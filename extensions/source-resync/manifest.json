@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "GoreeCloud Source Resync",
+  "version": "1.1.2",
+  "description": "Manually resync all resyncable ChatGPT Project Google Drive sources with one action.",
+  "permissions": ["storage", "tabs"],
+  "host_permissions": ["https://chatgpt.com/*"],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://chatgpt.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "GoreeCloud Source Resync",
+    "default_popup": "popup.html",
+    "default_icon": "icons/icon.svg"
+  },
+  "icons": {
+    "48": "icons/icon.svg",
+    "96": "icons/icon.svg"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "source-resync@goreecloud.com",
+      "strict_min_version": "128.0"
+    }
+  }
+}
