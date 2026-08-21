@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GoreeCloud Source Resync</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="mark" aria-hidden="true">↻</div>
+      <div>
+        <h1>Source Resync</h1>
+        <p>Manual ChatGPT Project source refresh</p>
+      </div>
+    </header>
+
+    <section class="card action-card">
+      <button id="runNow" class="primary" type="button">Resync all now</button>
+      <p class="muted">Open the ChatGPT Project Sources page you want to refresh, then use this button.</p>
+    </section>
+
+    <section class="card status-card" aria-live="polite">
+      <div class="eyebrow">Last manual run</div>
+      <div id="status">Not run yet.</div>
+      <div id="runDetails" class="details"></div>
+      <div id="lastRunAt" class="muted"></div>
+    </section>
+
+    <footer>
+      <span>GoreeCloud · Glaze UI</span>
+      <span id="version">v1.1.0</span>
+    </footer>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
