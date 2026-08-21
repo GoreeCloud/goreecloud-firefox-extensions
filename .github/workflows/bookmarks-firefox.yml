@@ -1,0 +1,28 @@
+name: Bookmarks Firefox
+
+on:
+  pull_request:
+    paths:
+      - 'extensions/bookmarks/**'
+      - '.github/workflows/bookmarks-firefox.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'extensions/bookmarks/**'
+      - '.github/workflows/bookmarks-firefox.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Validate Firefox source contract
+        run: python extensions/bookmarks/scripts/validate.py
+      - name: Check JavaScript syntax
+        run: node --check extensions/bookmarks/popup.js
