@@ -42,5 +42,11 @@ jobs:
           python shared/scripts/package_extension.py bookmarks
           python shared/scripts/package_extension.py redirector
           python shared/scripts/package_extension.py source-resync
-      - name: Show package inventory
-        run: unzip -l dist/*.xpi
+      - name: Verify package archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          for package in dist/*.xpi; do
+            unzip -t "$package"
+            unzip -l "$package"
+          done
