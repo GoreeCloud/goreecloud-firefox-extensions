@@ -7,7 +7,7 @@
       "name": "GoreeCloud Bookmarks",
       "directory": "extensions/bookmarks",
       "gecko_id": "goreecloud-bookmarks@goreecloud.com",
-      "release_status": "source-baseline",
+      "release_status": "authenticated-source-candidate",
       "legacy_repository": "GoreeCloud/goreecloud-bookmark-browser-extension"
     },
     {

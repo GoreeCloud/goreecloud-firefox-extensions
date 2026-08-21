@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>GoreeCloud Bookmarks — Connection Settings</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="options-page">
+  <main class="options-shell" aria-labelledby="title">
+    <header>
+      <p class="eyebrow">GoreeCloud</p>
+      <h1 id="title">Bookmarks connection</h1>
+      <p class="lede">Use a revocable GoreeCloud Bookmarks access token for reliable Firefox extension authentication.</p>
+    </header>
+
+    <section class="settings-card" aria-labelledby="token-heading">
+      <h2 id="token-heading">Extension token</h2>
+      <p class="help">Create a dedicated access token in GoreeCloud Bookmarks and paste it here. The token is stored only in Firefox extension local storage and is sent only to <code>bookmarks.goreecloud.com</code>.</p>
+      <form id="token-form">
+        <label>Access token
+          <input id="token-input" type="password" autocomplete="off" spellcheck="false" placeholder="Paste a revocable access token">
+        </label>
+        <p id="options-status" class="options-status" role="status"></p>
+        <button type="submit">Save connection</button>
+        <button id="clear-token" class="danger" type="button">Remove stored token</button>
+      </form>
+      <button id="open-bookmarks" class="secondary" type="button">Open GoreeCloud Bookmarks</button>
+    </section>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>
