@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "repository": "GoreeCloud/goreecloud-firefox-extensions",
+  "extensions": [
+    {
+      "slug": "bookmarks",
+      "name": "GoreeCloud Bookmarks",
+      "directory": "extensions/bookmarks",
+      "gecko_id": "goreecloud-bookmarks@goreecloud.com",
+      "release_status": "source-baseline",
+      "legacy_repository": "GoreeCloud/goreecloud-bookmark-browser-extension"
+    },
+    {
+      "slug": "redirector",
+      "name": "GoreeCloud Redirector",
+      "directory": "extensions/redirector",
+      "gecko_id": "redirector@goreecloud.com",
+      "release_status": "canonical-source",
+      "legacy_repository": "GoreeCloud/goreecloud-redirector"
+    },
+    {
+      "slug": "source-resync",
+      "name": "GoreeCloud Source Resync",
+      "directory": "extensions/source-resync",
+      "gecko_id": "source-resync@goreecloud.com",
+      "release_status": "canonical-source",
+      "legacy_repository": "GoreeCloud/goreecloud-source-resync"
+    }
+  ]
+}
