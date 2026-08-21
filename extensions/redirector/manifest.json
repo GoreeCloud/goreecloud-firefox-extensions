@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "GoreeCloud Redirector",
+  "version": "0.2.1",
+  "description": "Privacy-first URL redirects for GoreeCloud services, with user-controlled custom redirect rules.",
+  "homepage_url": "https://github.com/GoreeCloud/goreecloud-firefox-extensions/tree/main/extensions/redirector",
+  "icons": {
+    "16": "icons/redirector.svg",
+    "32": "icons/redirector.svg",
+    "48": "icons/redirector.svg",
+    "64": "icons/redirector.svg",
+    "96": "icons/redirector.svg",
+    "128": "icons/redirector.svg"
+  },
+  "permissions": [
+    "declarativeNetRequest",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://keep.google.com/*"
+  ],
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "goreecloud_builtin",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  },
+  "action": {
+    "default_title": "GoreeCloud Redirector",
+    "default_icon": "icons/redirector.svg",
+    "default_popup": "popup.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "redirector@goreecloud.com",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  }
+}
