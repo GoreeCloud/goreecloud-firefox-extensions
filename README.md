@@ -2,20 +2,20 @@
 
 This repository is the canonical source-control home for Firefox extensions built and maintained by GoreeCloud.
 
-All first-party GoreeCloud Firefox-extension source code, extension-specific documentation, validation tooling, packaging workflows, release metadata, and maintained extension assets belong in this repository. New GoreeCloud Firefox extensions should be created here rather than in separate standalone repositories unless a documented technical or licensing requirement makes separation necessary.
+All first-party GoreeCloud Firefox-extension source code, extension-specific documentation, validation tooling, packaging workflows, release metadata, and maintained extension assets belong here. New GoreeCloud Firefox extensions should be created in this repository unless a documented technical, licensing, or platform requirement makes separation necessary.
 
 ## Repository role
 
-`GoreeCloud/goreecloud-firefox-extensions` is the authoritative maintenance location for GoreeCloud Firefox extensions.
+`GoreeCloud/goreecloud-firefox-extensions` is the authoritative Firefox-extension maintenance location for GoreeCloud.
 
-The repository is intended to provide:
+The repository provides:
 
 - one discoverable home for every GoreeCloud Firefox extension;
-- consistent Firefox/WebExtension engineering and validation practices;
-- shared packaging, signing, release, privacy, security, and compatibility tooling;
-- clear extension ownership and lifecycle status;
-- reusable Glaze UI, Wardveil Security, and Privacy Shield integration patterns where applicable;
-- preserved source history and migration records for extensions that previously lived in standalone repositories.
+- independent extension identities and release boundaries inside one repository;
+- shared Firefox/WebExtension validation and deterministic packaging tooling;
+- common Mozilla signing and release-gate guidance;
+- consistent privacy, security, compatibility, and provenance records;
+- reusable Glaze UI, Wardveil Security, and Privacy Shield patterns where appropriate.
 
 ## Canonical layout
 
@@ -26,28 +26,64 @@ extensions/
 └── source-resync/
 
 docs/
+├── extension-inventory.json
+├── MOZILLA_SIGNING.md
 └── repository-policy.md
 
 shared/
-├── assets/
-├── scripts/
-└── tooling/
+└── scripts/
+    ├── package_extension.py
+    └── validate_repository.py
 ```
 
-Additional extension directories should use concise lowercase kebab-case names under `extensions/`.
+Additional extension directories use concise lowercase kebab-case names under `extensions/`.
 
 ## Current extension inventory
 
-| Extension | Purpose | Canonical directory | Legacy repository |
-| --- | --- | --- | --- |
-| GoreeCloud Bookmarks browser extension | Browser integration for GoreeCloud Bookmarks | `extensions/bookmarks/` | `GoreeCloud/goreecloud-bookmark-browser-extension` |
-| GoreeCloud Redirector | Firefox request and URL redirection controls | `extensions/redirector/` | `GoreeCloud/goreecloud-redirector` |
-| GoreeCloud Source Resync | Manual resynchronization support for compatible ChatGPT Project Sources | `extensions/source-resync/` | `GoreeCloud/goreecloud-source-resync` |
+| Extension | Canonical directory | Firefox add-on ID | Canonical source state | Legacy repository |
+| --- | --- | --- | --- | --- |
+| GoreeCloud Bookmarks | `extensions/bookmarks/` | `goreecloud-bookmarks@goreecloud.com` | Source baseline; not Stable | `GoreeCloud/goreecloud-bookmark-browser-extension` |
+| GoreeCloud Redirector | `extensions/redirector/` | `redirector@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-redirector` |
+| GoreeCloud Source Resync | `extensions/source-resync/` | `source-resync@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-source-resync` |
 
-The legacy repositories remain historical migration sources until their code, release metadata, and relevant history have been reconciled with this repository. After migration, active development should occur here.
+Machine-readable inventory lives in [`docs/extension-inventory.json`](docs/extension-inventory.json).
+
+Legacy repositories may remain available for provenance, redirects, compatibility, or release continuity, but new Firefox-specific development belongs in the canonical directory after migration acceptance.
+
+## Validation
+
+Repository-wide source validation:
+
+```bash
+python shared/scripts/validate_repository.py
+```
+
+The shared validator checks the canonical inventory, Manifest V3 status, GoreeCloud product names, unique Firefox add-on IDs, version syntax, required documentation, and required-host permission boundaries. Extension-specific validation remains available where an extension needs stricter checks.
+
+GitHub Actions runs repository-wide validation, JavaScript syntax checks, deterministic unsigned packaging, and archive-integrity checks for maintained extensions.
+
+## Packaging
+
+Create a deterministic unsigned XPI candidate with:
+
+```bash
+python shared/scripts/package_extension.py <extension-slug>
+```
+
+For example:
+
+```bash
+python shared/scripts/package_extension.py bookmarks
+```
+
+Generated packages are written to `dist/` and are build outputs rather than authoritative source. Packaging success does not imply Mozilla signing or Stable acceptance.
+
+## Mozilla signing
+
+See [`docs/MOZILLA_SIGNING.md`](docs/MOZILLA_SIGNING.md). Each extension keeps an independent release state. A source merge or unsigned package must never be described as Stable solely because repository validation passes.
 
 ## Maintenance rule
 
-A GoreeCloud Firefox extension is not considered fully centralized until its active source, documentation, validation, build/package workflow, and release instructions are represented here. Legacy repositories may remain available for history, redirects, or compatibility, but they are not the preferred location for new development after migration.
+A GoreeCloud Firefox extension is not fully centralized until its active source, documentation, validation, package workflow, release instructions, required licensing/attribution, and relevant release history are represented here.
 
-See [`docs/repository-policy.md`](docs/repository-policy.md) for the repository governance and migration rules.
+See [`docs/repository-policy.md`](docs/repository-policy.md) for repository governance and migration rules.
