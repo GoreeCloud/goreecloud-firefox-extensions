@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">GoreeCloud Redirector</title>
+  <desc id="desc">Two polished directional paths forming a protected redirect mark.</desc>
+  <defs>
+    <linearGradient id="g" x1="18" y1="18" x2="110" y2="110" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6ea8ff"/>
+      <stop offset="1" stop-color="#7c5cff"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="30" fill="url(#g)"/>
+  <path d="M30 44h47l-12-12 9-9 28 28-28 28-9-9 12-12H30z" fill="#fff" opacity=".96"/>
+  <path d="M98 84H51l12 12-9 9-28-28 28-28 9 9-12 12h47z" fill="#fff" opacity=".70"/>
+</svg>
