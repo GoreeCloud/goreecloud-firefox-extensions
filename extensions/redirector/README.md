@@ -1,7 +1,25 @@
 # GoreeCloud Redirector
 
-Canonical Firefox-extension directory for GoreeCloud Redirector.
+GoreeCloud Redirector is the first-party Firefox extension for privacy-preserving URL redirection into approved GoreeCloud services.
 
-Current migration source: `GoreeCloud/goreecloud-redirector`.
+This directory is the canonical development and maintenance location. The historical standalone repository `GoreeCloud/goreecloud-redirector` remains a legacy source and release-history reference; active Firefox development belongs here.
 
-The existing standalone repository remains the active source until its exact maintained extension source, release metadata, validation workflow, and Mozilla-signing information are imported and validated here. New long-term development should move to this directory as part of that migration.
+## Current capability
+
+- Manifest V3 Firefox extension.
+- Built-in Google Keep → GoreeCloud Memos redirect.
+- User-controlled enable/disable state.
+- Custom redirect rules stored locally in Firefox.
+- Per-source optional host-permission requests.
+- Redirect-loop prevention and duplicate-source validation.
+- Dynamic-rule reconciliation after permission changes.
+- No analytics, injected page scripts, remote code, or external runtime service.
+- Glaze UI 1.3 interface foundation.
+
+## Privacy boundary
+
+Redirect decisions are evaluated through Firefox Declarative Net Request. Custom rule definitions remain in local extension storage. The extension asks for a source site's host permission only when the user creates or enables a rule requiring that site.
+
+## Release state
+
+Version `0.2.1` establishes the canonical-repository migration and maintenance baseline. Signed-package acceptance remains a separate release gate.

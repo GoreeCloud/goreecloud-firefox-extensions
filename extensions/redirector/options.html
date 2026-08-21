@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en" data-glaze-ui="1.3">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>GoreeCloud Redirector Settings</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="options-page">
+  <main class="settings-shell" id="main-content">
+    <header class="settings-header">
+      <div>
+        <p class="eyebrow">GoreeCloud</p>
+        <h1>Redirector</h1>
+        <p class="lede">Own the shortcuts that move you from outside services to GoreeCloud.</p>
+      </div>
+      <span class="pill" id="version-pill" aria-label="Extension version">v…</span>
+    </header>
+
+    <section class="glass-card section-card" aria-labelledby="builtin-heading">
+      <div class="section-heading"><div><p class="eyebrow">Built in</p><h2 id="builtin-heading">GoreeCloud defaults</h2></div></div>
+      <div class="rule-row">
+        <div><strong>Google Keep → GoreeCloud Memos</strong><p>https://keep.google.com/* → https://memos.goreecloud.com/</p></div>
+        <label class="switch" aria-label="Enable built-in Keep redirect"><input id="builtin-toggle" type="checkbox"><span class="slider"></span></label>
+      </div>
+    </section>
+
+    <section class="glass-card section-card" aria-labelledby="custom-heading">
+      <div class="section-heading">
+        <div><p class="eyebrow">Custom</p><h2 id="custom-heading">Your redirects</h2></div>
+        <button id="new-rule" class="secondary-button" type="button">New redirect</button>
+      </div>
+      <div id="rule-list" class="rule-list" aria-live="polite"></div>
+    </section>
+
+    <section id="editor-card" class="glass-card section-card hidden" aria-labelledby="editor-heading">
+      <div class="section-heading"><div><p class="eyebrow">Editor</p><h2 id="editor-heading">Redirect rule</h2></div></div>
+      <form id="rule-form" novalidate>
+        <input id="rule-id" type="hidden">
+        <label class="field"><span>Name</span><input id="rule-name" type="text" maxlength="80" autocomplete="off" placeholder="Google Calendar → GoreeCloud Calendar" required></label>
+        <label class="field"><span>From</span><input id="rule-source" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://calendar.google.com/" required><small>The entered URL and paths below it are redirected. Only this source site is granted access.</small></label>
+        <label class="field"><span>To</span><input id="rule-destination" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://calendar.goreecloud.com/" required></label>
+        <label class="checkbox-row"><input id="rule-enabled" type="checkbox" checked><span>Enable this redirect</span></label>
+        <p id="form-status" class="form-status" role="status"></p>
+        <div class="button-row"><button class="primary-button" type="submit">Save redirect</button><button id="cancel-edit" class="secondary-button" type="button">Cancel</button></div>
+      </form>
+    </section>
+
+    <section class="privacy-panel" aria-labelledby="privacy-heading">
+      <h2 id="privacy-heading">Privacy boundary</h2>
+      <p>GoreeCloud Redirector does not inject scripts into websites, read page contents, use analytics, or contact an external service. Firefox evaluates redirect rules internally. Custom source-site access is requested only when you save a rule for that site.</p>
+    </section>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>
