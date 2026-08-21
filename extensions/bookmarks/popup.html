@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>GoreeCloud Bookmarks</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell" aria-labelledby="title">
+    <header>
+      <p class="eyebrow">GoreeCloud</p>
+      <h1 id="title">Bookmarks</h1>
+      <p class="lede">Save the current page to your private bookmark library.</p>
+    </header>
+    <form id="save-form">
+      <label>Title<input id="title-input" type="text" maxlength="300" required></label>
+      <label>URL<input id="url-input" type="url" required></label>
+      <label>Collection<input id="collection-input" type="text" maxlength="120" placeholder="Unsorted"></label>
+      <label>Tags<input id="tags-input" type="text" maxlength="300" placeholder="tag-one, tag-two"></label>
+      <label>Note<textarea id="note-input" maxlength="2000" rows="4"></textarea></label>
+      <p id="status" role="status"></p>
+      <button id="save-button" type="submit">Save bookmark</button>
+    </form>
+    <button id="open-bookmarks" class="secondary" type="button">Open GoreeCloud Bookmarks</button>
+    <p class="privacy">No analytics. No remote code. No stored passwords or API tokens.</p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

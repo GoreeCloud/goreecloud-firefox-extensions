@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "GoreeCloud Bookmarks",
+  "version": "0.1.0",
+  "description": "Save the current page to GoreeCloud Bookmarks from Firefox.",
+  "homepage_url": "https://github.com/GoreeCloud/goreecloud-firefox-extensions",
+  "permissions": ["activeTab"],
+  "host_permissions": ["https://bookmarks.goreecloud.com/*"],
+  "action": {
+    "default_title": "GoreeCloud Bookmarks",
+    "default_popup": "popup.html"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "goreecloud-bookmarks@goreecloud.com",
+      "strict_min_version": "140.0"
+    }
+  }
+}
