@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "priority": 100,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "url": "https://memos.goreecloud.com/"
+      }
+    },
+    "condition": {
+      "regexFilter": "^https://keep\\.google\\.com(?:[/?].*)?$",
+      "resourceTypes": ["main_frame"]
+    }
+  }
+]
