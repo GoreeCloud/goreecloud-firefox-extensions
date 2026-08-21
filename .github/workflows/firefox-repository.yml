@@ -1,0 +1,46 @@
+name: Firefox Repository
+
+on:
+  pull_request:
+    paths:
+      - 'extensions/**'
+      - 'shared/**'
+      - 'docs/extension-inventory.json'
+      - '.github/workflows/firefox-repository.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'extensions/**'
+      - 'shared/**'
+      - 'docs/extension-inventory.json'
+      - '.github/workflows/firefox-repository.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Validate canonical extension inventory and manifests
+        run: python shared/scripts/validate_repository.py
+      - name: Validate Bookmarks source contract
+        run: python extensions/bookmarks/scripts/validate.py
+      - name: Check maintained JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          find extensions -type f -name '*.js' -print0 | while IFS= read -r -d '' file; do
+            node --check "$file"
+          done
+      - name: Build deterministic unsigned packages
+        run: |
+          python shared/scripts/package_extension.py bookmarks
+          python shared/scripts/package_extension.py redirector
+          python shared/scripts/package_extension.py source-resync
+      - name: Show package inventory
+        run: unzip -l dist/*.xpi
