@@ -93,6 +93,23 @@
     return TRACKING_PREFIXES.some((prefix) => lower.startsWith(prefix));
   }
 
+  function queryParamNames(parsed) {
+    const query = String(parsed?.search || "").replace(/^\?/, "");
+    if (!query) return [];
+    const names = [];
+    const seen = new Set();
+    for (const part of query.split("&")) {
+      if (!part) continue;
+      const rawName = part.split("=", 1)[0];
+      let name = rawName.replace(/\+/g, " ");
+      try { name = decodeURIComponent(name); } catch { /* preserve malformed raw name */ }
+      if (seen.has(name)) continue;
+      seen.add(name);
+      names.push(name);
+    }
+    return names;
+  }
+
   function unwrapRedirect(url) {
     let parsed;
     try { parsed = new URL(url); } catch { return url; }
@@ -122,7 +139,10 @@
     let parsed;
     try { parsed = new URL(source); } catch { return source; }
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return source;
-    for (const key of Array.from(parsed.searchParams.keys())) {
+    // Firefox content-script compartments can expose an empty URLSearchParams
+    // keys() iterator even though get()/delete() operate correctly. Derive names
+    // from the serialized query and keep standards-based delete() for mutation.
+    for (const key of queryParamNames(parsed)) {
       if (shouldDropParam(key)) parsed.searchParams.delete(key);
     }
     return parsed.href;
