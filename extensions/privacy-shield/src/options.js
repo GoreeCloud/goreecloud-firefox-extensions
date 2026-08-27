@@ -30,6 +30,7 @@
     const result = await browser.runtime.sendMessage({ type: "subscriptions:update" });
     status(`Updated ${result.listCount} configured list(s); imported up to ${result.ruleCount} lines.`);
   });
+  document.querySelector("#manageHidden").addEventListener("click", () => browser.tabs.create({ url: browser.runtime.getURL("hidden.html") }));
   document.querySelector("#openLogger").addEventListener("click", () => browser.tabs.create({ url: browser.runtime.getURL("logger.html") }));
   load();
 })();

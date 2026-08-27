@@ -8,11 +8,13 @@ manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 assert manifest["manifest_version"] == 3
 assert manifest["browser_specific_settings"]["gecko"]["id"] == "privacy-shield@goreecloud.com"
 assert "<all_urls>" in manifest.get("host_permissions", [])
-background = manifest.get("background", {})
-assert "persistent" not in background, "Manifest V3 background.persistent is unsupported by Firefox"
+assert "persistent" not in manifest.get("background", {}), "Firefox MV3 does not support background.persistent"
 for permission in ("webRequest", "webRequestBlocking", "storage", "clipboardWrite"):
     assert permission in manifest.get("permissions", []), permission
-for required in ("README.md", "PRIVACY.md", "SECURITY.md", "ARCHITECTURE.md", "BROAD_HOST_PERMISSION_REVIEW.md", "vendor/THIRD_PARTY_NOTICES.md"):
+for required in (
+    "README.md", "PRIVACY.md", "SECURITY.md", "ARCHITECTURE.md", "BROAD_HOST_PERMISSION_REVIEW.md",
+    "vendor/THIRD_PARTY_NOTICES.md", "hidden.html", "src/cosmetic-rules.js", "src/hidden.js"
+):
     assert (ROOT / required).is_file(), required
 for resource in ("vendor/normalize-8.0.1.css", "src/page-guard.js"):
     assert (ROOT / resource).is_file(), resource
