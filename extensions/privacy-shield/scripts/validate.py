@@ -37,5 +37,8 @@ assert 'id="hiddenCount"' in popup_html, "popup hidden counter missing"
 assert 'PAGE_FILTER_REASONS' in background_js and 'message.type === "page:filtered"' in background_js, "unified page activity handling missing"
 assert 'stat: "cleaned"' in content_js and 'type: "page:filtered"' in content_js, "content activity reporting missing"
 assert 'selector' not in background_js.split('function logPageFilter', 1)[1].split('function requestHostname', 1)[0].lower(), "page activity logger must not record selectors"
+assert 'TAB_COUNTER_KEYS' in background_js and 'setBadgeText' in background_js, "combined This tab toolbar badge missing"
+assert 'blocked", "cleaned", "hidden", "local' in background_js, "toolbar badge counter set is incomplete"
+assert '999+' in background_js, "toolbar badge compact overflow behavior missing"
 
 print("Privacy Shield source contract validated.")
