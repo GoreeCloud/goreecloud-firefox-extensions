@@ -31,7 +31,7 @@ Shared code and tooling belongs under `shared/` only when it is genuinely reusab
 
 Extension directories use concise lowercase kebab-case names. The directory name describes the extension rather than repeating the `goreecloud-` repository prefix.
 
-Current directories are `extensions/bookmarks/`, `extensions/redirector/`, and `extensions/source-resync/`.
+Current directories are `extensions/bookmarks/`, `extensions/privacy-shield/`, `extensions/redirector/`, and `extensions/source-resync/`.
 
 ## Migration rule
 
@@ -60,7 +60,7 @@ A successful source merge, validation run, or unsigned XPI build is not equivale
 
 `docs/extension-inventory.json` is the machine-readable inventory for canonical Firefox extensions.
 
-`shared/scripts/validate_repository.py` validates repository-wide identity and manifest invariants, including unique Firefox add-on IDs and broad required-host permission checks.
+`shared/scripts/validate_repository.py` validates repository-wide identity and manifest invariants, including unique Firefox add-on IDs and broad required-host permission checks. An extension that genuinely requires broad host access must declare a `broad_host_permission_review` path in the inventory, and that review must exist and document the functional requirement and privacy constraints.
 
 `shared/scripts/package_extension.py` creates deterministic unsigned XPI candidates from canonical extension directories while excluding maintenance-only documentation and tooling. Generated packages belong under `dist/` and are not authoritative source.
 
@@ -74,14 +74,19 @@ Reusable credentials, tokens, cookies, signing secrets, private keys, account da
 
 Broad required host access such as `<all_urls>` is prohibited unless an extension has a documented and reviewed requirement. Optional host permissions may be broader when Firefox grants them only after an explicit user action and the extension documents the purpose.
 
+A privacy or security extension whose primary role is browser-wide request inspection may qualify for broad host access, but only when the requirement is explicit, validated in the inventory, bounded by privacy documentation, and independently reviewed during release acceptance.
+
 ## GoreeCloud platform integration
 
 Where applicable, extensions follow GoreeCloud application branding, Glaze UI, Wardveil Security, Privacy Shield, code-structure, release-lifecycle, production-readiness, and source-control requirements without adding unnecessary complexity.
+
+Privacy Shield adapters must not treat branding as evidence of implementation. Browser-specific Privacy Shield claims remain limited to implemented, testable Firefox behavior and do not confer platform authority outside the adapter's accepted scope.
 
 ## Current migration state
 
 - `GoreeCloud/goreecloud-source-resync` → `extensions/source-resync/`: canonical Firefox source migration accepted.
 - `GoreeCloud/goreecloud-redirector` → `extensions/redirector/`: canonical Firefox source migration accepted; later canonical source versions retain independent signing gates from the historically accepted signed v0.2.0 release.
-- `GoreeCloud/goreecloud-bookmark-browser-extension` → `extensions/bookmarks/`: legacy cross-browser Linkwarden-derived repository inspected; canonical Firefox-specific first-party replacement foundation accepted. Bookmarks v0.1.0 remains a source baseline rather than a Stable release.
+- `GoreeCloud/goreecloud-bookmark-browser-extension` → `extensions/bookmarks/`: legacy cross-browser Linkwarden-derived repository inspected; canonical Firefox-specific first-party replacement foundation accepted. Bookmarks remains a source baseline rather than a Stable release.
+- `extensions/privacy-shield/`: first-party Firefox Privacy Shield adapter introduced directly in the canonical repository; no legacy standalone Firefox extension repository exists.
 
 Legacy repositories remain useful only to the extent required for provenance, cross-browser boundaries, redirects, compatibility, or historical release continuity.
