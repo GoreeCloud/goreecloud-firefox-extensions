@@ -12,11 +12,17 @@ GoreeCloud Privacy Shield is the first-party Firefox adapter for GoreeCloud's pl
 - resistance to link rewriting through document-start cleanup, mutation observation, and capture-phase click cleanup;
 - wide-spectrum request filtering for built-in ad/tracker/miner categories plus custom and subscribed rules;
 - support for hosts-style, common ABP domain rules, wildcard/regex URL rules, exceptions, and cosmetic rules;
-- cosmetic filtering, persistent element picker rules, and a temporary element zapper;
+- cosmetic filtering, persistent element picker rules, a temporary element zapper, one-click **Undo last hide**, and a **Hidden elements** manager for reviewing/restoring saved cosmetic rules;
 - per-site protection override and controls for third-party scripts, third-party frames, and media/object requests;
 - a local-only ephemeral request logger with blocked, redirected, and optionally allowed requests;
 - exact-version local-resource substitution for reviewed CDN resources, initially normalize.css 8.0.1 across supported jsDelivr, cdnjs, and unpkg URLs;
 - daily refresh of user-configured HTTPS filter lists, with no default remote subscription.
+
+## Cosmetic rule recovery
+
+The element picker creates persistent `domain##selector` cosmetic rules. **Undo last hide** removes the most recently saved custom cosmetic rule for the current site and reloads the page. **Hidden elements** lists all saved custom cosmetic rules with individual **Restore** actions. Existing picker-created rules from earlier Privacy Shield builds are recognized because recovery operates on the same `customRules` storage used by the picker.
+
+The zapper remains temporary: it removes the selected element from the current document without saving a rule.
 
 ## Local-resource delivery
 
