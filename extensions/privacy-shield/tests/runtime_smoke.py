@@ -286,6 +286,12 @@ def main() -> int:
             lambda d: d.execute_script("return window.__goreecloudPrivacyShieldPopupGuard === true;"),
             "popup guard was not injected into the page world",
         )
+        wait_for(
+            driver,
+            lambda d: d.execute_script("return !navigator.userActivation || !navigator.userActivation.isActive;"),
+            "transient user activation did not expire before popup test",
+            timeout=10.0,
+        )
         handles_before = len(driver.window_handles)
         popup_blocked = driver.execute_script("return window.open('/popup', '_blank') === null;")
         time.sleep(0.25)
