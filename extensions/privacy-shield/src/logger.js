@@ -26,6 +26,10 @@
       "media-request": "media/object request",
       "custom-domain-rule": "custom domain rule",
       "custom-url-rule": "custom URL rule",
+      "cosmetic-content": "cosmetic content",
+      "annoyance-overlay": "reviewed annoyance overlay",
+      "element-picker": "element picker",
+      "zapper": "zapper",
       "no-rule-match": "no rule match"
     };
     return labels[reason] || String(reason || "").replace(/-/g, " ");
@@ -79,8 +83,9 @@
 
   function updateSummary(visible) {
     document.querySelector("#visibleCount").textContent = visible.length;
-    document.querySelector("#blockedCount").textContent = visible.filter((entry) => entry.verdict === "blocked").length;
-    document.querySelector("#redirectedCount").textContent = visible.filter((entry) => entry.verdict === "redirected").length;
+    document.querySelector("#blockedCount").textContent = visible.filter((entry) => entry.verdict === "blocked").reduce((sum, entry) => sum + (Number(entry.count) || 1), 0);
+    document.querySelector("#hiddenCountSummary").textContent = visible.filter((entry) => entry.verdict === "hidden").reduce((sum, entry) => sum + (Number(entry.count) || 1), 0);
+    document.querySelector("#redirectedCount").textContent = visible.filter((entry) => entry.verdict === "redirected").reduce((sum, entry) => sum + (Number(entry.count) || 1), 0);
     document.querySelector("#domainCount").textContent = new Set(visible.map((entry) => entry.hostname).filter(Boolean)).size;
   }
 
@@ -165,18 +170,20 @@
     syncSelect(typeFilter, optionValues("type"), "All types");
     syncSelect(verdictFilter, optionValues("verdict"), "All verdicts");
 
-    const visible = entries.filter(matchesFilters).slice().reverse();
+    const visible = entries.filter(matchesFilters).slice().sort((a, b) => Number(b.time || 0) - Number(a.time || 0));
     updateSummary(visible);
     tbody.replaceChildren();
 
     for (const entry of visible) {
       const tr = document.createElement("tr");
+      const count = Math.max(1, Number(entry.count) || 1);
+      const reason = `${displayReason(entry.reason)}${count > 1 ? ` ×${count}` : ""}`;
       const values = [
         new Date(entry.time).toLocaleTimeString(),
         entry.verdict,
         entry.type,
         entry.hostname || "—",
-        displayReason(entry.reason)
+        reason
       ];
       values.forEach((value, index) => {
         const td = document.createElement("td");
@@ -192,14 +199,14 @@
   }
 
   async function load() {
-    entries = await browser.runtime.sendMessage({ type: "logger:get", limit: 1000 }) || [];
+    entries = await browser.runtime.sendMessage({ type: "logger:get", limit: 2000 }) || [];
     render();
   }
 
   browser.runtime.onMessage.addListener((message) => {
     if (message?.type === "logger:event") {
       entries.push(message.entry);
-      if (entries.length > 1000) entries.shift();
+      if (entries.length > 2000) entries = entries.slice(-2000);
       render();
     }
   });

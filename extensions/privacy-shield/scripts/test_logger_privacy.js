@@ -57,5 +57,24 @@ const entry = L.publicEntry({
 assert.equal(entry.hostname, "example.com");
 assert.equal(entry.url, "https://example.com/log?token=[redacted]&keep=1");
 assert.equal(entry.redacted, true);
+assert.equal(entry.count, 1);
+assert.equal(entry.source, "network");
+
+const pageEntry = L.publicEntry({
+  id: "page-1",
+  time: 456,
+  tabId: 8,
+  type: "page",
+  verdict: "hidden",
+  reason: "cosmetic-content",
+  url: "https://www.reddit.com/?request_id=opaque-value&keep=1",
+  count: 3,
+  source: "page"
+});
+assert.equal(pageEntry.hostname, "www.reddit.com");
+assert.equal(pageEntry.verdict, "hidden");
+assert.equal(pageEntry.count, 3);
+assert.equal(pageEntry.source, "page");
+assert.match(L.privacyViewUrl(pageEntry.url).url, /request_id=\[private\]/);
 
 console.log("Privacy Shield logger privacy tests passed.");

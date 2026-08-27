@@ -106,7 +106,9 @@
       hostname: request.hostname,
       url: request.url,
       finalUrl: final.url || null,
-      redacted: request.redacted || final.redacted
+      redacted: request.redacted || final.redacted,
+      count: Math.max(1, Number(entry?.count) || 1),
+      source: entry?.source === "page" ? "page" : "network"
     };
   }
 
