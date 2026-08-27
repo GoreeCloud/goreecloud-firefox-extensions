@@ -37,6 +37,7 @@ def main() -> int:
             const dirty = document.getElementById('dirty');
             const redirect = document.getElementById('redirect');
             const ad = document.getElementById('adnode');
+            const root = document.documentElement;
             return {
               currentUrl: location.href,
               dirty: dirty ? dirty.href : null,
@@ -45,8 +46,11 @@ def main() -> int:
               adDisplay: ad ? getComputedStyle(ad).display : null,
               cosmeticStyle: Boolean(document.getElementById('goreecloud-privacy-shield-cosmetic')),
               popupGuard: window.__goreecloudPrivacyShieldPopupGuard === true,
-              debugClean: document.documentElement.dataset.goreecloudDebugClean || null,
-              debugCleanLinks: document.documentElement.dataset.goreecloudDebugCleanLinks || null
+              debugClean: root.dataset.goreecloudDebugClean || null,
+              debugCleanLinks: root.dataset.goreecloudDebugCleanLinks || null,
+              debugKeys: root.dataset.goreecloudDebugKeys || null,
+              debugManual: root.dataset.goreecloudDebugManual || null,
+              debugFbclidSet: root.dataset.goreecloudDebugFbclidSet || null
             };
             """
         )
