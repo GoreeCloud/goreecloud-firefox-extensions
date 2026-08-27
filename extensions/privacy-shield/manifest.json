@@ -30,7 +30,8 @@
     "scripts": [
       "src/core.js",
       "src/logger-privacy.js",
-      "src/background.js"
+      "src/background.js",
+      "src/page-observability-background.js"
     ]
   },
   "content_scripts": [
