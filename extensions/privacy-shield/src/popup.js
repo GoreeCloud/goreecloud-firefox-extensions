@@ -4,14 +4,13 @@
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   const host = (() => { try { return new URL(tab?.url || "").hostname; } catch { return ""; } })();
   let settings = await browser.runtime.sendMessage({ type: "settings:get" });
-  const stats = tab?.id != null ? await browser.runtime.sendMessage({ type: "tab:stats", tabId: tab.id }) : { blocked: 0, cleaned: 0, local: 0 };
-  const pageStats = tab?.id != null ? await browser.runtime.sendMessage({ type: "page:stats", tabId: tab.id }) : { hidden: 0 };
+  const stats = tab?.id != null ? await browser.runtime.sendMessage({ type: "tab:stats", tabId: tab.id }) : { blocked: 0, cleaned: 0, hidden: 0, local: 0 };
   const popupStatus = document.querySelector("#popupStatus");
 
   document.querySelector("#site").textContent = host || "This page";
   document.querySelector("#blocked").textContent = stats.blocked || 0;
   document.querySelector("#cleaned").textContent = stats.cleaned || 0;
-  document.querySelector("#hiddenCount").textContent = pageStats.hidden || 0;
+  document.querySelector("#hiddenCount").textContent = stats.hidden || 0;
   document.querySelector("#local").textContent = stats.local || 0;
   const siteEnabled = settings?.siteOverrides?.[host]?.enabled ?? settings?.enabled ?? true;
   const toggle = document.querySelector("#enabled");
