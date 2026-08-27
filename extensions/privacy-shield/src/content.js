@@ -6,6 +6,11 @@
   let overlay = null;
   let mode = null;
   let hoverTarget = null;
+  let cosmeticSelectors = [];
+  let annoyanceSelectors = [];
+  const filteredNodes = new WeakSet();
+  const pendingFiltered = new Map();
+  let filteredFlushTimer = null;
 
   async function init() {
     try { currentSettings = await browser.runtime.sendMessage({ type: "settings:get" }) || currentSettings; } catch { /* ignore */ }
@@ -13,10 +18,10 @@
     if (!site.enabled) return;
     if (site.blockPopups) injectPageGuard();
     cleanDocumentLinks(site);
-    installMutationObserver(site);
     installClickGuard(site);
     installCopyCleaner(site);
-    if (site.cosmeticFiltering) applyCosmeticRules(site);
+    if (site.cosmeticFiltering) await applyCosmeticRules(site);
+    installMutationObserver(site);
   }
 
   function injectPageGuard() {
@@ -40,11 +45,57 @@
     if (root instanceof HTMLAnchorElement || root instanceof HTMLAreaElement) cleanAnchor(root, site);
   }
 
+  function queueFiltered(reason, amount) {
+    const value = Math.max(0, Number(amount) || 0);
+    if (!value) return;
+    pendingFiltered.set(reason, (pendingFiltered.get(reason) || 0) + value);
+    if (filteredFlushTimer) return;
+    filteredFlushTimer = setTimeout(() => {
+      filteredFlushTimer = null;
+      for (const [nextReason, nextAmount] of pendingFiltered) {
+        browser.runtime.sendMessage({ type: "page:filtered", reason: nextReason, amount: nextAmount }).catch(() => {});
+      }
+      pendingFiltered.clear();
+    }, 120);
+  }
+
+  function matchesIn(root, selectors) {
+    const nodes = new Set();
+    for (const selector of selectors || []) {
+      try {
+        if (root instanceof Element && root.matches(selector)) nodes.add(root);
+        if (root.querySelectorAll) root.querySelectorAll(selector).forEach((node) => nodes.add(node));
+      } catch { /* ignore invalid selector */ }
+    }
+    return nodes;
+  }
+
+  function recordFiltered(root = document) {
+    let annoyances = 0;
+    let cosmetic = 0;
+    for (const node of matchesIn(root, annoyanceSelectors)) {
+      if (filteredNodes.has(node)) continue;
+      filteredNodes.add(node);
+      annoyances += 1;
+    }
+    for (const node of matchesIn(root, cosmeticSelectors)) {
+      if (filteredNodes.has(node)) continue;
+      filteredNodes.add(node);
+      cosmetic += 1;
+    }
+    if (annoyances) queueFiltered("annoyance-overlay", annoyances);
+    if (cosmetic) queueFiltered("cosmetic-content", cosmetic);
+  }
+
   function installMutationObserver(site) {
     const observer = new MutationObserver((records) => {
       for (const record of records) {
         if (record.type === "attributes" && record.target) cleanAnchor(record.target, site);
-        for (const node of record.addedNodes) if (node.nodeType === Node.ELEMENT_NODE) cleanDocumentLinks(site, node);
+        for (const node of record.addedNodes) {
+          if (node.nodeType !== Node.ELEMENT_NODE) continue;
+          cleanDocumentLinks(site, node);
+          if (site.cosmeticFiltering) recordFiltered(node);
+        }
       }
     });
     observer.observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ["href", "ping"] });
@@ -91,15 +142,17 @@
   }
 
   async function applyCosmeticRules(site) {
-    let selectors = [];
-    try { selectors = await browser.runtime.sendMessage({ type: "cosmetic:get", hostname: location.hostname }) || []; } catch { return; }
-    if (site.blockAnnoyances) selectors.push(...selectorsFromCatalog(C.SITE_ANNOYANCE_SELECTORS));
-    selectors = Array.from(new Set(selectors.filter(Boolean))).slice(0, 2000);
+    try { cosmeticSelectors = await browser.runtime.sendMessage({ type: "cosmetic:get", hostname: location.hostname }) || []; } catch { cosmeticSelectors = []; }
+    annoyanceSelectors = site.blockAnnoyances ? selectorsFromCatalog(C.SITE_ANNOYANCE_SELECTORS) : [];
+    cosmeticSelectors = Array.from(new Set(cosmeticSelectors.filter(Boolean))).slice(0, 2000);
+    annoyanceSelectors = Array.from(new Set(annoyanceSelectors.filter(Boolean))).slice(0, 500);
+    const selectors = Array.from(new Set([...cosmeticSelectors, ...annoyanceSelectors]));
     if (!selectors.length) return;
     const style = document.createElement("style");
     style.id = "goreecloud-privacy-shield-cosmetic";
     style.textContent = `${selectors.join(",\n")}{display:none!important;visibility:hidden!important;}`;
     (document.documentElement || document.head || document).appendChild(style);
+    recordFiltered(document);
   }
 
   function selectorFor(element) {
@@ -158,10 +211,15 @@
     event.preventDefault(); event.stopImmediatePropagation();
     const target = hoverTarget;
     const selector = selectorFor(target);
-    if (mode === "zapper") target.remove();
-    else if (selector) {
+    if (mode === "zapper") {
+      filteredNodes.add(target);
+      target.remove();
+      queueFiltered("zapper", 1);
+    } else if (selector) {
       await browser.runtime.sendMessage({ type: "rule:addCosmetic", hostname: location.hostname, selector });
+      filteredNodes.add(target);
       target.style.setProperty("display", "none", "important");
+      queueFiltered("element-picker", 1);
     }
     stopPicker();
   }
