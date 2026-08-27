@@ -31,7 +31,7 @@
       "name": "GoreeCloud Privacy Shield",
       "directory": "extensions/privacy-shield",
       "gecko_id": "privacy-shield@goreecloud.com",
-      "release_status": "source-candidate",
+      "release_status": "stable",
       "legacy_repository": null,
       "broad_host_permission_review": "extensions/privacy-shield/BROAD_HOST_PERMISSION_REVIEW.md"
     }
