@@ -36,8 +36,8 @@ jobs:
         run: node extensions/privacy-shield/scripts/test_core.js
       - name: Test Privacy Shield logger privacy
         run: node extensions/privacy-shield/scripts/test_logger_privacy.js
-      - name: Test Privacy Shield page observability
-        run: node extensions/privacy-shield/scripts/test_page_observability.js
+      - name: Test Privacy Shield unified background activity
+        run: node extensions/privacy-shield/scripts/test_background_activity.js
       - name: Check maintained JavaScript syntax
         shell: bash
         run: |
