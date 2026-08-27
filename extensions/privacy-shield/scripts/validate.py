@@ -20,4 +20,13 @@ for required in (
     assert (ROOT / required).is_file(), required
 for resource in ("vendor/normalize-8.0.1.css", "src/page-guard.js"):
     assert (ROOT / resource).is_file(), resource
+
+logger_html = (ROOT / "logger.html").read_text(encoding="utf-8")
+options_html = (ROOT / "options.html").read_text(encoding="utf-8")
+popup_html = (ROOT / "popup.html").read_text(encoding="utf-8")
+assert 'src/logger-privacy.js' in logger_html, "logger page must load privacy helper"
+assert 'id="privacyView"' in logger_html, "logger Privacy view control missing"
+assert 'id="blockAnnoyances"' in options_html, "reviewed annoyance setting missing"
+assert 'This tab' in popup_html, "popup counter scope must be explicit"
+
 print("Privacy Shield source contract validated.")
