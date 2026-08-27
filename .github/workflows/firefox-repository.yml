@@ -34,6 +34,8 @@ jobs:
         run: python extensions/privacy-shield/scripts/validate.py
       - name: Test Privacy Shield core behavior
         run: node extensions/privacy-shield/scripts/test_core.js
+      - name: Test Privacy Shield logger privacy
+        run: node extensions/privacy-shield/scripts/test_logger_privacy.js
       - name: Check maintained JavaScript syntax
         shell: bash
         run: |
