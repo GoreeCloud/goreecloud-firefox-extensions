@@ -129,8 +129,7 @@
       render();
       return;
     }
-    const type = entry.source === "page" ? "page:logger:reveal" : "logger:reveal";
-    const raw = await browser.runtime.sendMessage({ type, id: entry.id });
+    const raw = await browser.runtime.sendMessage({ type: "logger:reveal", id: entry.id });
     if (raw) revealed.set(entry.id, raw);
     render();
   }
@@ -200,11 +199,7 @@
   }
 
   async function load() {
-    const [networkEntries, pageEntries] = await Promise.all([
-      browser.runtime.sendMessage({ type: "logger:get", limit: 1000 }),
-      browser.runtime.sendMessage({ type: "page:logger:get", limit: 1000 })
-    ]);
-    entries = [...(networkEntries || []), ...(pageEntries || [])];
+    entries = await browser.runtime.sendMessage({ type: "logger:get", limit: 2000 }) || [];
     render();
   }
 
@@ -218,10 +213,7 @@
 
   [filter, domainFilter, typeFilter, verdictFilter, privacyView].forEach((control) => control.addEventListener(control === filter ? "input" : "change", render));
   document.querySelector("#clear").addEventListener("click", async () => {
-    await Promise.all([
-      browser.runtime.sendMessage({ type: "logger:clear" }),
-      browser.runtime.sendMessage({ type: "page:logger:clear" })
-    ]);
+    await browser.runtime.sendMessage({ type: "logger:clear" });
     entries = [];
     revealed.clear();
     render();
