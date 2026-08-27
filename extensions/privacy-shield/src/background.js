@@ -5,6 +5,7 @@
   const LP = globalThis.PrivacyShieldLoggerPrivacy;
   const LOG_LIMIT = 2000;
   const REMOTE_RULE_LIMIT = 60000;
+  const PAGE_FILTER_REASONS = new Set(["cosmetic-content", "annoyance-overlay", "element-picker", "zapper"]);
   let settings = { ...C.DEFAULT_SETTINGS };
   let builtin = { ads: [], trackers: [], miners: [], malicious: [] };
   let userRules = C.parseFilterText("");
@@ -27,11 +28,11 @@
   })();
 
   function tabCounters(tabId) {
-    if (!countersByTab.has(tabId)) countersByTab.set(tabId, { blocked: 0, cleaned: 0, local: 0 });
+    if (!countersByTab.has(tabId)) countersByTab.set(tabId, { blocked: 0, cleaned: 0, hidden: 0, local: 0 });
     return countersByTab.get(tabId);
   }
 
-  function logEvent(details, verdict, reason, finalUrl = null) {
+  function logEvent(details, verdict, reason, finalUrl = null, extra = {}) {
     if (verdict === "allowed" && !settings.logAllowed) return;
     const entry = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -42,11 +43,22 @@
       verdict,
       reason,
       url: details.url,
-      finalUrl
+      finalUrl,
+      count: Math.max(1, Number(extra.count) || 1),
+      source: extra.source === "page" ? "page" : "network"
     };
     logs.push(entry);
     if (logs.length > LOG_LIMIT) logs = logs.slice(-LOG_LIMIT);
     browser.runtime.sendMessage({ type: "logger:event", entry: LP.publicEntry(entry) }).catch(() => {});
+  }
+
+  function logPageFilter(sender, reason, amount) {
+    logEvent({
+      tabId: sender.tab?.id ?? -1,
+      type: "page",
+      method: "",
+      url: sender.url || sender.tab?.url || ""
+    }, "hidden", reason, null, { count: amount, source: "page" });
   }
 
   function requestHostname(details) {
@@ -250,11 +262,22 @@
       counters[message.stat] = (counters[message.stat] || 0) + (Number(message.amount) || 1);
       return counters;
     }
+    if (message.type === "page:filtered" && sender.tab?.id != null) {
+      const reason = String(message.reason || "");
+      if (!PAGE_FILTER_REASONS.has(reason)) return false;
+      const amount = Math.min(500, Math.max(1, Number(message.amount) || 1));
+      const counters = tabCounters(sender.tab.id);
+      counters.hidden += amount;
+      logPageFilter(sender, reason, amount);
+      return counters;
+    }
     return undefined;
   });
 
   browser.tabs.onRemoved.addListener((tabId) => countersByTab.delete(tabId));
-  browser.tabs.onUpdated.addListener((tabId, changeInfo) => { if (changeInfo.status === "loading") countersByTab.set(tabId, { blocked: 0, cleaned: 0, local: 0 }); });
+  browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+    if (changeInfo.status === "loading") countersByTab.set(tabId, { blocked: 0, cleaned: 0, hidden: 0, local: 0 });
+  });
 
   browser.runtime.onInstalled.addListener(async () => {
     await ready;
