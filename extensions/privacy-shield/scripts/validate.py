@@ -18,7 +18,8 @@ for permission in ("webRequest", "webRequestBlocking", "storage", "clipboardWrit
 for required in (
     "README.md", "PRIVACY.md", "SECURITY.md", "ARCHITECTURE.md", "BROAD_HOST_PERMISSION_REVIEW.md",
     "vendor/THIRD_PARTY_NOTICES.md", "hidden.html", "src/cosmetic-rules.js", "src/hidden.js",
-    "src/logger-privacy.js", "src/page-observability-background.js", "scripts/test_logger_privacy.js"
+    "src/logger-privacy.js", "src/page-observability-background.js", "scripts/test_logger_privacy.js",
+    "scripts/test_page_observability.js"
 ):
     assert (ROOT / required).is_file(), required
 for resource in ("vendor/normalize-8.0.1.css", "src/page-guard.js"):
