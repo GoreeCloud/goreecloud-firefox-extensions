@@ -12,4 +12,6 @@ Version 0.1.0 is a source candidate and must not be described as Stable until al
 8. Mozilla signing succeeds for the exact accepted source candidate;
 9. the signed XPI survives a full Firefox restart and the critical tests are repeated.
 
+Gates 8 and 9 are implemented by `.github/workflows/privacy-shield-mozilla-signing.yml` and `tests/signed_restart_smoke.py`. The signing workflow uses Mozilla's unlisted/self-distribution channel, stages the exact deterministic package payload before submission, and requires the returned signed XPI to pass non-temporary installation plus a second Firefox process using the same profile without reinstalling the add-on. See `SIGNING.md` for the credential and release boundary.
+
 Any failure keeps the candidate below Stable.
