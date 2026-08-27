@@ -6,6 +6,8 @@
   const LOG_LIMIT = 2000;
   const REMOTE_RULE_LIMIT = 60000;
   const PAGE_FILTER_REASONS = new Set(["cosmetic-content", "annoyance-overlay", "element-picker", "zapper"]);
+  const TAB_COUNTER_KEYS = new Set(["blocked", "cleaned", "hidden", "local"]);
+  const BADGE_BACKGROUND = "#356DC7";
   let settings = { ...C.DEFAULT_SETTINGS };
   let builtin = { ads: [], trackers: [], miners: [], malicious: [] };
   let userRules = C.parseFilterText("");
@@ -27,9 +29,46 @@
     }
   })();
 
+  function emptyTabCounters() {
+    return { blocked: 0, cleaned: 0, hidden: 0, local: 0 };
+  }
+
   function tabCounters(tabId) {
-    if (!countersByTab.has(tabId)) countersByTab.set(tabId, { blocked: 0, cleaned: 0, hidden: 0, local: 0 });
+    if (!countersByTab.has(tabId)) countersByTab.set(tabId, emptyTabCounters());
     return countersByTab.get(tabId);
+  }
+
+  function tabCounterTotal(counters) {
+    return Array.from(TAB_COUNTER_KEYS).reduce((sum, key) => sum + Math.max(0, Number(counters?.[key]) || 0), 0);
+  }
+
+  function badgeTextFor(total) {
+    const count = Math.max(0, Math.floor(Number(total) || 0));
+    if (!count) return "";
+    return count > 999 ? "999+" : String(count);
+  }
+
+  function updateTabBadge(tabId) {
+    if (!Number.isInteger(tabId) || tabId < 0 || !browser.action?.setBadgeText) return;
+    const text = badgeTextFor(tabCounterTotal(tabCounters(tabId)));
+    if (browser.action.setBadgeBackgroundColor) {
+      browser.action.setBadgeBackgroundColor({ tabId, color: BADGE_BACKGROUND }).catch(() => {});
+    }
+    browser.action.setBadgeText({ tabId, text }).catch(() => {});
+  }
+
+  function incrementTabCounter(tabId, stat, amount = 1) {
+    const counters = tabCounters(tabId);
+    if (!TAB_COUNTER_KEYS.has(stat)) return counters;
+    const delta = Math.min(500, Math.max(1, Number(amount) || 1));
+    counters[stat] += delta;
+    updateTabBadge(tabId);
+    return counters;
+  }
+
+  function resetTabCounters(tabId) {
+    countersByTab.set(tabId, emptyTabCounters());
+    updateTabBadge(tabId);
   }
 
   function logEvent(details, verdict, reason, finalUrl = null, extra = {}) {
@@ -128,7 +167,7 @@
       if (site.stripTrackingParams && details.type === "main_frame") {
         const cleaned = C.cleanUrl(details.url, { bypassRedirects: site.bypassRedirects });
         if (cleaned !== details.url) {
-          tabCounters(details.tabId).cleaned += 1;
+          incrementTabCounter(details.tabId, "cleaned");
           logEvent(details, "redirected", "tracking-parameter-cleanup", cleaned);
           return { redirectUrl: cleaned };
         }
@@ -138,7 +177,7 @@
         const resource = localResourceFor(details.url);
         if (resource) {
           const target = browser.runtime.getURL(resource);
-          tabCounters(details.tabId).local += 1;
+          incrementTabCounter(details.tabId, "local");
           logEvent(details, "redirected", "local-resource-substitution", target);
           return { redirectUrl: target };
         }
@@ -146,7 +185,7 @@
 
       const reason = blockReason(details, site);
       if (reason) {
-        tabCounters(details.tabId).blocked += 1;
+        incrementTabCounter(details.tabId, "blocked");
         logEvent(details, "blocked", reason);
         return { cancel: true };
       }
@@ -258,16 +297,13 @@
       return saveSettings({ ...settings, siteOverrides });
     }
     if (message.type === "content:stat" && sender.tab?.id != null) {
-      const counters = tabCounters(sender.tab.id);
-      counters[message.stat] = (counters[message.stat] || 0) + (Number(message.amount) || 1);
-      return counters;
+      return incrementTabCounter(sender.tab.id, String(message.stat || ""), message.amount);
     }
     if (message.type === "page:filtered" && sender.tab?.id != null) {
       const reason = String(message.reason || "");
       if (!PAGE_FILTER_REASONS.has(reason)) return false;
       const amount = Math.min(500, Math.max(1, Number(message.amount) || 1));
-      const counters = tabCounters(sender.tab.id);
-      counters.hidden += amount;
+      const counters = incrementTabCounter(sender.tab.id, "hidden", amount);
       logPageFilter(sender, reason, amount);
       return counters;
     }
@@ -276,7 +312,7 @@
 
   browser.tabs.onRemoved.addListener((tabId) => countersByTab.delete(tabId));
   browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
-    if (changeInfo.status === "loading") countersByTab.set(tabId, { blocked: 0, cleaned: 0, hidden: 0, local: 0 });
+    if (changeInfo.status === "loading") resetTabCounters(tabId);
   });
 
   browser.runtime.onInstalled.addListener(async () => {
