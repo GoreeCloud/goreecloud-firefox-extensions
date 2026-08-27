@@ -44,7 +44,7 @@ Additional extension directories use concise lowercase kebab-case names under `e
 | Extension | Canonical directory | Firefox add-on ID | Canonical source state | Legacy repository |
 | --- | --- | --- | --- | --- |
 | GoreeCloud Bookmarks | `extensions/bookmarks/` | `goreecloud-bookmarks@goreecloud.com` | Source baseline; not Stable | `GoreeCloud/goreecloud-bookmark-browser-extension` |
-| GoreeCloud Privacy Shield | `extensions/privacy-shield/` | `privacy-shield@goreecloud.com` | Source candidate; not Stable | None |
+| GoreeCloud Privacy Shield | `extensions/privacy-shield/` | `privacy-shield@goreecloud.com` | Stable 0.1.0; Mozilla-signed unlisted self-distribution | None |
 | GoreeCloud Redirector | `extensions/redirector/` | `redirector@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-redirector` |
 | GoreeCloud Source Resync | `extensions/source-resync/` | `source-resync@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-source-resync` |
 
@@ -83,6 +83,8 @@ Generated packages are written to `dist/` and are build outputs rather than auth
 ## Mozilla signing
 
 See [`docs/MOZILLA_SIGNING.md`](docs/MOZILLA_SIGNING.md). Each extension keeps an independent release state. A source merge or unsigned package must never be described as Stable solely because repository validation passes.
+
+Privacy Shield 0.1.0 is the first Stable Privacy Shield Firefox release: its exact accepted payload was Mozilla-signed through the unlisted/self-distribution channel and passed persistent installation plus full Firefox restart acceptance.
 
 ## Maintenance rule
 
