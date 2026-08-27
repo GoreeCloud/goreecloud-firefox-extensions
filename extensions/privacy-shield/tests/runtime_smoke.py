@@ -19,6 +19,9 @@ from urllib.parse import quote, urlsplit
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -217,18 +220,31 @@ def main() -> int:
         require(not host_hits("doubleclick.net"), "ad-domain request blocked")
         require(not host_hits("coinhive.com"), "cryptocurrency-miner request blocked")
 
-        copied = driver.execute_script(
+        dirty_copy = f"{base}/copy?utm_source=clipboard&fbclid=copy&keep=clipboard"
+        driver.execute_script(
             """
-            const a = document.createElement('a');
-            a.href = location.origin + '/copy?utm_source=clipboard&fbclid=copy&keep=clipboard';
-            a.textContent = 'copy me';
-            document.body.appendChild(a);
-            const data = new DataTransfer();
-            const event = new ClipboardEvent('copy', {clipboardData: data, bubbles: true, cancelable: true});
-            a.dispatchEvent(event);
-            return data.getData('text/plain');
-            """
+            const source = document.createElement('span');
+            source.id = 'copy-source';
+            source.textContent = arguments[0];
+            document.body.appendChild(source);
+            const target = document.createElement('textarea');
+            target.id = 'paste-target';
+            document.body.appendChild(target);
+            const range = document.createRange();
+            range.selectNodeContents(source);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            """,
+            dirty_copy,
         )
+        ActionChains(driver).key_down(Keys.CONTROL).send_keys("c").key_up(Keys.CONTROL).perform()
+        time.sleep(0.2)
+        paste_target = driver.find_element(By.ID, "paste-target")
+        paste_target.click()
+        ActionChains(driver).key_down(Keys.CONTROL).send_keys("v").key_up(Keys.CONTROL).perform()
+        time.sleep(0.2)
+        copied = paste_target.get_attribute("value") or ""
         require(
             "utm_source=" not in copied and "fbclid=" not in copied and "keep=clipboard" in copied,
             "copied-link cleanup",
