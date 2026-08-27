@@ -131,8 +131,8 @@
 
   async function copySafe(entry, button) {
     try {
-      const shown = displayedUrls(entry);
-      await navigator.clipboard.writeText(shown.url || "");
+      const safeUrl = privacyView.checked ? LP.privacyViewUrl(entry.url).url : entry.url;
+      await navigator.clipboard.writeText(safeUrl || "");
       const previous = button.textContent;
       button.textContent = "Copied";
       setTimeout(() => { button.textContent = previous; }, 900);
@@ -146,7 +146,7 @@
     cell.className = "logger-actions";
 
     const copy = document.createElement("button");
-    copy.textContent = "Copy displayed URL";
+    copy.textContent = "Copy safe URL";
     copy.addEventListener("click", () => copySafe(entry, copy));
     cell.appendChild(copy);
 
