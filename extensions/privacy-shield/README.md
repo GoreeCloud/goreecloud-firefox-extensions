@@ -14,7 +14,7 @@ GoreeCloud Privacy Shield is the first-party Firefox adapter for GoreeCloud's pl
 - support for hosts-style, common ABP domain rules, wildcard/regex URL rules, exceptions, and cosmetic rules;
 - cosmetic filtering, persistent element picker rules, a temporary element zapper, one-click **Undo last hide**, and a **Hidden elements** manager for reviewing/restoring saved cosmetic rules;
 - per-site protection override and controls for third-party scripts, third-party frames, and media/object requests;
-- a local-only ephemeral request logger with blocked, redirected, and optionally allowed requests;
+- a local-only ephemeral request logger with default URL redaction, domain/type/verdict filters, safe-URL copy, explicit temporary full-URL reveal, and distinct ping/beacon reasons;
 - exact-version local-resource substitution for reviewed CDN resources, initially normalize.css 8.0.1 across supported jsDelivr, cdnjs, and unpkg URLs;
 - daily refresh of user-configured HTTPS filter lists, with no default remote subscription.
 
@@ -23,6 +23,14 @@ GoreeCloud Privacy Shield is the first-party Firefox adapter for GoreeCloud's pl
 The element picker creates persistent `domain##selector` cosmetic rules. **Undo last hide** removes the most recently saved custom cosmetic rule for the current site and reloads the page. **Hidden elements** lists all saved custom cosmetic rules with individual **Restore** actions. Existing picker-created rules from earlier Privacy Shield builds are recognized because recovery operates on the same `customRules` storage used by the picker.
 
 The zapper remains temporary: it removes the selected element from the current document without saving a rule.
+
+## Request logger privacy
+
+The request logger is memory-only and does not persist browsing history. Logger views receive redacted URLs by default: authentication/token/session/credential-like query values, credential-bearing URL authority, URL fragments, and long high-entropy query values are suppressed while host, path, safe query values, request type, verdict, and reason remain visible for debugging.
+
+Raw request URLs remain only in the background process's ephemeral in-memory log. **Reveal full URL** retrieves one selected entry only after explicit user action, and the logger tab forgets revealed values when it is refreshed or closed. **Copy safe URL** always copies the redacted representation.
+
+Ping and beacon traffic are reported separately as `hyperlink-auditing-ping` and `telemetry-beacon` rather than being collapsed into one generic reason.
 
 ## Local-resource delivery
 
@@ -47,7 +55,8 @@ From the repository root:
 ```bash
 python shared/scripts/validate_repository.py
 python extensions/privacy-shield/scripts/validate.py
-node --check extensions/privacy-shield/src/core.js
+node extensions/privacy-shield/scripts/test_core.js
+node extensions/privacy-shield/scripts/test_logger_privacy.js
 node --check extensions/privacy-shield/src/background.js
 node --check extensions/privacy-shield/src/content.js
 python shared/scripts/package_extension.py privacy-shield
