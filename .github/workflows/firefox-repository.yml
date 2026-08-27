@@ -32,6 +32,8 @@ jobs:
         run: python extensions/bookmarks/scripts/validate.py
       - name: Validate Privacy Shield source contract
         run: python extensions/privacy-shield/scripts/validate.py
+      - name: Test Privacy Shield core behavior
+        run: node extensions/privacy-shield/scripts/test_core.js
       - name: Check maintained JavaScript syntax
         shell: bash
         run: |
