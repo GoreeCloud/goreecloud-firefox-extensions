@@ -30,6 +30,8 @@ jobs:
         run: python shared/scripts/validate_repository.py
       - name: Validate Bookmarks source contract
         run: python extensions/bookmarks/scripts/validate.py
+      - name: Validate Privacy Shield source contract
+        run: python extensions/privacy-shield/scripts/validate.py
       - name: Check maintained JavaScript syntax
         shell: bash
         run: |
@@ -42,6 +44,7 @@ jobs:
           python shared/scripts/package_extension.py bookmarks
           python shared/scripts/package_extension.py redirector
           python shared/scripts/package_extension.py source-resync
+          python shared/scripts/package_extension.py privacy-shield
       - name: Verify package archives
         shell: bash
         run: |
