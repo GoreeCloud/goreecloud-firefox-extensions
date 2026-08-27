@@ -49,6 +49,30 @@ def main() -> int:
             """
         )
         print("PROBE state", json.dumps(state, sort_keys=True))
+
+        interactions = driver.execute_script(
+            """
+            const dirty = document.getElementById('dirty');
+            dirty.dispatchEvent(new PointerEvent('pointerdown', {bubbles: true, cancelable: true}));
+            const afterPointer = dirty.href;
+
+            const fresh = document.createElement('a');
+            fresh.href = location.origin + '/copy?utm_source=clipboard&fbclid=copy&keep=clipboard';
+            fresh.textContent = 'copy probe';
+            document.body.appendChild(fresh);
+            const data = new DataTransfer();
+            const copyEvent = new ClipboardEvent('copy', {clipboardData: data, bubbles: true, cancelable: true});
+            fresh.dispatchEvent(copyEvent);
+
+            return {
+              afterPointer,
+              copied: data.getData('text/plain'),
+              freshAfterCopy: fresh.href,
+              copyPrevented: copyEvent.defaultPrevented
+            };
+            """
+        )
+        print("PROBE interactions", json.dumps(interactions, sort_keys=True))
         print("PROBE hits", json.dumps(FixtureHandler.hits, sort_keys=True))
         return 0
     finally:
