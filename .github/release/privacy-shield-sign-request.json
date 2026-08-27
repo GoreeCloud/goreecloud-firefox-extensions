@@ -1,7 +1,0 @@
-{
-  "extension": "privacy-shield",
-  "version": "0.1.0",
-  "channel": "unlisted",
-  "purpose": "Mozilla signing and persistent signed-XPI Firefox restart acceptance",
-  "source": "main after merge of the signing-gate pull request"
-}
