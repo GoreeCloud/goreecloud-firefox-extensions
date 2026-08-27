@@ -11,6 +11,11 @@ assert.equal(
 );
 
 assert.equal(
+  C.cleanUrl("https://example.com/path?%75tm_source=encoded&fbclid=a&fbclid=b&keep=1", { bypassRedirects: true }),
+  "https://example.com/path?keep=1"
+);
+
+assert.equal(
   C.cleanUrl("https://www.google.com/url?q=https%3A%2F%2Fexample.com%2Fp%3Fgclid%3Dx%26keep%3D1", { bypassRedirects: true }),
   "https://example.com/p?keep=1"
 );
