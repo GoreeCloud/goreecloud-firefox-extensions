@@ -44,7 +44,9 @@ def main() -> int:
               redirect: redirect ? redirect.href : null,
               adDisplay: ad ? getComputedStyle(ad).display : null,
               cosmeticStyle: Boolean(document.getElementById('goreecloud-privacy-shield-cosmetic')),
-              popupGuard: window.__goreecloudPrivacyShieldPopupGuard === true
+              popupGuard: window.__goreecloudPrivacyShieldPopupGuard === true,
+              debugClean: document.documentElement.dataset.goreecloudDebugClean || null,
+              debugCleanLinks: document.documentElement.dataset.goreecloudDebugCleanLinks || null
             };
             """
         )
