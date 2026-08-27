@@ -1,0 +1,35 @@
+name: Privacy Shield Firefox Runtime
+
+on:
+  pull_request:
+    paths:
+      - 'extensions/privacy-shield/**'
+      - 'shared/scripts/package_extension.py'
+      - '.github/workflows/privacy-shield-firefox-runtime.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: browser-actions/setup-firefox@v1
+        with:
+          firefox-version: latest
+      - uses: browser-actions/setup-geckodriver@latest
+      - name: Install Selenium
+        run: python -m pip install --disable-pip-version-check selenium
+      - name: Package Privacy Shield unsigned XPI
+        run: python shared/scripts/package_extension.py privacy-shield
+      - name: Route test-only third-party hosts locally
+        shell: bash
+        run: |
+          echo '127.0.0.1 google-analytics.com doubleclick.net coinhive.com cdn.jsdelivr.net' | sudo tee -a /etc/hosts
+      - name: Run real Firefox runtime smoke suite
+        run: python extensions/privacy-shield/tests/runtime_smoke.py dist/goreecloud-privacy-shield-0.1.0.xpi
