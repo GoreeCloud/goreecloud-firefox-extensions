@@ -37,6 +37,7 @@
     blockMalware: true,
     blockMiners: true,
     blockPopups: true,
+    blockAnnoyances: false,
     cosmeticFiltering: true,
     localResources: true,
     blockThirdPartyScripts: false,
@@ -63,6 +64,34 @@
     "iframe[src*='doubleclick.net']",
     "iframe[src*='googlesyndication.com']"
   ]);
+
+  const SITE_AD_SELECTORS = Object.freeze({
+    "reddit.com": Object.freeze([
+      "shreddit-ad-post",
+      "shreddit-post[is-promoted]",
+      "shreddit-post[promoted]",
+      "[data-testid='ad-post']",
+      "[data-testid='post-container'][data-promoted='true']",
+      "[data-promoted='true']",
+      ".promotedlink"
+    ]),
+    "pinterest.com": Object.freeze([
+      "[data-test-id='promoted-pin']",
+      "[data-test-id='promotedPin']",
+      "[data-test-id='pin'][data-promoted='true']",
+      "[data-promoted='true']"
+    ])
+  });
+
+  const SITE_ANNOYANCE_SELECTORS = Object.freeze({
+    "pinterest.com": Object.freeze([
+      "#credential_picker_container",
+      "[id^='credential_picker_container']",
+      "iframe[src*='accounts.google.com/gsi/']",
+      "iframe[title*='Sign in with Google']",
+      "[data-test-id='one-tap']"
+    ])
+  });
 
   function normalizeHostname(hostname) {
     return String(hostname || "").trim().toLowerCase().replace(/^www\./, "").replace(/\.$/, "");
@@ -218,9 +247,23 @@
     return { ...merged, ...site, siteOverrides: overrides };
   }
 
-  function cosmeticSelectorsFor(hostname, parsedRules, includeBuiltin = true) {
+  function selectorsForSite(hostname, catalog) {
     const host = normalizeHostname(hostname);
-    const selectors = new Set(includeBuiltin ? BUILTIN_COSMETIC_SELECTORS : []);
+    const selectors = [];
+    for (const [domain, values] of Object.entries(catalog || {})) {
+      if (hostnameMatches(host, domain)) selectors.push(...values);
+    }
+    return selectors;
+  }
+
+  function cosmeticSelectorsFor(hostname, parsedRules, includeBuiltinAds = true, includeAnnoyances = false) {
+    const host = normalizeHostname(hostname);
+    const selectors = new Set();
+    if (includeBuiltinAds) {
+      BUILTIN_COSMETIC_SELECTORS.forEach((selector) => selectors.add(selector));
+      selectorsForSite(host, SITE_AD_SELECTORS).forEach((selector) => selectors.add(selector));
+    }
+    if (includeAnnoyances) selectorsForSite(host, SITE_ANNOYANCE_SELECTORS).forEach((selector) => selectors.add(selector));
     for (const rule of parsedRules?.cosmetic || []) {
       if (!rule.domain || hostnameMatches(host, rule.domain)) selectors.add(rule.selector);
     }
@@ -234,6 +277,8 @@
     DEFAULT_SETTINGS,
     LOCAL_RESOURCE_CATALOG,
     TRACKING_PARAMS,
+    SITE_AD_SELECTORS,
+    SITE_ANNOYANCE_SELECTORS,
     cleanUrl,
     unwrapRedirect,
     normalizeHostname,
