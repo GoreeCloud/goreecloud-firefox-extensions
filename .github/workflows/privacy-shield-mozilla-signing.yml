@@ -1,0 +1,154 @@
+name: Privacy Shield Mozilla Signing
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/release/privacy-shield-sign-request.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: privacy-shield-mozilla-signing
+  cancel-in-progress: false
+
+jobs:
+  sign-and-restart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: browser-actions/setup-firefox@v1
+        with:
+          firefox-version: latest
+
+      - uses: browser-actions/setup-geckodriver@latest
+
+      - name: Install Selenium
+        run: python -m pip install --disable-pip-version-check selenium
+
+      - name: Validate exact source candidate
+        run: |
+          python shared/scripts/validate_repository.py
+          python extensions/privacy-shield/scripts/validate.py
+          node extensions/privacy-shield/scripts/test_core.js
+          node extensions/privacy-shield/scripts/test_logger_privacy.js
+          node extensions/privacy-shield/scripts/test_background_activity.js
+          python -m py_compile extensions/privacy-shield/tests/runtime_smoke.py extensions/privacy-shield/tests/signed_restart_smoke.py
+
+      - name: Build deterministic unsigned candidate
+        run: python shared/scripts/package_extension.py privacy-shield --output-dir dist/candidate
+
+      - name: Stage exact packaged payload for Mozilla
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate="$(find dist/candidate -maxdepth 1 -type f -name 'goreecloud-privacy-shield-*.xpi' -print -quit)"
+          test -n "$candidate"
+          mkdir -p signing-source dist/mozilla
+          python - "$candidate" <<'PY'
+          import hashlib
+          import json
+          import sys
+          import zipfile
+          from pathlib import Path
+
+          candidate = Path(sys.argv[1])
+          stage = Path('signing-source')
+          with zipfile.ZipFile(candidate) as archive:
+              bad = archive.testzip()
+              if bad:
+                  raise SystemExit(f'candidate archive integrity failure: {bad}')
+              archive.extractall(stage)
+          manifest = json.loads((stage / 'manifest.json').read_text(encoding='utf-8'))
+          if manifest.get('browser_specific_settings', {}).get('gecko', {}).get('id') != 'privacy-shield@goreecloud.com':
+              raise SystemExit('unexpected or missing Firefox extension ID')
+          if manifest.get('version') != '0.1.0':
+              raise SystemExit(f"unexpected candidate version: {manifest.get('version')}")
+          digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
+          Path('dist/candidate-sha256.txt').write_text(f'{digest}  {candidate.name}\n', encoding='utf-8')
+          print(f'Candidate SHA-256: {digest}')
+          PY
+
+      - name: Require AMO signing credentials
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${AMO_JWT_ISSUER}" || -z "${AMO_JWT_SECRET}" ]]; then
+            echo '::error::Missing AMO_JWT_ISSUER and/or AMO_JWT_SECRET repository secrets.'
+            echo 'Create Mozilla Add-ons API credentials and store them as GitHub repository secrets before rerunning this job.'
+            exit 1
+          fi
+
+      - name: Submit exact candidate to Mozilla for unlisted signing
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: >-
+          npx --yes web-ext@10.5.0 sign
+          --source-dir signing-source
+          --artifacts-dir dist/mozilla
+          --channel=unlisted
+          --approval-timeout=900000
+          --timeout=900000
+
+      - name: Normalize and inspect signed XPI
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import shutil
+          import zipfile
+          from pathlib import Path
+
+          files = sorted(Path('dist/mozilla').glob('*.xpi'))
+          if len(files) != 1:
+              raise SystemExit(f'expected exactly one Mozilla-signed XPI, found: {files}')
+          source = files[0]
+          target = Path('dist/goreecloud-privacy-shield-0.1.0-signed.xpi')
+          shutil.copy2(source, target)
+          with zipfile.ZipFile(target) as archive:
+              bad = archive.testzip()
+              if bad:
+                  raise SystemExit(f'signed XPI integrity failure: {bad}')
+              names = archive.namelist()
+              if 'manifest.json' not in names:
+                  raise SystemExit('signed XPI is missing manifest.json')
+              if not any(name.startswith('META-INF/') for name in names):
+                  raise SystemExit('signed XPI does not contain Mozilla signature metadata')
+          digest = hashlib.sha256(target.read_bytes()).hexdigest()
+          Path('dist/signed-sha256.txt').write_text(f'{digest}  {target.name}\n', encoding='utf-8')
+          print(f'Signed SHA-256: {digest}')
+          PY
+          unzip -t dist/goreecloud-privacy-shield-0.1.0-signed.xpi
+
+      - name: Route controlled tracker host locally
+        run: echo '127.0.0.1 google-analytics.com' | sudo tee -a /etc/hosts
+
+      - name: Persistent signed-XPI install and Firefox restart acceptance
+        run: python extensions/privacy-shield/tests/signed_restart_smoke.py dist/goreecloud-privacy-shield-0.1.0-signed.xpi
+
+      - name: Retain signed release evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: goreecloud-privacy-shield-0.1.0-mozilla-signed
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            dist/goreecloud-privacy-shield-0.1.0-signed.xpi
+            dist/candidate-sha256.txt
+            dist/signed-sha256.txt
