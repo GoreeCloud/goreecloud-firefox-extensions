@@ -18,6 +18,7 @@ GoreeCloud Privacy Shield is the first-party Firefox adapter for GoreeCloud's pl
 - per-site protection override and controls for third-party scripts, third-party frames, and media/object requests;
 - a local-only ephemeral **Activity Logger** covering both network decisions and privacy-safe page-filter events, with default URL redaction, optional stricter **Privacy view**, domain/type/verdict filters, safe-URL copy, explicit temporary full-URL reveal, and distinct ping/beacon reasons;
 - explicit **This tab** popup counters for blocked requests, cleaned links, hidden page elements, and reviewed local-resource substitutions;
+- a Firefox toolbar badge showing the combined current-tab total: **Blocked + Cleaned + Hidden + Local**;
 - exact-version local-resource substitution for reviewed CDN resources, initially normalize.css 8.0.1 across supported jsDelivr, cdnjs, and unpkg URLs;
 - daily refresh of user-configured HTTPS filter lists, with no default remote subscription.
 
@@ -51,9 +52,13 @@ Raw URLs remain only in the background process's ephemeral in-memory log. **Reve
 
 Ping and beacon traffic are reported separately as `hyperlink-auditing-ping` and `telemetry-beacon` rather than being collapsed into one generic reason.
 
-## Counter scope
+## Counter scope and toolbar badge
 
-Popup counts are explicitly labeled **This tab** and reset as that tab begins a new page load. They include network blocks, cleaned links, observed page-filter matches, and local-resource substitutions for that tab. Logger summary counts are explicitly labeled **This logger session** and can include activity from multiple tabs until the in-memory logger is cleared or the background state ends. The two surfaces therefore should not be expected to display the same totals.
+Popup counts are explicitly labeled **This tab** and reset as that tab begins a new page load. They include network blocks, cleaned links, observed page-filter matches, and local-resource substitutions for that tab.
+
+The toolbar badge is derived from the same in-memory per-tab counters and shows their combined total: **Blocked + Cleaned + Hidden + Local**. A zero total clears the badge, totals from 1 through 999 are displayed directly, and larger totals display `999+`. The badge resets when the tab begins a new navigation, matching the popup's **This tab** scope.
+
+Logger summary counts are explicitly labeled **This logger session** and can include activity from multiple tabs until the in-memory logger is cleared or the background state ends. The logger and toolbar badge therefore should not be expected to display the same totals.
 
 ## Local-resource delivery
 

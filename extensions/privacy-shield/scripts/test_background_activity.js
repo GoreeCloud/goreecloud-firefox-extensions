@@ -3,7 +3,10 @@
 const assert = require("node:assert/strict");
 
 const messageListeners = [];
+const updatedListeners = [];
 const outbound = [];
+const badgeWrites = [];
+const badgeColors = [];
 
 function listenerSlot() {
   return { addListener() {} };
@@ -22,6 +25,10 @@ global.browser = {
     onMessage: { addListener(fn) { messageListeners.push(fn); } },
     onInstalled: listenerSlot()
   },
+  action: {
+    async setBadgeText(details) { badgeWrites.push(details); },
+    async setBadgeBackgroundColor(details) { badgeColors.push(details); }
+  },
   webRequest: {
     onBeforeRequest: listenerSlot(),
     onBeforeSendHeaders: listenerSlot(),
@@ -30,7 +37,7 @@ global.browser = {
   scripting: { async executeScript() { return true; } },
   tabs: {
     onRemoved: listenerSlot(),
-    onUpdated: listenerSlot(),
+    onUpdated: { addListener(fn) { updatedListeners.push(fn); } },
     async reload() { return true; },
     async sendMessage() { return true; }
   },
@@ -47,10 +54,15 @@ require("../src/logger-privacy.js");
 require("../src/background.js");
 
 assert.equal(messageListeners.length, 1, "background should register one message authority");
+assert.equal(updatedListeners.length, 1, "background should register one tab update listener");
 const onMessage = messageListeners[0];
 
 async function invoke(message, sender = {}) {
   return await onMessage(message, sender);
+}
+
+function lastBadgeText(tabId) {
+  return badgeWrites.filter((item) => item.tabId === tabId).at(-1)?.text;
 }
 
 (async () => {
@@ -64,6 +76,12 @@ async function invoke(message, sender = {}) {
   const counters = await invoke({ type: "page:filtered", reason: "cosmetic-content", amount: 3 }, sender);
   assert.equal(counters.hidden, 3);
   assert.equal(counters.blocked, 0);
+  assert.equal(lastBadgeText(19), "3", "badge should show the combined This tab total");
+  assert.equal(badgeColors.at(-1)?.color, "#356DC7");
+
+  await invoke({ type: "content:stat", stat: "cleaned", amount: 2 }, sender);
+  assert.equal((await invoke({ type: "tab:stats", tabId: 19 })).cleaned, 2);
+  assert.equal(lastBadgeText(19), "5", "badge should combine cleaned and hidden counters");
 
   const tabStats = await invoke({ type: "tab:stats", tabId: 19 });
   assert.equal(tabStats.hidden, 3);
@@ -85,9 +103,19 @@ async function invoke(message, sender = {}) {
   const rejected = await invoke({ type: "page:filtered", reason: "arbitrary-page-text", amount: 50 }, sender);
   assert.equal(rejected, false);
   assert.equal((await invoke({ type: "tab:stats", tabId: 19 })).hidden, 3);
+  assert.equal(lastBadgeText(19), "5", "rejected page events must not change the badge");
 
   await invoke({ type: "page:filtered", reason: "annoyance-overlay", amount: 2 }, sender);
   assert.equal((await invoke({ type: "tab:stats", tabId: 19 })).hidden, 5);
+  assert.equal(lastBadgeText(19), "7");
+
+  await invoke({ type: "page:filtered", reason: "cosmetic-content", amount: 500 }, sender);
+  await invoke({ type: "page:filtered", reason: "cosmetic-content", amount: 500 }, sender);
+  assert.equal(lastBadgeText(19), "999+", "large combined totals should stay compact");
+
+  updatedListeners[0](19, { status: "loading" });
+  assert.deepEqual(await invoke({ type: "tab:stats", tabId: 19 }), { blocked: 0, cleaned: 0, hidden: 0, local: 0 });
+  assert.equal(lastBadgeText(19), "", "badge should clear when a new navigation starts");
 
   await invoke({ type: "logger:clear" });
   assert.deepEqual(await invoke({ type: "logger:get", limit: 20 }), []);
