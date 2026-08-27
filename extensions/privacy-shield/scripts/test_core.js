@@ -2,8 +2,10 @@
 
 const assert = require("node:assert/strict");
 require("../src/core.js");
+require("../src/cosmetic-rules.js");
 
 const C = globalThis.PrivacyShieldCore;
+const R = globalThis.PrivacyShieldCosmeticRules;
 
 assert.equal(
   C.cleanUrl("https://example.com/path?utm_source=test&ok=1&fbclid=abc", { bypassRedirects: true }),
@@ -42,6 +44,25 @@ assert.deepEqual(parsed.allowDomains, ["safe.example"]);
 assert.equal(parsed.cosmetic[0].selector, ".sponsored");
 assert.equal(parsed.cosmeticExceptions[0].selector, ".allowed-ad");
 assert.equal(C.patternMatches("https://cdn.example/evil.js", parsed.urlPatterns[0]), true);
+
+const cosmeticText = [
+  "||tracker.example^",
+  "github.com##header .AppHeader-logo",
+  "example.com##.sponsored",
+  "github.com##.HeaderMenu-link"
+].join("\n");
+const cosmeticRules = R.list(cosmeticText);
+assert.equal(cosmeticRules.length, 3);
+assert.equal(cosmeticRules[0].domain, "github.com");
+assert.equal(cosmeticRules[0].selector, "header .AppHeader-logo");
+const undoGithub = R.undoLast(cosmeticText, "www.github.com");
+assert.equal(undoGithub.removed, true);
+assert.equal(undoGithub.item.selector, ".HeaderMenu-link");
+assert.equal(undoGithub.text.includes("github.com##.HeaderMenu-link"), false);
+assert.equal(undoGithub.text.includes("github.com##header .AppHeader-logo"), true);
+const removeLogoRule = R.removeAt(undoGithub.text, 1, "github.com##header .AppHeader-logo");
+assert.equal(removeLogoRule.removed, true);
+assert.equal(removeLogoRule.text.includes("AppHeader-logo"), false);
 
 assert.equal(
   C.LOCAL_RESOURCE_CATALOG["https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.css"],
