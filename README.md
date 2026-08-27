@@ -22,6 +22,7 @@ The repository provides:
 ```text
 extensions/
 ├── bookmarks/
+├── privacy-shield/
 ├── redirector/
 └── source-resync/
 
@@ -43,6 +44,7 @@ Additional extension directories use concise lowercase kebab-case names under `e
 | Extension | Canonical directory | Firefox add-on ID | Canonical source state | Legacy repository |
 | --- | --- | --- | --- | --- |
 | GoreeCloud Bookmarks | `extensions/bookmarks/` | `goreecloud-bookmarks@goreecloud.com` | Source baseline; not Stable | `GoreeCloud/goreecloud-bookmark-browser-extension` |
+| GoreeCloud Privacy Shield | `extensions/privacy-shield/` | `privacy-shield@goreecloud.com` | Source candidate; not Stable | None |
 | GoreeCloud Redirector | `extensions/redirector/` | `redirector@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-redirector` |
 | GoreeCloud Source Resync | `extensions/source-resync/` | `source-resync@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-source-resync` |
 
@@ -58,9 +60,9 @@ Repository-wide source validation:
 python shared/scripts/validate_repository.py
 ```
 
-The shared validator checks the canonical inventory, Manifest V3 status, GoreeCloud product names, unique Firefox add-on IDs, version syntax, required documentation, and required-host permission boundaries. Extension-specific validation remains available where an extension needs stricter checks.
+The shared validator checks the canonical inventory, Manifest V3 status, GoreeCloud product names, unique Firefox add-on IDs, version syntax, required documentation, and required-host permission boundaries. Broad required host access is accepted only when the extension inventory points to a substantive review document.
 
-GitHub Actions runs repository-wide validation, JavaScript syntax checks, deterministic unsigned packaging, and archive-integrity checks for maintained extensions.
+Extension-specific validation remains available where an extension needs stricter checks. GitHub Actions runs repository-wide validation, JavaScript syntax checks, deterministic unsigned packaging, and archive-integrity checks for maintained extensions.
 
 ## Packaging
 
@@ -73,7 +75,7 @@ python shared/scripts/package_extension.py <extension-slug>
 For example:
 
 ```bash
-python shared/scripts/package_extension.py bookmarks
+python shared/scripts/package_extension.py privacy-shield
 ```
 
 Generated packages are written to `dist/` and are build outputs rather than authoritative source. Packaging success does not imply Mozilla signing or Stable acceptance.

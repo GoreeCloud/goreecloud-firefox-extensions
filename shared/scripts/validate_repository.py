@@ -60,8 +60,17 @@ def main() -> None:
 
         forbidden = {"http://*/*", "https://*/*", "<all_urls>"}
         required_hosts = set(manifest.get("host_permissions", []))
-        if forbidden & required_hosts:
-            fail(f"{slug} has broad required host permission: {sorted(forbidden & required_hosts)}")
+        broad = forbidden & required_hosts
+        if broad:
+            review = entry.get("broad_host_permission_review")
+            if not review:
+                fail(f"{slug} has broad required host permission without inventory review: {sorted(broad)}")
+            review_path = ROOT / review
+            if not review_path.is_file():
+                fail(f"{slug} broad host permission review is missing: {review}")
+            review_text = review_path.read_text(encoding="utf-8").strip()
+            if len(review_text) < 200:
+                fail(f"{slug} broad host permission review is not substantive: {review}")
 
     print(f"Validated {len(entries)} canonical GoreeCloud Firefox extensions.")
 

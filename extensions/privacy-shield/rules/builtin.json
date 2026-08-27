@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "ads": [
+    "doubleclick.net",
+    "googlesyndication.com",
+    "adservice.google.com",
+    "amazon-adsystem.com",
+    "ads-twitter.com"
+  ],
+  "trackers": [
+    "google-analytics.com",
+    "analytics.google.com",
+    "connect.facebook.net",
+    "scorecardresearch.com",
+    "quantserve.com",
+    "segment.io",
+    "api.segment.io",
+    "mixpanel.com",
+    "hotjar.com"
+  ],
+  "miners": [
+    "coinhive.com",
+    "coin-hive.com",
+    "authedmine.com",
+    "cryptoloot.pro",
+    "webminepool.com"
+  ],
+  "malicious": []
+}

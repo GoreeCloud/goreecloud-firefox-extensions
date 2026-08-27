@@ -1,0 +1,70 @@
+{
+  "manifest_version": 3,
+  "name": "GoreeCloud Privacy Shield",
+  "version": "0.1.0",
+  "description": "Advanced local-first privacy, content blocking, link cleaning, request controls, and reviewed local CDN substitution for Firefox.",
+  "homepage_url": "https://github.com/GoreeCloud/goreecloud-firefox-extensions/tree/main/extensions/privacy-shield",
+  "icons": {
+    "16": "icons/privacy-shield.svg",
+    "32": "icons/privacy-shield.svg",
+    "48": "icons/privacy-shield.svg",
+    "64": "icons/privacy-shield.svg",
+    "96": "icons/privacy-shield.svg",
+    "128": "icons/privacy-shield.svg"
+  },
+  "permissions": [
+    "activeTab",
+    "alarms",
+    "clipboardWrite",
+    "menus",
+    "scripting",
+    "storage",
+    "tabs",
+    "webRequest",
+    "webRequestBlocking"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": [
+      "src/core.js",
+      "src/background.js"
+    ],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["src/core.js", "src/content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "action": {
+    "default_title": "GoreeCloud Privacy Shield",
+    "default_icon": "icons/privacy-shield.svg",
+    "default_popup": "popup.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "vendor/normalize-8.0.1.css"
+      ],
+      "matches": ["http://*/*", "https://*/*"]
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "privacy-shield@goreecloud.com",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  }
+}
