@@ -218,7 +218,7 @@
     if (message.type === "tab:stats") return tabCounters(message.tabId);
     if (message.type === "cosmetic:get") {
       const site = C.resolveSettings(settings, message.hostname);
-      return site.cosmeticFiltering ? C.cosmeticSelectorsFor(message.hostname, combinedRules, true) : [];
+      return site.cosmeticFiltering ? C.cosmeticSelectorsFor(message.hostname, combinedRules, site.blockAds, false) : [];
     }
     if (message.type === "rule:addCosmetic") {
       const host = C.normalizeHostname(message.hostname);
