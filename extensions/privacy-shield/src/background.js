@@ -2,6 +2,7 @@
   "use strict";
 
   const C = globalThis.PrivacyShieldCore;
+  const LP = globalThis.PrivacyShieldLoggerPrivacy;
   const LOG_LIMIT = 2000;
   const REMOTE_RULE_LIMIT = 60000;
   let settings = { ...C.DEFAULT_SETTINGS };
@@ -45,7 +46,7 @@
     };
     logs.push(entry);
     if (logs.length > LOG_LIMIT) logs = logs.slice(-LOG_LIMIT);
-    browser.runtime.sendMessage({ type: "logger:event", entry }).catch(() => {});
+    browser.runtime.sendMessage({ type: "logger:event", entry: LP.publicEntry(entry) }).catch(() => {});
   }
 
   function requestHostname(details) {
@@ -82,7 +83,8 @@
     const custom = userRuleVerdict(details.url, host);
     if (custom?.allow) return null;
     if (custom?.block) return custom.reason;
-    if (siteSettings.disablePing && (details.type === "ping" || details.type === "beacon")) return "hyperlink-auditing-or-beacon";
+    if (siteSettings.disablePing && details.type === "ping") return "hyperlink-auditing-ping";
+    if (siteSettings.disablePing && details.type === "beacon") return "telemetry-beacon";
     if (siteSettings.blockAds && matchesDomains(host, builtin.ads)) return "ad-domain";
     if (siteSettings.blockTrackers && matchesDomains(host, builtin.trackers)) return "tracker-domain";
     if (siteSettings.blockMiners && matchesDomains(host, builtin.miners)) return "cryptocurrency-miner-domain";
@@ -205,7 +207,13 @@
     if (message.type === "settings:get") return settings;
     if (message.type === "settings:set") return saveSettings(message.settings || {});
     if (message.type === "subscriptions:update") return updateSubscriptions();
-    if (message.type === "logger:get") return logs.slice(-Math.min(Number(message.limit) || 500, LOG_LIMIT));
+    if (message.type === "logger:get") {
+      return logs.slice(-Math.min(Number(message.limit) || 500, LOG_LIMIT)).map((entry) => LP.publicEntry(entry));
+    }
+    if (message.type === "logger:reveal") {
+      const entry = logs.find((item) => item.id === message.id);
+      return entry ? { id: entry.id, url: entry.url, finalUrl: entry.finalUrl || null } : null;
+    }
     if (message.type === "logger:clear") { logs = []; return true; }
     if (message.type === "tab:stats") return tabCounters(message.tabId);
     if (message.type === "cosmetic:get") {

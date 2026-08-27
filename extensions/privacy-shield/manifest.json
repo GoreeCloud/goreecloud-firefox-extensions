@@ -29,6 +29,7 @@
   "background": {
     "scripts": [
       "src/core.js",
+      "src/logger-privacy.js",
       "src/background.js"
     ]
   },
