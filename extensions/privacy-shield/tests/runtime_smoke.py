@@ -79,6 +79,26 @@ class FixtureHandler(BaseHTTPRequestHandler):
             self._send(200, body, "text/html; charset=utf-8")
             return
 
+        if parsed.path == "/reddit-test":
+            self._send(
+                200,
+                "<!doctype html><title>Reddit Cosmetic Fixture</title>"
+                "<shreddit-ad-post id='reddit-promoted'>promoted</shreddit-ad-post>"
+                "<article id='reddit-normal'>normal post</article>",
+                "text/html; charset=utf-8",
+            )
+            return
+
+        if parsed.path == "/pinterest-test":
+            self._send(
+                200,
+                "<!doctype html><title>Pinterest Annoyance Fixture</title>"
+                "<div id='credential_picker_container'>sign in prompt</div>"
+                "<article id='pinterest-normal'>normal content</article>",
+                "text/html; charset=utf-8",
+            )
+            return
+
         if parsed.path == "/landing":
             self._send(200, "<!doctype html><title>Landing</title><p id='landing'>landing</p>", "text/html; charset=utf-8")
             return
@@ -152,6 +172,7 @@ def main() -> int:
     options.set_preference("browser.startup.page", 0)
     options.set_preference("datareporting.policy.dataSubmissionEnabled", False)
     options.set_preference("toolkit.telemetry.reportingpolicy.firstRun", False)
+    options.set_preference("network.stricttransportsecurity.preloadlist", False)
 
     driver: webdriver.Firefox | None = None
     try:
@@ -315,6 +336,28 @@ def main() -> int:
             timeout=12.0,
         )
         require(True, "reviewed local CDN resource substituted and applied")
+
+        reddit_fixture = f"http://reddit.com:{FixtureHandler.port}/reddit-test"
+        driver.get(reddit_fixture)
+        wait_for(
+            driver,
+            lambda d: d.execute_script("return getComputedStyle(document.getElementById('reddit-promoted')).display === 'none';"),
+            "reviewed Reddit promoted-placement selector did not hide the fixture",
+        )
+        require(
+            driver.execute_script("return getComputedStyle(document.getElementById('reddit-normal')).display !== 'none';"),
+            "reviewed Reddit selector preserves normal content",
+        )
+        require(True, "reviewed Reddit first-party promoted placement hidden")
+
+        pinterest_fixture = f"http://pinterest.com:{FixtureHandler.port}/pinterest-test"
+        driver.get(pinterest_fixture)
+        wait_for(driver, lambda d: d.find_element(By.ID, "credential_picker_container"), "Pinterest annoyance fixture did not load")
+        require(
+            driver.execute_script("return getComputedStyle(document.getElementById('credential_picker_container')).display !== 'none';"),
+            "reviewed annoyance filtering must remain off by default",
+        )
+        require(True, "reviewed annoyance layer remains opt-in")
 
         print("\nFirefox runtime smoke suite passed.")
         return 0
