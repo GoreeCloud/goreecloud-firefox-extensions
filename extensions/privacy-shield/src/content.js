@@ -16,7 +16,7 @@
     installMutationObserver(site);
     installClickGuard(site);
     installCopyCleaner(site);
-    if (site.cosmeticFiltering) applyCosmeticRules();
+    if (site.cosmeticFiltering) applyCosmeticRules(site);
   }
 
   function injectPageGuard() {
@@ -82,9 +82,19 @@
     }, true);
   }
 
-  async function applyCosmeticRules() {
+  function selectorsFromCatalog(catalog) {
+    const selectors = [];
+    for (const [domain, values] of Object.entries(catalog || {})) {
+      if (C.hostnameMatches(location.hostname, domain)) selectors.push(...values);
+    }
+    return selectors;
+  }
+
+  async function applyCosmeticRules(site) {
     let selectors = [];
     try { selectors = await browser.runtime.sendMessage({ type: "cosmetic:get", hostname: location.hostname }) || []; } catch { return; }
+    if (site.blockAnnoyances) selectors.push(...selectorsFromCatalog(C.SITE_ANNOYANCE_SELECTORS));
+    selectors = Array.from(new Set(selectors.filter(Boolean))).slice(0, 2000);
     if (!selectors.length) return;
     const style = document.createElement("style");
     style.id = "goreecloud-privacy-shield-cosmetic";

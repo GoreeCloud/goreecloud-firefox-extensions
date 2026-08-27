@@ -13,6 +13,17 @@ assert.match(google.url, /opi=89978449/);
 assert.equal(google.redacted, true);
 assert.equal(google.url.includes("SAPISIDHASH"), false);
 
+const strictGoogle = L.privacyViewUrl(google.url);
+assert.match(strictGoogle.url, /auth=\[redacted\]/);
+assert.match(strictGoogle.url, /opi=\[private\]/);
+assert.equal(strictGoogle.privateMasked, true);
+
+const strictIdentifiers = L.privacyViewUrl("https://www.google.com/gen_204?ei=opaque-event&zx=opaque-cache&keep=useful");
+assert.match(strictIdentifiers.url, /ei=\[private\]/);
+assert.match(strictIdentifiers.url, /zx=\[private\]/);
+assert.match(strictIdentifiers.url, /keep=useful/);
+assert.equal(strictIdentifiers.privateMasked, true);
+
 const apiKey = L.sanitizeUrl("https://example.com/v1?api-key=supersecretvalue&keep=1");
 assert.match(apiKey.url, /api-key=\[redacted\]/);
 assert.match(apiKey.url, /keep=1/);

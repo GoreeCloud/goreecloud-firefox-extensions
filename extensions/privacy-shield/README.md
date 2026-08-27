@@ -11,12 +11,21 @@ GoreeCloud Privacy Shield is the first-party Firefox adapter for GoreeCloud's pl
 - ETag tracking resistance by removing `ETag` responses and `If-None-Match` requests;
 - resistance to link rewriting through document-start cleanup, mutation observation, and capture-phase click cleanup;
 - wide-spectrum request filtering for built-in ad/tracker/miner categories plus custom and subscribed rules;
+- reviewed first-party promoted-placement cosmetic rules for supported sites, initially Reddit and Pinterest;
 - support for hosts-style, common ABP domain rules, wildcard/regex URL rules, exceptions, and cosmetic rules;
 - cosmetic filtering, persistent element picker rules, a temporary element zapper, one-click **Undo last hide**, and a **Hidden elements** manager for reviewing/restoring saved cosmetic rules;
+- an optional, off-by-default reviewed annoyance layer for selected sign-in/promotional overlays, initially Google One Tap-style prompts on Pinterest;
 - per-site protection override and controls for third-party scripts, third-party frames, and media/object requests;
-- a local-only ephemeral request logger with default URL redaction, domain/type/verdict filters, safe-URL copy, explicit temporary full-URL reveal, and distinct ping/beacon reasons;
+- a local-only ephemeral request logger with default URL redaction, optional stricter **Privacy view**, domain/type/verdict filters, safe-URL copy, explicit temporary full-URL reveal, and distinct ping/beacon reasons;
+- explicit UI scope labels distinguishing current-tab popup counters from logger-session summary counters;
 - exact-version local-resource substitution for reviewed CDN resources, initially normalize.css 8.0.1 across supported jsDelivr, cdnjs, and unpkg URLs;
 - daily refresh of user-configured HTTPS filter lists, with no default remote subscription.
+
+## Reviewed page controls
+
+Network blocking is not sufficient for advertisements and promotional surfaces served through a site's own first-party application infrastructure. Privacy Shield therefore includes a small reviewed site-selector catalog in addition to generic cosmetic rules. The initial catalog recognizes current Reddit promoted-post containers and Pinterest promoted-pin markers. Built-in cosmetic ad selectors follow the **Ads** setting; user-defined cosmetic rules remain governed separately by **Cosmetic filtering**.
+
+The separate **Reviewed sign-in and promotional overlays** setting is disabled by default. It currently targets narrowly reviewed Pinterest/Google One Tap-style prompt containers rather than applying broad modal heuristics. This avoids treating every dialog, consent surface, or sign-in flow as unwanted content. Future additions require a specific selector review and regression coverage.
 
 ## Cosmetic rule recovery
 
@@ -28,9 +37,15 @@ The zapper remains temporary: it removes the selected element from the current d
 
 The request logger is memory-only and does not persist browsing history. Logger views receive redacted URLs by default: authentication/token/session/credential-like query values, credential-bearing URL authority, URL fragments, and long high-entropy query values are suppressed while host, path, safe query values, request type, verdict, and reason remain visible for debugging.
 
-Raw request URLs remain only in the background process's ephemeral in-memory log. **Reveal full URL** retrieves one selected entry only after explicit user action, and the logger tab forgets revealed values when it is refreshed or closed. **Copy safe URL** always copies the redacted representation.
+**Privacy view** is enabled by default in the logger UI and adds a second presentation-only privacy layer that masks common opaque request, event, visitor, device, measurement, and trace identifiers such as `ei`, `opi`, `ved`, `zx`, and `request_id`. Turning Privacy view off restores the already-redacted baseline representation; it does not expose credentials or other baseline-sensitive values.
+
+Raw request URLs remain only in the background process's ephemeral in-memory log. **Reveal full URL** retrieves one selected entry only after explicit user action, and the logger tab forgets revealed values when it is refreshed or closed. **Copy safe URL** always copies the current non-raw privacy representation, even if that row has been explicitly revealed in the interface.
 
 Ping and beacon traffic are reported separately as `hyperlink-auditing-ping` and `telemetry-beacon` rather than being collapsed into one generic reason.
+
+## Counter scope
+
+Popup counts are explicitly labeled **This tab** and reset as that tab begins a new page load. Logger summary counts are explicitly labeled **This logger session** and can include events from multiple tabs until the in-memory logger is cleared or the background state ends. The two surfaces therefore should not be expected to display the same totals.
 
 ## Local-resource delivery
 

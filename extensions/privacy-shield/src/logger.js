@@ -1,11 +1,13 @@
 (() => {
   "use strict";
 
+  const LP = globalThis.PrivacyShieldLoggerPrivacy;
   const tbody = document.querySelector("#rows");
   const filter = document.querySelector("#filter");
   const domainFilter = document.querySelector("#domainFilter");
   const typeFilter = document.querySelector("#typeFilter");
   const verdictFilter = document.querySelector("#verdictFilter");
+  const privacyView = document.querySelector("#privacyView");
   const revealed = new Map();
   let entries = [];
 
@@ -49,13 +51,29 @@
     if (values.includes(current)) select.value = current;
   }
 
+  function displayUrl(value) {
+    const source = String(value || "");
+    if (!source || !privacyView.checked) return { url: source, privateMasked: false };
+    const result = LP.privacyViewUrl(source);
+    return { url: result.url, privateMasked: Boolean(result.privateMasked) };
+  }
+
+  function displayedUrls(entry) {
+    if (revealed.has(entry.id)) return revealed.get(entry.id);
+    return {
+      url: displayUrl(entry.url).url,
+      finalUrl: entry.finalUrl ? displayUrl(entry.finalUrl).url : null
+    };
+  }
+
   function matchesFilters(entry) {
     if (domainFilter.value && entry.hostname !== domainFilter.value) return false;
     if (typeFilter.value && entry.type !== typeFilter.value) return false;
     if (verdictFilter.value && entry.verdict !== verdictFilter.value) return false;
     const query = filter.value.trim().toLowerCase();
     if (!query) return true;
-    const haystack = `${entry.verdict} ${entry.reason} ${displayReason(entry.reason)} ${entry.type} ${entry.hostname} ${entry.url} ${entry.finalUrl || ""}`.toLowerCase();
+    const shown = displayedUrls(entry);
+    const haystack = `${entry.verdict} ${entry.reason} ${displayReason(entry.reason)} ${entry.type} ${entry.hostname} ${shown.url || ""} ${shown.finalUrl || ""}`.toLowerCase();
     return haystack.includes(query);
   }
 
@@ -70,7 +88,8 @@
     const wrapper = document.createElement("div");
     wrapper.className = "logger-url-block";
     const raw = revealed.get(entry.id);
-    const shownUrl = raw?.url || entry.url;
+    const requestPrivacy = !raw && privacyView.checked ? LP.privacyViewUrl(entry.url) : null;
+    const shownUrl = raw?.url || requestPrivacy?.url || entry.url;
 
     const request = document.createElement("code");
     request.className = raw ? "logger-url logger-url-revealed" : "logger-url";
@@ -78,7 +97,8 @@
     request.title = shownUrl || "";
     wrapper.appendChild(request);
 
-    const finalShown = raw?.finalUrl || entry.finalUrl;
+    const finalPrivacy = !raw && privacyView.checked && entry.finalUrl ? LP.privacyViewUrl(entry.finalUrl) : null;
+    const finalShown = raw?.finalUrl || finalPrivacy?.url || entry.finalUrl;
     if (finalShown) {
       const final = document.createElement("code");
       final.className = raw ? "logger-final-url logger-url-revealed" : "logger-final-url";
@@ -87,10 +107,12 @@
       wrapper.appendChild(final);
     }
 
-    if (entry.redacted && !raw) {
+    if (!raw && (entry.redacted || requestPrivacy?.privateMasked || finalPrivacy?.privateMasked)) {
       const note = document.createElement("span");
       note.className = "redaction-label";
-      note.textContent = "sensitive values redacted";
+      if (entry.redacted && (requestPrivacy?.privateMasked || finalPrivacy?.privateMasked)) note.textContent = "sensitive values redacted • identifiers private";
+      else if (entry.redacted) note.textContent = "sensitive values redacted";
+      else note.textContent = "opaque identifiers private";
       wrapper.appendChild(note);
     }
     return wrapper;
@@ -109,7 +131,8 @@
 
   async function copySafe(entry, button) {
     try {
-      await navigator.clipboard.writeText(entry.url || "");
+      const safeUrl = privacyView.checked ? LP.privacyViewUrl(entry.url).url : entry.url;
+      await navigator.clipboard.writeText(safeUrl || "");
       const previous = button.textContent;
       button.textContent = "Copied";
       setTimeout(() => { button.textContent = previous; }, 900);
@@ -127,7 +150,7 @@
     copy.addEventListener("click", () => copySafe(entry, copy));
     cell.appendChild(copy);
 
-    if (entry.redacted) {
+    if (entry.redacted || privacyView.checked) {
       const reveal = document.createElement("button");
       reveal.className = "secondary-danger";
       reveal.textContent = revealed.has(entry.id) ? "Hide full URL" : "Reveal full URL";
@@ -181,7 +204,7 @@
     }
   });
 
-  [filter, domainFilter, typeFilter, verdictFilter].forEach((control) => control.addEventListener(control === filter ? "input" : "change", render));
+  [filter, domainFilter, typeFilter, verdictFilter, privacyView].forEach((control) => control.addEventListener(control === filter ? "input" : "change", render));
   document.querySelector("#clear").addEventListener("click", async () => {
     await browser.runtime.sendMessage({ type: "logger:clear" });
     entries = [];

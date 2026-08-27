@@ -64,6 +64,15 @@ const removeLogoRule = R.removeAt(undoGithub.text, 1, "github.com##header .AppHe
 assert.equal(removeLogoRule.removed, true);
 assert.equal(removeLogoRule.text.includes("AppHeader-logo"), false);
 
+const redditSelectors = C.cosmeticSelectorsFor("www.reddit.com", C.parseFilterText(""), true, false);
+assert.equal(redditSelectors.includes("shreddit-ad-post"), true);
+assert.equal(redditSelectors.includes("[data-promoted='true']"), true);
+const pinterestWithoutAnnoyances = C.cosmeticSelectorsFor("www.pinterest.com", C.parseFilterText(""), true, false);
+assert.equal(pinterestWithoutAnnoyances.includes("#credential_picker_container"), false);
+const pinterestWithAnnoyances = C.cosmeticSelectorsFor("www.pinterest.com", C.parseFilterText(""), true, true);
+assert.equal(pinterestWithAnnoyances.includes("#credential_picker_container"), true);
+assert.equal(C.DEFAULT_SETTINGS.blockAnnoyances, false);
+
 assert.equal(
   C.LOCAL_RESOURCE_CATALOG["https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.css"],
   "vendor/normalize-8.0.1.css"

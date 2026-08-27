@@ -2,7 +2,7 @@
   "use strict";
   const TOGGLES = [
     "enabled", "stripTrackingParams", "cleanLinks", "bypassRedirects", "disablePing", "stripETags",
-    "blockAds", "blockTrackers", "blockMalware", "blockMiners", "blockPopups", "cosmeticFiltering",
+    "blockAds", "blockTrackers", "blockMalware", "blockMiners", "blockPopups", "blockAnnoyances", "cosmeticFiltering",
     "localResources", "blockThirdPartyScripts", "blockThirdPartyFrames", "blockMedia", "logAllowed"
   ];
   let settings = null;
