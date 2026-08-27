@@ -33,3 +33,10 @@ jobs:
           echo '127.0.0.1 google-analytics.com doubleclick.net coinhive.com cdn.jsdelivr.net reddit.com www.reddit.com pinterest.com www.pinterest.com' | sudo tee -a /etc/hosts
       - name: Run real Firefox runtime smoke suite
         run: python extensions/privacy-shield/tests/runtime_smoke.py dist/goreecloud-privacy-shield-0.1.0.xpi
+      - name: Retain Privacy Shield page-observability XPI for export
+        uses: actions/upload-artifact@v4
+        with:
+          name: goreecloud-privacy-shield-0.1.0-page-observability-xpi
+          path: dist/goreecloud-privacy-shield-0.1.0.xpi
+          if-no-files-found: error
+          retention-days: 1
