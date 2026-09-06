@@ -330,18 +330,36 @@ def main() -> int:
         assert_standard_runtime(driver)
         site_handle = driver.current_window_handle
 
-        open_popup_for_active_site(driver, site_handle)
+        popup_handle = open_popup_for_active_site(driver, site_handle)
         require(driver.find_element(By.ID, "protectionState").text == "On · Standard mode", "popup exposes local Standard protection state", driver.find_element(By.ID, "protectionState").text)
         require(current_profile(driver) == "standard", "popup initially selects Standard mode", current_profile(driver))
         blocked = int(driver.find_element(By.ID, "blocked").text or "0")
         cleaned = int(driver.find_element(By.ID, "cleaned").text or "0")
         require(blocked >= 1, "popup reports current-tab blocked activity", str(blocked))
         require(cleaned >= 1, "popup reports current-tab cleaned activity", str(cleaned))
-        details = driver.find_element(By.ID, "detailList").text
-        require("Tracker requests" in details, "Protection details explains tracker blocking", details)
-        require("Tracking-parameter cleanup" in details, "Protection details explains URL cleanup", details)
+
+        # The Activity Logger is intentionally background-memory-only and may have
+        # ended before the popup opens even though current-tab counters survived in
+        # storage.session. Create one fresh blocked request while this popup session
+        # is open, then Refresh so Protection details can explain live activity
+        # without pretending older logger rows are durable history.
+        FixtureHandler.reset_hits()
+        driver.switch_to.window(site_handle)
+        driver.execute_script(
+            """
+            const script = document.createElement('script');
+            script.id = 'detail-tracker-probe';
+            script.src = arguments[0];
+            document.body.appendChild(script);
+            """,
+            f"http://{TRACKER_HOST}:{FixtureHandler.port}/tracker.js?detail-probe=1",
+        )
+        time.sleep(0.35)
+        require(not host_hits(TRACKER_HOST), "Protection-details probe tracker request is blocked")
+        driver.switch_to.window(popup_handle)
         driver.find_element(By.ID, "refreshDetails").click()
-        wait_for(driver, lambda d: "Protection details refreshed." in d.find_element(By.ID, "popupStatus").text, "Refresh did not report completion")
+        wait_for(driver, lambda d: "Tracker requests" in d.find_element(By.ID, "detailList").text, "Refresh did not expose fresh tracker reason in Protection details")
+        require("Protection details refreshed." in driver.find_element(By.ID, "popupStatus").text, "Refresh reports completion")
         require(True, "Protection details refreshes without page reload")
 
         apply_profile(driver, site_handle, "strict")
