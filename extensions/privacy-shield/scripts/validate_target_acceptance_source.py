@@ -15,6 +15,7 @@ packager = (REPO_ROOT / "shared/scripts/package_extension.py").read_text(encodin
 for required in (
     ROOT / "scripts/target_acceptance.py",
     ROOT / "scripts/test_target_acceptance.py",
+    ROOT / "scripts/validate_target_acceptance_source.py",
     ROOT / "RELEASE-ACCEPTANCE-0.2.0.md",
 ):
     assert required.is_file(), required
@@ -78,7 +79,9 @@ for marker in (
 ):
     assert marker in tests, f"target acceptance regression missing: {marker}"
 
-# The permanent repository gate must exercise the evidence contract.
+# The permanent repository gate must exercise both source governance and the evidence contract.
+assert 'python extensions/privacy-shield/scripts/validate_target_acceptance_source.py' in repository_workflow, \
+    "repository workflow must run target acceptance source validation"
 assert 'python extensions/privacy-shield/scripts/test_target_acceptance.py' in repository_workflow, \
     "repository workflow must run target acceptance evidence tests"
 
@@ -95,6 +98,8 @@ assert 'target acceptance XPI digest mismatch' in signing_workflow, \
     "manual signing must compare rebuilt unsigned XPI with target-reviewed XPI digest"
 assert 'dist/target-acceptance-evidence.txt' in signing_workflow, \
     "signed release evidence must retain only the target acceptance provenance tuple"
+assert 'python extensions/privacy-shield/scripts/validate_target_acceptance_source.py' in signing_workflow, \
+    "signing preflight must rerun target acceptance source validation"
 assert 'python extensions/privacy-shield/scripts/test_target_acceptance.py' in signing_workflow, \
     "signing preflight must rerun target acceptance evidence tests"
 assert 'extensions/privacy-shield/scripts/target_acceptance.py' in signing_workflow, \
