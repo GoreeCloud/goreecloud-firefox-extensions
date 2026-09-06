@@ -44,7 +44,7 @@ Additional extension directories use concise lowercase kebab-case names under `e
 | Extension | Canonical directory | Firefox add-on ID | Canonical source state | Legacy repository |
 | --- | --- | --- | --- | --- |
 | GoreeCloud Bookmarks | `extensions/bookmarks/` | `goreecloud-bookmarks@goreecloud.com` | Source baseline; not Stable | `GoreeCloud/goreecloud-bookmark-browser-extension` |
-| GoreeCloud Privacy Shield | `extensions/privacy-shield/` | `privacy-shield@goreecloud.com` | Stable 0.1.1; Mozilla-signed unlisted self-distribution; Firefox 155.0.1 accepted | None |
+| GoreeCloud Privacy Shield | `extensions/privacy-shield/` | `privacy-shield@goreecloud.com` | 0.2.0 source candidate; Stable 0.1.1 remains Mozilla-signed / Firefox 155.0.1 accepted | None |
 | GoreeCloud Redirector | `extensions/redirector/` | `redirector@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-redirector` |
 | GoreeCloud Source Resync | `extensions/source-resync/` | `source-resync@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-source-resync` |
 
@@ -85,6 +85,8 @@ Generated packages are written to `dist/` and are build outputs rather than auth
 See [`docs/MOZILLA_SIGNING.md`](docs/MOZILLA_SIGNING.md). Each extension keeps an independent release state. A source merge or unsigned package must never be described as Stable solely because repository validation passes.
 
 Privacy Shield 0.1.1 is the current Stable Privacy Shield Firefox release for Mozilla unlisted/self-distribution. Its exact packaged payload was Mozilla-signed and passed persistent installation, full Firefox 155.0.1 restart acceptance, real MV3 event-page termination/wake recovery, and target-environment popup-counter verification. Stable 0.1.0 remains preserved as the prior accepted Firefox 154.0.1 release record.
+
+Privacy Shield 0.2.0 is an active feature candidate adding popup quick controls and per-site modes. It does not supersede 0.1.1 until its independent runtime, compatibility, manual UI, signing, persistent-install/restart, and privacy-review gates pass.
 
 ## Maintenance rule
 

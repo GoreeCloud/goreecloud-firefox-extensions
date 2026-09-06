@@ -3,11 +3,20 @@
 ## Runtime layers
 
 1. **Core (`src/core.js`)** — pure URL cleaning, redirect unwrapping, rule parsing, domain matching, setting resolution, reviewed site-specific ad/annoyance selector catalogs, cosmetic selector resolution, and local-resource catalog.
-2. **Logger privacy (`src/logger-privacy.js`)** — pure sanitization of activity URLs before logger data crosses from the background process into UI surfaces plus a stricter presentation-only Privacy view for opaque identifiers.
-3. **Background (`src/background.js`)** — Firefox network enforcement, ETag protection, user/filter-list state, local CDN redirects, unified per-tab counters, combined action-badge state, bounded in-memory network/page activity logging, scheduled list refresh, and context menus. Raw activity URLs remain inside this memory-only background layer unless one entry is explicitly revealed.
-4. **Content (`src/content.js`)** — link cleanup, hyperlink-auditing removal, anti-rewrite mutation monitoring, copy cleaning, cosmetic filtering, reviewed site-specific page controls, privacy-safe page-filter activity reporting, picker, and zapper.
-5. **Page guard (`src/page-guard.js`)** — page-world popup control that preserves user-initiated popup behavior while rejecting programmatic `window.open()` calls without active user activation.
-6. **Glaze UI surfaces** — popup, toolbar action badge, settings, hidden-element recovery, and privacy-redacted Activity Logger with explicit counter scope.
+2. **Site profiles (`src/site-profiles.js`)** — pure per-site Standard/Strict/Compatible profile mapping over the existing `siteOverrides` settings structure. Profile application preserves the independent site enabled/disabled field and never broadens extension permissions.
+3. **Logger privacy (`src/logger-privacy.js`)** — pure sanitization of activity URLs before logger data crosses from the background process into UI surfaces plus a stricter presentation-only Privacy view for opaque identifiers.
+4. **Background (`src/background.js`)** — Firefox network enforcement, ETag protection, user/filter-list state, local CDN redirects, unified per-tab counters, combined action-badge state, bounded in-memory network/page activity logging, scheduled list refresh, and context menus. Raw activity URLs remain inside this memory-only background layer unless one entry is explicitly revealed.
+5. **Content (`src/content.js`)** — link cleanup, hyperlink-auditing removal, anti-rewrite mutation monitoring, copy cleaning, cosmetic filtering, reviewed site-specific page controls, privacy-safe page-filter activity reporting, picker, and zapper.
+6. **Page guard (`src/page-guard.js`)** — page-world popup control that preserves user-initiated popup behavior while rejecting programmatic `window.open()` calls without active user activation.
+7. **Glaze UI surfaces** — popup quick controls, toolbar action badge, settings, hidden-element recovery, and privacy-redacted Activity Logger with explicit counter scope.
+
+## Popup quick-control boundary
+
+The popup remains a presentation/control surface rather than a competing enforcement authority. **Copy clean URL** calls the existing background `url:clean` message, which delegates to the canonical core URL sanitizer, then writes the result to the local clipboard. It does not create a separate sanitizer, remote shortening service, or redirect service.
+
+Per-site modes are deliberately implemented in `src/site-profiles.js` rather than duplicating network-decision logic in the popup. The helper transforms only the current hostname's existing `siteOverrides` entry. **Standard** removes the profile-managed fields so global settings apply. **Strict** explicitly enables third-party script/frame blocking while retaining the normal protection set. **Compatible** keeps the core tracker/malware/miner/URL/ping/ETag/popup/ad-request protections while disabling cosmetic filtering and local-resource substitution and leaving third-party script/frame/media blocking off. The independent `enabled` field is preserved when a mode changes. **Reset site** removes the complete host-specific override.
+
+The popup's **Protection details** view is derived only from `logger:get` public entries that have already crossed `src/logger-privacy.js`. It filters to the current tab, accepts only blocked/redirected/hidden outcomes, groups stable reason codes, and displays friendly reason labels plus aggregate counts. The details renderer never consumes or displays `url` or `finalUrl`. This makes the surface useful for “why did Privacy Shield act?” without creating a second raw-activity exposure path.
 
 ## Reviewed content-selector boundary
 
@@ -31,11 +40,15 @@ The logger's **Privacy view** applies another transformation only to the already
 
 The logger UI has no bulk raw-log API. `logger:reveal` accepts one activity entry ID and returns that entry's raw URL only after an explicit user action. The logger page stores revealed values only in page memory and discards them on refresh or close.
 
+Protection details deliberately uses `logger:get`, not `logger:reveal`, and therefore cannot receive the raw-URL representation. Its reason rows are a presentation of existing redacted metadata, not a durable privacy-history database.
+
 ## Counter scopes and action badge
 
 Per-tab counters live in `countersByTab` and reset when that tab begins loading a new page. They track `blocked`, `cleaned`, `hidden`, and `local`. The popup exposes those counters individually under **This tab**.
 
 The Firefox action badge is derived only from those same four counters. Its value is `blocked + cleaned + hidden + local`; zero clears the badge, values through 999 display directly, and larger totals display `999+`. Each accepted counter mutation updates the badge immediately. Beginning a new navigation resets both the four counters and the badge, so the toolbar surface cannot silently drift into a longer-lived session total.
+
+The counters are mirrored to memory-only Firefox `storage.session` so non-persistent MV3 event-page recreation does not erase current-browser-session values. This does not change the logger's separate memory-only lifecycle.
 
 Logger entries live in the background's bounded in-memory logger and can include multiple tabs. Glaze UI therefore labels logger summary statistics **This logger session** instead of implying that logger totals should equal the current-tab popup or toolbar badge.
 
@@ -53,8 +66,10 @@ The logger's **Hidden** summary sums aggregate page-filter counts, while **Event
 8. optional third-party script/frame or media blocking;
 9. optional allowed-request logging.
 
-Page-filter observation occurs in the content layer alongside cosmetic enforcement and does not alter this network decision order.
+Page-filter observation occurs in the content layer alongside cosmetic enforcement and does not alter this network decision order. Site modes influence the existing resolved settings consumed by this order; they do not introduce another request interceptor.
 
 ## Privacy Shield boundary
 
 This extension is a Firefox adapter implementing browser-specific privacy controls. The platform-wide Privacy Shield repository remains the authority for shared privacy contracts and capability governance. Firefox-specific interception remains here because the runtime that performs the work owns its implementation and acceptance evidence.
+
+Stable 0.1.1 remains the accepted Firefox release while 0.2.0 quick controls are developed and validated. Source integration of a new popup control or site profile does not itself constitute a Stable release, Mozilla signing, or broader platform production acceptance.

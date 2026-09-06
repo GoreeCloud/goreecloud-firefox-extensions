@@ -17,8 +17,8 @@ for permission in ("webRequest", "webRequestBlocking", "storage", "clipboardWrit
 for required in (
     "README.md", "PRIVACY.md", "SECURITY.md", "ARCHITECTURE.md", "BROAD_HOST_PERMISSION_REVIEW.md",
     "vendor/THIRD_PARTY_NOTICES.md", "hidden.html", "src/cosmetic-rules.js", "src/hidden.js",
-    "src/logger-privacy.js", "scripts/test_logger_privacy.js", "scripts/test_background_activity.js",
-    "tests/event_page_recovery_smoke.py"
+    "src/logger-privacy.js", "src/site-profiles.js", "scripts/test_logger_privacy.js",
+    "scripts/test_background_activity.js", "scripts/test_site_profiles.js", "tests/event_page_recovery_smoke.py"
 ):
     assert (ROOT / required).is_file(), required
 for resource in ("vendor/normalize-8.0.1.css", "src/page-guard.js"):
@@ -27,6 +27,8 @@ for resource in ("vendor/normalize-8.0.1.css", "src/page-guard.js"):
 logger_html = (ROOT / "logger.html").read_text(encoding="utf-8")
 options_html = (ROOT / "options.html").read_text(encoding="utf-8")
 popup_html = (ROOT / "popup.html").read_text(encoding="utf-8")
+popup_js = (ROOT / "src/popup.js").read_text(encoding="utf-8")
+profile_js = (ROOT / "src/site-profiles.js").read_text(encoding="utf-8")
 background_js = (ROOT / "src/background.js").read_text(encoding="utf-8")
 content_js = (ROOT / "src/content.js").read_text(encoding="utf-8")
 assert 'src/logger-privacy.js' in logger_html, "logger page must load privacy helper"
@@ -45,5 +47,18 @@ assert 'browser.storage?.session' in background_js and 'runtimeTabCounters' in b
 assert 'onBeforeRequest.addListener(\n    async (details) => {\n      await ready;' in background_js, "request blocking must await MV3 event-page initialization"
 assert 'onBeforeSendHeaders.addListener(\n    async (details) => {\n      await ready;' in background_js, "request-header protection must await MV3 event-page initialization"
 assert 'onHeadersReceived.addListener(\n    async (details) => {\n      await ready;' in background_js, "response-header protection must await MV3 event-page initialization"
+
+# Popup quick controls are local-only and must stay tied to existing sanitized/runtime boundaries.
+for control_id in ("copyCleanUrl", "resetSite", "siteProfile", "applyProfile", "profileHelp", "detailList", "detailTotal"):
+    assert f'id="{control_id}"' in popup_html, f"popup quick control missing: {control_id}"
+assert popup_html.index('src/core.js') < popup_html.index('src/site-profiles.js') < popup_html.index('src/popup.js'), "site profile helper must load after core and before popup"
+assert 'type: "url:clean"' in popup_js and 'writeClipboard' in popup_js, "Copy clean URL must use the canonical URL cleaner and local clipboard"
+assert 'type: "logger:get"' in popup_js and 'DETAIL_LABELS' in popup_js, "Protection details must derive from existing privacy-safe logger entries"
+render_details = popup_js.split('function renderDetails', 1)[1].split('function setProfileHelp', 1)[0]
+assert '.url' not in render_details and 'finalUrl' not in render_details, "Protection details must not render request URLs"
+assert 'strict' in profile_js and 'compatible' in profile_js and 'standard' in profile_js, "site protection profiles are incomplete"
+assert 'blockThirdPartyScripts: true' in profile_js and 'blockThirdPartyFrames: true' in profile_js, "Strict profile must add third-party script/frame blocking"
+assert 'cosmeticFiltering: false' in profile_js and 'localResources: false' in profile_js, "Compatible profile must reduce page-altering behavior"
+assert 'enabled' not in profile_js.split('values: Object.freeze({', 1)[1].split('})', 1)[0], "profile values must not silently change the independent site enabled state"
 
 print("Privacy Shield source contract validated.")

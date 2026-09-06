@@ -6,6 +6,7 @@ GoreeCloud Privacy Shield is the first-party Firefox adapter for GoreeCloud's pl
 
 - automatic tracking-parameter removal on navigation and page links;
 - clean copied links and a **Copy clean link** context-menu action;
+- a popup **Copy clean URL** action for the current page using the same canonical local URL sanitizer;
 - bypass of supported tracking redirect wrappers;
 - removal of hyperlink `ping` attributes and blocking of ping/beacon requests;
 - ETag tracking resistance by removing `ETag` responses and `If-None-Match` requests;
@@ -15,13 +16,29 @@ GoreeCloud Privacy Shield is the first-party Firefox adapter for GoreeCloud's pl
 - support for hosts-style, common ABP domain rules, wildcard/regex URL rules, exceptions, and cosmetic rules;
 - cosmetic filtering, persistent element picker rules, a temporary element zapper, one-click **Undo last hide**, and a **Hidden elements** manager for reviewing/restoring saved cosmetic rules;
 - an optional, off-by-default reviewed annoyance layer for selected sign-in/promotional overlays, initially Google One Tap-style prompts on Pinterest;
-- per-site protection override and controls for third-party scripts, third-party frames, and media/object requests;
+- per-site protection override plus **Standard**, **Strict**, and **Compatible** site modes with one-click site reset;
+- controls for third-party scripts, third-party frames, and media/object requests;
 - a local-only ephemeral **Activity Logger** covering both network decisions and privacy-safe page-filter events, with default URL redaction, optional stricter **Privacy view**, domain/type/verdict filters, safe-URL copy, explicit temporary full-URL reveal, and distinct ping/beacon reasons;
+- popup **Protection details** that summarizes current-tab protection reason counts from already-redacted in-memory logger metadata without displaying request URLs or page content;
 - explicit **This tab** popup counters for blocked requests, cleaned links, hidden page elements, and reviewed local-resource substitutions;
 - a Firefox toolbar badge showing the combined current-tab total: **Blocked + Cleaned + Hidden + Local**;
 - MV3 event-page-safe current-tab counter recovery through memory-only `browser.storage.session`, with blocking listeners awaiting background initialization before making protection decisions;
 - exact-version local-resource substitution for reviewed CDN resources, initially normalize.css 8.0.1 across supported jsDelivr, cdnjs, and unpkg URLs;
 - daily refresh of user-configured HTTPS filter lists, with no default remote subscription.
+
+## Popup quick controls
+
+**Copy clean URL** applies the same reviewed Privacy Shield URL-cleaning function used by navigation and link cleanup, then writes only the resulting current-page URL to the local clipboard. It does not contact a remote shortening, redirect, or analytics service.
+
+The popup exposes three per-site protection modes:
+
+- **Standard** removes profile-managed site overrides and follows the user's normal/global Privacy Shield settings.
+- **Strict** retains the normal protection set and additionally enables third-party script and third-party frame blocking for that site. It does not automatically enable the reviewed annoyance layer or media blocking.
+- **Compatible** keeps tracker, malware, miner, URL-cleaning, ping/beacon, ETag, popup, and ad-request protections while disabling cosmetic filtering and reviewed local-resource substitution and leaving third-party script/frame/media blocking off to reduce page-altering behavior.
+
+Changing a site mode preserves the independent site enabled/disabled state. **Reset site** removes the complete host-specific override and returns the site to global Privacy Shield settings. Site modes are stored in the existing local `siteOverrides` settings structure; no browsing-history store or new network service is introduced.
+
+**Protection details** is an intentionally bounded explanation surface. It groups the current tab's blocked, redirected, and hidden logger events by stable reason code and displays only friendly reason labels plus aggregate counts. It does not display request URLs, final URLs, selectors, DOM text, page content, credentials, or identifiers. Because the Activity Logger is intentionally memory-only, detail rows cover the current logger/background session while the separate This tab counters can survive an MV3 event-page recreation through `storage.session`.
 
 ## Reviewed page controls
 
@@ -77,6 +94,8 @@ The initial parser supports a useful subset rather than claiming complete uBlock
 
 This adapter requires broad HTTP/HTTPS host access because its documented role is to inspect, clean, cancel, redirect, and modify requests across ordinary websites. The exception is documented in `BROAD_HOST_PERMISSION_REVIEW.md` and enforced by repository validation.
 
+The 0.2.0 quick-control candidate adds no new extension permission. Clipboard use remains covered by the existing `clipboardWrite` permission, per-site modes reuse existing local settings, and Protection details reuse the existing privacy-safe in-memory logger boundary.
+
 ## Development and release status
 
 From the repository root:
@@ -85,11 +104,15 @@ From the repository root:
 python shared/scripts/validate_repository.py
 python extensions/privacy-shield/scripts/validate.py
 node extensions/privacy-shield/scripts/test_core.js
+node extensions/privacy-shield/scripts/test_site_profiles.js
 node extensions/privacy-shield/scripts/test_logger_privacy.js
 node extensions/privacy-shield/scripts/test_background_activity.js
 node --check extensions/privacy-shield/src/background.js
 node --check extensions/privacy-shield/src/content.js
+node --check extensions/privacy-shield/src/popup.js
 python shared/scripts/package_extension.py privacy-shield
 ```
 
-Privacy Shield **0.1.1** is the current Stable Firefox release for Mozilla unlisted/self-distribution within the accepted Firefox 155.0.1 evidence. The signed artifact passed persistent installation, full restart acceptance, real MV3 event-page termination/wake recovery, and target-environment popup-counter verification. See `RELEASE.md` and `FIREFOX-155-HOTFIX.md` for exact revision and artifact evidence. Development after 0.1.1 must use a new candidate version and pass its own release gates; source validation or unsigned packaging alone never creates a Stable claim.
+Privacy Shield **0.1.1** remains the current Stable Firefox release for Mozilla unlisted/self-distribution within the accepted Firefox 155.0.1 evidence. The signed artifact passed persistent installation, full restart acceptance, real MV3 event-page termination/wake recovery, and target-environment popup-counter verification.
+
+Privacy Shield **0.2.0** is a feature **candidate** adding popup quick controls, site protection modes, site reset, and privacy-bounded Protection details. It is not Stable and must pass exact candidate repository/runtime validation, compatibility review, Mozilla signing, persistent-install/restart acceptance, and user-facing acceptance before it may supersede 0.1.1. Source validation or unsigned packaging alone never creates a Stable claim.
