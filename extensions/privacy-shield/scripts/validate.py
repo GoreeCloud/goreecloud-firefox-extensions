@@ -40,5 +40,9 @@ assert 'selector' not in background_js.split('function logPageFilter', 1)[1].spl
 assert 'TAB_COUNTER_KEYS' in background_js and 'setBadgeText' in background_js, "combined This tab toolbar badge missing"
 assert 'blocked", "cleaned", "hidden", "local' in background_js, "toolbar badge counter set is incomplete"
 assert '999+' in background_js, "toolbar badge compact overflow behavior missing"
+assert 'browser.storage?.session' in background_js and 'runtimeTabCounters' in background_js, "MV3 event-page counter recovery missing"
+assert 'onBeforeRequest.addListener(\n    async (details) => {\n      await ready;' in background_js, "request blocking must await MV3 event-page initialization"
+assert 'onBeforeSendHeaders.addListener(\n    async (details) => {\n      await ready;' in background_js, "request-header protection must await MV3 event-page initialization"
+assert 'onHeadersReceived.addListener(\n    async (details) => {\n      await ready;' in background_js, "response-header protection must await MV3 event-page initialization"
 
 print("Privacy Shield source contract validated.")
