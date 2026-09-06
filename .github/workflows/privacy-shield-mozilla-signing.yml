@@ -2,6 +2,12 @@ name: Privacy Shield Mozilla Signing
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - fix/privacy-shield-firefox-155-event-page
+    paths:
+      - 'extensions/privacy-shield/**'
+      - '.github/workflows/privacy-shield-mozilla-signing.yml'
 
 permissions:
   contents: read
