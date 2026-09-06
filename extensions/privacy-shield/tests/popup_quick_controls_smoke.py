@@ -232,6 +232,17 @@ def current_profile(driver: webdriver.Firefox) -> str:
     return Select(driver.find_element(By.ID, "siteProfile")).first_selected_option.get_attribute("value") or ""
 
 
+def open_protection_details(driver: webdriver.Firefox) -> None:
+    details = driver.find_element(By.CSS_SELECTOR, "details.protection-details")
+    if not details.get_attribute("open"):
+        details.find_element(By.CSS_SELECTOR, "summary").click()
+    wait_for(
+        driver,
+        lambda d: bool(d.find_element(By.CSS_SELECTOR, "details.protection-details").get_attribute("open")),
+        "Protection details disclosure did not open",
+    )
+
+
 def apply_profile(driver: webdriver.Firefox, site_handle: str, profile: str) -> None:
     selector = Select(driver.find_element(By.ID, "siteProfile"))
     selector.select_by_value(profile)
@@ -357,7 +368,10 @@ def main() -> int:
         time.sleep(0.35)
         require(not host_hits(TRACKER_HOST), "Protection-details probe tracker request is blocked")
         driver.switch_to.window(popup_handle)
-        driver.find_element(By.ID, "refreshDetails").click()
+        open_protection_details(driver)
+        refresh_button = driver.find_element(By.ID, "refreshDetails")
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", refresh_button)
+        refresh_button.click()
         wait_for(driver, lambda d: "Tracker requests" in d.find_element(By.ID, "detailList").text, "Refresh did not expose fresh tracker reason in Protection details")
         require("Protection details refreshed." in driver.find_element(By.ID, "popupStatus").text, "Refresh reports completion")
         require(True, "Protection details refreshes without page reload")
@@ -399,8 +413,10 @@ def main() -> int:
         wait_for(driver, lambda d: "Clean URL copied." in d.find_element(By.ID, "popupStatus").text, "Copy clean URL did not complete in Firefox")
         require(True, "Copy clean URL executes through popup in real Firefox")
 
+        open_protection_details(driver)
         snapshot_button = driver.find_element(By.ID, "copySupportSnapshot")
         require(not snapshot_button.get_attribute("disabled"), "Copy support snapshot is available on a web page")
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", snapshot_button)
         snapshot_button.click()
         wait_for(driver, lambda d: "Privacy-safe support snapshot copied." in d.find_element(By.ID, "popupStatus").text, "Copy support snapshot did not complete in Firefox")
         require(True, "privacy-safe support snapshot copies through popup in real Firefox")
