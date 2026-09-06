@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = ROOT.parents[1]
 manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
 assert manifest["manifest_version"] == 3
@@ -16,6 +17,7 @@ for permission in ("webRequest", "webRequestBlocking", "storage", "clipboardWrit
     assert permission in manifest.get("permissions", []), permission
 for required in (
     "README.md", "PRIVACY.md", "SECURITY.md", "ARCHITECTURE.md", "BROAD_HOST_PERMISSION_REVIEW.md",
+    "RELEASE.md", "SIGNING.md", "RELEASE-PRIVACY-REVIEW-0.2.0.md",
     "vendor/THIRD_PARTY_NOTICES.md", "hidden.html", "src/cosmetic-rules.js", "src/hidden.js",
     "src/logger-privacy.js", "src/site-profiles.js", "src/support-snapshot.js",
     "scripts/test_logger_privacy.js", "scripts/test_background_activity.js", "scripts/test_site_profiles.js",
@@ -35,6 +37,10 @@ support_snapshot_test = (ROOT / "scripts/test_support_snapshot.js").read_text(en
 popup_runtime_test = (ROOT / "tests/popup_quick_controls_smoke.py").read_text(encoding="utf-8")
 background_js = (ROOT / "src/background.js").read_text(encoding="utf-8")
 content_js = (ROOT / "src/content.js").read_text(encoding="utf-8")
+release_doc = (ROOT / "RELEASE.md").read_text(encoding="utf-8")
+signing_doc = (ROOT / "SIGNING.md").read_text(encoding="utf-8")
+release_privacy_review = (ROOT / "RELEASE-PRIVACY-REVIEW-0.2.0.md").read_text(encoding="utf-8")
+signing_workflow = (REPO_ROOT / ".github/workflows/privacy-shield-mozilla-signing.yml").read_text(encoding="utf-8")
 assert 'src/logger-privacy.js' in logger_html, "logger page must load privacy helper"
 assert 'id="privacyView"' in logger_html, "logger Privacy view control missing"
 assert 'id="hiddenCountSummary"' in logger_html, "logger hidden summary missing"
@@ -99,5 +105,30 @@ for marker in (
     assert marker in popup_runtime_test, f"popup runtime acceptance marker missing: {marker}"
 assert 'WebExtensionPolicy.getByID' in popup_runtime_test, "popup runtime test must inspect the installed extension origin"
 assert 'inBackground: true' in popup_runtime_test, "popup runtime test must preserve the protected active tab during popup initialization"
+
+# Release governance must preserve the current Stable/candidate distinction and the reviewed privacy boundary.
+release_lower = release_doc.lower()
+review_lower = release_privacy_review.lower()
+signing_lower = signing_doc.lower()
+assert '0.1.1 remains the current stable' in release_lower, "0.2 release record must preserve Stable 0.1.1"
+assert '0.2.0 is a **candidate**' in release_doc, "0.2 must remain explicitly candidate until promotion"
+assert 'source-level release privacy review passed' in review_lower, "0.2 source-level release privacy review result missing"
+assert 'does **not** make 0.2.0 stable' in review_lower, "privacy review must not imply Stable promotion"
+for boundary in ('raw request', 'query', 'page content', 'selectors', 'credentials', 'logger identifiers'):
+    assert boundary in review_lower, f"release privacy review missing private-data boundary: {boundary}"
+assert 'hostname is intentionally included' in review_lower, "release privacy review must disclose hostname inclusion"
+assert 'manual target-environment' in release_lower and 'representative-site compatibility' in release_lower, "remaining human/compatibility gates missing from release record"
+assert 'mozilla unlisted signing' in release_lower and 'persistent signed installation' in release_lower, "remaining signing/restart gates missing from release record"
+
+# Signing guidance/workflow must be deliberate, version-dynamic, unlisted, secret-bound, and test the returned signed XPI.
+assert 'manual-only' in signing_lower and 'version-dynamic' in signing_lower, "signing guidance must describe manual version-dynamic release operation"
+assert 'privacy-shield@goreecloud.com' in signing_doc and 'unlisted/self-distribution' in signing_lower, "signing identity/channel boundary missing"
+assert 'AMO_JWT_ISSUER' in signing_doc and 'AMO_JWT_SECRET' in signing_doc, "signing credential names missing"
+assert 'workflow_dispatch:' in signing_workflow, "Mozilla signing workflow must remain manual-only"
+assert 'test_site_profiles.js' in signing_workflow and 'test_support_snapshot.js' in signing_workflow, "signing preflight must validate 0.2 profiles/support snapshot"
+assert 'popup_quick_controls_smoke.py' in signing_workflow, "signed XPI popup acceptance missing from signing workflow"
+assert 'event_page_recovery_smoke.py' in signing_workflow, "signed XPI MV3 recovery acceptance missing from signing workflow"
+assert 'signed_restart_smoke.py' in signing_workflow, "persistent signed restart acceptance missing from signing workflow"
+assert '--channel=unlisted' in signing_workflow and 'web-ext@10.5.0' in signing_workflow, "Mozilla unlisted signing tool/channel boundary drifted"
 
 print("Privacy Shield source contract validated.")
