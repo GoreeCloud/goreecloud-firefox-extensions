@@ -11,6 +11,20 @@ Create Mozilla Add-ons API credentials from the AMO Developer Hub and store them
 
 Do not commit either value, put either value in workflow files, copy either value into changelogs or documentation, include either value in artifacts, or disclose either value in support/debug output.
 
+## Target-acceptance evidence boundary
+
+For Privacy Shield 0.2.0, manual target-environment acceptance is recorded locally with `scripts/target_acceptance.py`. The completed JSON record is deliberately privacy-minimized, but it can still contain the hostnames selected for representative compatibility review. It does **not** need to be uploaded to GitHub merely to start signing.
+
+Before invoking the manual signing workflow, validate the completed record with `--require-release-ready`, then calculate its SHA-256 locally. The workflow requires three non-secret provenance inputs:
+
+- `target_acceptance_source_revision` — the exact full source revision bound into the completed record;
+- `target_acceptance_xpi_sha256` — the exact unsigned XPI digest already bound into the completed record;
+- `target_acceptance_record_sha256` — the SHA-256 of the completed local JSON record itself.
+
+The workflow fails closed unless the target-acceptance source revision exactly equals the workflow's checked-out `GITHUB_SHA`, and it fails again unless the deterministic XPI rebuilt for Mozilla signing exactly matches the reviewed XPI SHA-256. Only the evidence digest—not the local review record contents—is retained alongside signed release evidence. This binds target review → exact source → exact unsigned package → Mozilla submission without publishing private browsing evidence.
+
+A record digest is provenance linkage, not proof that the human review was performed correctly. Governed release review still controls whether the target-acceptance record is legitimate and sufficient.
+
 ## Canonical release workflow
 
 `.github/workflows/privacy-shield-mozilla-signing.yml` is the canonical signing and signed-artifact acceptance workflow. It is **manual-only** through `workflow_dispatch`; a normal source merge does not submit an add-on to Mozilla.
@@ -19,20 +33,21 @@ The workflow is version-dynamic. It resolves the Privacy Shield version from the
 
 For the exact revision deliberately selected for signing, the workflow:
 
-1. re-runs repository and Privacy Shield source validation, including core behavior, site-profile, support-snapshot privacy, logger-privacy, and unified-background regression tests;
-2. syntax-checks the maintained Python acceptance programs used by the signed release path;
-3. builds the deterministic unsigned Privacy Shield XPI with `shared/scripts/package_extension.py`;
-4. extracts that exact packaged payload to a clean signing directory, so documentation, Python tests, scripts, and other files excluded by the canonical packager cannot silently enter the XPI;
-5. verifies the fixed add-on ID and the dynamically resolved manifest version, then records the deterministic unsigned candidate SHA-256;
-6. requires the AMO credentials only from GitHub encrypted repository secrets and fails closed before Mozilla submission if either secret is unavailable;
-7. submits the staged payload through pinned `web-ext` 10.5.0 on Node.js 22 with `--channel=unlisted`;
-8. requires exactly one returned signed XPI, verifies archive integrity and Mozilla signature metadata, normalizes its filename, and records its SHA-256;
-9. runs the returned **signed XPI** through the full real-Firefox runtime regression suite;
-10. runs the returned signed XPI through the 0.2 popup quick-control acceptance path, including Standard/Strict/Compatible behavior, Reset, Refresh, Copy clean URL, and Copy support snapshot when those controls are present in the signed version;
-11. runs the returned signed XPI through the controlled representative-archetype compatibility matrix, requiring Strict breakage behavior and recovery through Compatible and Reset while known tracker blocking remains active;
-12. runs the returned signed XPI through explicit Manifest V3 event-page termination and wake-recovery acceptance;
-13. installs the returned signed XPI persistently into a Firefox profile, executes critical protections, fully closes Firefox, launches a second Firefox process on the same profile without reinstalling the add-on, and repeats the critical checks;
-14. retains the signed XPI plus unsigned/signed digest evidence as a GitHub Actions artifact only after every signing and signed-runtime gate succeeds.
+1. validates and binds the target-acceptance source revision, reviewed unsigned-XPI digest, and local target-record digest without uploading the record contents;
+2. re-runs repository and Privacy Shield source validation, including core behavior, site-profile, support-snapshot privacy, target-acceptance evidence-contract tests, logger-privacy, and unified-background regression tests;
+3. syntax-checks the maintained Python acceptance programs used by the signed release path;
+4. builds the deterministic unsigned Privacy Shield XPI with `shared/scripts/package_extension.py`;
+5. extracts that exact packaged payload to a clean signing directory, so documentation, Python tests, scripts, and other files excluded by the canonical packager cannot silently enter the XPI;
+6. verifies the fixed add-on ID and dynamically resolved manifest version, recomputes the candidate XPI SHA-256, and requires it to equal the digest already reviewed on the target environment;
+7. requires the AMO credentials only from GitHub encrypted repository secrets and fails closed before Mozilla submission if either secret is unavailable;
+8. submits the staged payload through pinned `web-ext` 10.5.0 on Node.js 22 with `--channel=unlisted`;
+9. requires exactly one returned signed XPI, verifies archive integrity and Mozilla signature metadata, normalizes its filename, and records its SHA-256;
+10. runs the returned **signed XPI** through the full real-Firefox runtime regression suite;
+11. runs the returned signed XPI through the 0.2 popup quick-control acceptance path, including Standard/Strict/Compatible behavior, Reset, Refresh, Copy clean URL, and Copy support snapshot when those controls are present in the signed version;
+12. runs the returned signed XPI through the controlled representative-archetype compatibility matrix, requiring Strict breakage behavior and recovery through Compatible and Reset while known tracker blocking remains active;
+13. runs the returned signed XPI through explicit Manifest V3 event-page termination and wake-recovery acceptance;
+14. installs the returned signed XPI persistently into a Firefox profile, executes critical protections, fully closes Firefox, launches a second Firefox process on the same profile without reinstalling the add-on, and repeats the critical checks;
+15. retains the signed XPI, unsigned/signed package digests, and the privacy-safe target-acceptance provenance digest tuple as a GitHub Actions artifact only after every signing and signed-runtime gate succeeds.
 
 The signing workflow does not transform a candidate into Stable by itself. Stable promotion remains a separate governed decision requiring all release-specific source, runtime, privacy, compatibility, manual-review, signing, restart, and evidence gates applicable to that version.
 
@@ -40,13 +55,14 @@ The signing workflow does not transform a candidate into Stable by itself. Stabl
 
 Version 0.2.0 remains a candidate until its remaining release gates are complete. The current signing workflow has been strengthened so that, when 0.2.0 is deliberately submitted, Mozilla's returned signed artifact—not merely the unsigned source candidate—is exercised through:
 
+- exact source/XPI linkage to a completed target-acceptance record digest;
 - the normal real-Firefox Privacy Shield runtime regression matrix;
 - the installed popup quick-control acceptance matrix;
 - controlled article, script-dependent application, and third-party-embed Strict → Compatible → Reset recovery archetypes;
 - forced non-persistent MV3 event-page wake recovery; and
 - persistent same-profile Firefox restart acceptance.
 
-The deterministic compatibility fixtures are regression evidence only and do not replace target-environment representative-site review. The human release path is recorded in `RELEASE-ACCEPTANCE-0.2.0.md`.
+The deterministic compatibility fixtures are regression evidence only and do not replace target-environment representative-site review. The human release path and privacy-safe local evidence workflow are recorded in `RELEASE-ACCEPTANCE-0.2.0.md`.
 
 The 0.2.0 release privacy review is recorded separately in `RELEASE-PRIVACY-REVIEW-0.2.0.md`. That review does not authorize automatic signing or Stable promotion. Manual target-environment interaction review, representative-site compatibility/recovery review, exact copied-support-snapshot inspection, deliberate Mozilla signing, signed-artifact acceptance, and governed release promotion remain independently evidence-bound.
 
