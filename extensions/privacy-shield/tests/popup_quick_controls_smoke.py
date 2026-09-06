@@ -75,6 +75,7 @@ class FixtureHandler(BaseHTTPRequestHandler):
                 f"""<!doctype html><html><head><meta charset=\"utf-8\"><title>Popup Controls</title></head>
 <body>
   <p id=\"ready\">popup controls fixture</p>
+  <a id=\"dirty-link\" href=\"/next?utm_source=page-link&fbclid=page-link&keep=1\">dirty link</a>
   <ins id=\"adnode\" class=\"adsbygoogle\">advertisement</ins>
   <script src=\"http://{THIRD_PARTY_HOST}:{port}/third-party.js\"></script>
   <script src=\"http://{TRACKER_HOST}:{port}/tracker.js\"></script>
@@ -317,6 +318,13 @@ def main() -> int:
             driver,
             lambda d: "utm_source=" not in d.current_url and "fbclid=" not in d.current_url and "keep=yes" in d.current_url,
             "initial main-frame tracking cleanup did not converge",
+        )
+        wait_for(
+            driver,
+            lambda d: "utm_source=" not in (d.find_element(By.ID, "dirty-link").get_attribute("href") or "")
+            and "fbclid=" not in (d.find_element(By.ID, "dirty-link").get_attribute("href") or "")
+            and "keep=1" in (d.find_element(By.ID, "dirty-link").get_attribute("href") or ""),
+            "content-script link cleanup did not create current-tab Cleaned activity",
         )
         time.sleep(0.75)
         assert_standard_runtime(driver)
