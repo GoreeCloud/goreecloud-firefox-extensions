@@ -33,6 +33,15 @@ jobs:
       - name: Install Selenium
         run: python -m pip install --disable-pip-version-check selenium
 
+      - name: Resolve Privacy Shield version
+        id: version
+        shell: bash
+        run: |
+          VERSION="$(python -c 'import json; print(json.load(open("extensions/privacy-shield/manifest.json", encoding="utf-8"))["version"])')"
+          test -n "$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "PRIVACY_SHIELD_VERSION=$VERSION" >> "$GITHUB_ENV"
+
       - name: Validate exact source candidate
         run: |
           python shared/scripts/validate_repository.py
@@ -52,7 +61,7 @@ jobs:
           candidate="$(find dist/candidate -maxdepth 1 -type f -name 'goreecloud-privacy-shield-*.xpi' -print -quit)"
           test -n "$candidate"
           mkdir -p signing-source dist/mozilla
-          python - "$candidate" <<'PY'
+          python - "$candidate" "$PRIVACY_SHIELD_VERSION" <<'PY'
           import hashlib
           import json
           import sys
@@ -60,6 +69,7 @@ jobs:
           from pathlib import Path
 
           candidate = Path(sys.argv[1])
+          expected_version = sys.argv[2]
           stage = Path('signing-source')
           with zipfile.ZipFile(candidate) as archive:
               bad = archive.testzip()
@@ -69,8 +79,8 @@ jobs:
           manifest = json.loads((stage / 'manifest.json').read_text(encoding='utf-8'))
           if manifest.get('browser_specific_settings', {}).get('gecko', {}).get('id') != 'privacy-shield@goreecloud.com':
               raise SystemExit('unexpected or missing Firefox extension ID')
-          if manifest.get('version') != '0.1.0':
-              raise SystemExit(f"unexpected candidate version: {manifest.get('version')}")
+          if manifest.get('version') != expected_version:
+              raise SystemExit(f"unexpected candidate version: {manifest.get('version')} (expected {expected_version})")
           digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
           Path('dist/candidate-sha256.txt').write_text(f'{digest}  {candidate.name}\n', encoding='utf-8')
           print(f'Candidate SHA-256: {digest}')
@@ -105,17 +115,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
+          python - "$PRIVACY_SHIELD_VERSION" <<'PY'
           import hashlib
           import shutil
+          import sys
           import zipfile
           from pathlib import Path
 
+          version = sys.argv[1]
           files = sorted(Path('dist/mozilla').glob('*.xpi'))
           if len(files) != 1:
               raise SystemExit(f'expected exactly one Mozilla-signed XPI, found: {files}')
           source = files[0]
-          target = Path('dist/goreecloud-privacy-shield-0.1.0-signed.xpi')
+          target = Path(f'dist/goreecloud-privacy-shield-{version}-signed.xpi')
           shutil.copy2(source, target)
           with zipfile.ZipFile(target) as archive:
               bad = archive.testzip()
@@ -130,21 +142,21 @@ jobs:
           Path('dist/signed-sha256.txt').write_text(f'{digest}  {target.name}\n', encoding='utf-8')
           print(f'Signed SHA-256: {digest}')
           PY
-          unzip -t dist/goreecloud-privacy-shield-0.1.0-signed.xpi
+          unzip -t "dist/goreecloud-privacy-shield-${PRIVACY_SHIELD_VERSION}-signed.xpi"
 
       - name: Route controlled tracker host locally
         run: echo '127.0.0.1 google-analytics.com' | sudo tee -a /etc/hosts
 
       - name: Persistent signed-XPI install and Firefox restart acceptance
-        run: python extensions/privacy-shield/tests/signed_restart_smoke.py dist/goreecloud-privacy-shield-0.1.0-signed.xpi
+        run: python extensions/privacy-shield/tests/signed_restart_smoke.py "dist/goreecloud-privacy-shield-${PRIVACY_SHIELD_VERSION}-signed.xpi"
 
       - name: Retain signed release evidence
         uses: actions/upload-artifact@v4
         with:
-          name: goreecloud-privacy-shield-0.1.0-mozilla-signed
+          name: goreecloud-privacy-shield-${{ steps.version.outputs.version }}-mozilla-signed
           retention-days: 30
           if-no-files-found: error
           path: |
-            dist/goreecloud-privacy-shield-0.1.0-signed.xpi
+            dist/goreecloud-privacy-shield-*-signed.xpi
             dist/candidate-sha256.txt
             dist/signed-sha256.txt
