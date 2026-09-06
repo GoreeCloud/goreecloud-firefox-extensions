@@ -36,6 +36,8 @@ jobs:
         run: node extensions/privacy-shield/scripts/test_core.js
       - name: Test Privacy Shield site profiles
         run: node extensions/privacy-shield/scripts/test_site_profiles.js
+      - name: Test Privacy Shield support snapshots
+        run: node extensions/privacy-shield/scripts/test_support_snapshot.js
       - name: Test Privacy Shield logger privacy
         run: node extensions/privacy-shield/scripts/test_logger_privacy.js
       - name: Test Privacy Shield unified background activity
