@@ -83,6 +83,7 @@ jobs:
         run: |
           python shared/scripts/validate_repository.py
           python extensions/privacy-shield/scripts/validate.py
+          python extensions/privacy-shield/scripts/validate_target_acceptance_source.py
           node extensions/privacy-shield/scripts/test_core.js
           node extensions/privacy-shield/scripts/test_site_profiles.js
           node extensions/privacy-shield/scripts/test_support_snapshot.js
@@ -91,6 +92,8 @@ jobs:
           node extensions/privacy-shield/scripts/test_background_activity.js
           python -m py_compile \
             extensions/privacy-shield/scripts/target_acceptance.py \
+            extensions/privacy-shield/scripts/test_target_acceptance.py \
+            extensions/privacy-shield/scripts/validate_target_acceptance_source.py \
             extensions/privacy-shield/tests/runtime_smoke.py \
             extensions/privacy-shield/tests/popup_quick_controls_smoke.py \
             extensions/privacy-shield/tests/compatibility_recovery_smoke.py \
