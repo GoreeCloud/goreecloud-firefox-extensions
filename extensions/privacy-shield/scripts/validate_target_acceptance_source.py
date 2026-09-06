@@ -10,6 +10,8 @@ acceptance = (ROOT / "RELEASE-ACCEPTANCE-0.2.0.md").read_text(encoding="utf-8")
 signing = (ROOT / "SIGNING.md").read_text(encoding="utf-8")
 repository_workflow = (REPO_ROOT / ".github/workflows/firefox-repository.yml").read_text(encoding="utf-8")
 signing_workflow = (REPO_ROOT / ".github/workflows/privacy-shield-mozilla-signing.yml").read_text(encoding="utf-8")
+target_review_workflow_path = REPO_ROOT / ".github/workflows/privacy-shield-target-review.yml"
+target_review_workflow = target_review_workflow_path.read_text(encoding="utf-8")
 packager = (REPO_ROOT / "shared/scripts/package_extension.py").read_text(encoding="utf-8")
 
 for required in (
@@ -17,6 +19,7 @@ for required in (
     ROOT / "scripts/test_target_acceptance.py",
     ROOT / "scripts/validate_target_acceptance_source.py",
     ROOT / "RELEASE-ACCEPTANCE-0.2.0.md",
+    target_review_workflow_path,
 ):
     assert required.is_file(), required
 
@@ -85,6 +88,27 @@ assert 'python extensions/privacy-shield/scripts/validate_target_acceptance_sour
 assert 'python extensions/privacy-shield/scripts/test_target_acceptance.py' in repository_workflow, \
     "repository workflow must run target acceptance evidence tests"
 
+# The manual target-review packaging path must bind exact source, deterministic bytes, and browser-observable acceptance.
+assert 'workflow_dispatch:' in target_review_workflow, "target-review candidate workflow must remain manual-only"
+assert 'source_revision:' in target_review_workflow, "target-review workflow must require an exact source revision input"
+assert 'ref: ${{ inputs.source_revision }}' in target_review_workflow, "target-review checkout must use the requested exact revision"
+assert 'test "$actual" = "$TARGET_SOURCE_REVISION"' in target_review_workflow, "target-review workflow must verify exact checkout provenance"
+assert "test \"$version\" = '0.2.0'" in target_review_workflow, "target-review artifact workflow must remain release-specific"
+assert 'cmp "$first" "$second"' in target_review_workflow, "target-review workflow must prove deterministic package bytes"
+assert 'privacy-shield@goreecloud.com' in target_review_workflow, "target-review workflow must verify the fixed Firefox add-on identity"
+for marker in (
+    'runtime_smoke.py',
+    'popup_quick_controls_smoke.py',
+    'compatibility_recovery_smoke.py',
+    'event_page_recovery_smoke.py',
+):
+    assert marker in target_review_workflow, f"target-review Firefox acceptance gate missing: {marker}"
+assert 'candidate-sha256.txt' in target_review_workflow and 'source-revision.txt' in target_review_workflow, \
+    "target-review artifact must retain source and XPI digest provenance"
+assert 'actions/upload-artifact@v4' in target_review_workflow, "target-review artifact must be retained for human review"
+assert 'AMO_JWT_' not in target_review_workflow and 'web-ext' not in target_review_workflow, \
+    "target-review packaging must never sign or require Mozilla signing credentials"
+
 # Manual signing must bind the private/local review record to exact source and exact XPI bytes.
 for input_name in (
     'target_acceptance_source_revision',
@@ -105,7 +129,7 @@ assert 'python extensions/privacy-shield/scripts/test_target_acceptance.py' in s
 assert 'extensions/privacy-shield/scripts/target_acceptance.py' in signing_workflow, \
     "signing preflight must syntax-check the target acceptance tool"
 
-# Documentation must not imply that a digest replaces human review.
+# Documentation must not imply that a digest or generated artifact replaces human review.
 acceptance_lower = acceptance.lower()
 signing_lower = signing.lower()
 for marker in (
@@ -113,6 +137,8 @@ for marker in (
     'target_acceptance.py validate',
     '--require-release-ready',
     'do not commit a review record merely because the validator accepts it',
+    'privacy shield target review candidate',
+    'target-review artifact is not human acceptance',
 ):
     assert marker in acceptance_lower, f"target acceptance guidance missing: {marker}"
 for marker in (
