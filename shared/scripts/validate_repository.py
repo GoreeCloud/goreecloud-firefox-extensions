@@ -5,14 +5,25 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 INVENTORY = ROOT / "docs" / "extension-inventory.json"
+VERSION_RE = re.compile(r"\d+(?:\.\d+){1,3}")
+SOURCE_STATES = {"source-candidate", "canonical-source", "candidate", "stable"}
 
 
 def fail(message: str) -> None:
     raise SystemExit(f"ERROR: {message}")
 
 
+def valid_version(value: object) -> bool:
+    return isinstance(value, str) and bool(VERSION_RE.fullmatch(value))
+
+
 def main() -> None:
     data = json.loads(INVENTORY.read_text(encoding="utf-8"))
+    if data.get("schema_version") != 2:
+        fail("extension inventory must use schema_version 2")
+    if data.get("repository") != "GoreeCloud/goreecloud-firefox-extensions":
+        fail("extension inventory repository authority mismatch")
+
     entries = data.get("extensions", [])
     if not entries:
         fail("extension inventory is empty")
@@ -28,6 +39,26 @@ def main() -> None:
 
         if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug):
             fail(f"invalid extension slug: {slug}")
+
+        if "release_status" in entry:
+            fail(f"{slug} uses ambiguous legacy release_status; use source_state and accepted_stable_version")
+
+        source_state = entry.get("source_state")
+        if source_state not in SOURCE_STATES:
+            fail(f"invalid source_state for {slug}: {source_state!r}")
+
+        source_version = entry.get("source_version")
+        if not valid_version(source_version):
+            fail(f"invalid source_version for {slug}: {source_version!r}")
+
+        accepted_stable_version = entry.get("accepted_stable_version")
+        if accepted_stable_version is not None and not valid_version(accepted_stable_version):
+            fail(f"invalid accepted_stable_version for {slug}: {accepted_stable_version!r}")
+
+        if source_state == "stable" and accepted_stable_version != source_version:
+            fail(f"{slug} source_state=stable requires accepted_stable_version to equal source_version")
+        if source_state in {"source-candidate", "candidate"} and accepted_stable_version == source_version:
+            fail(f"{slug} candidate source cannot simultaneously identify the same version as accepted Stable")
 
         extension_dir = ROOT / entry["directory"]
         manifest_path = extension_dir / "manifest.json"
@@ -51,8 +82,10 @@ def main() -> None:
         seen_ids.add(gecko_id)
 
         version = manifest.get("version")
-        if not isinstance(version, str) or not re.fullmatch(r"\d+(?:\.\d+){1,3}", version):
+        if not valid_version(version):
             fail(f"invalid version for {slug}: {version!r}")
+        if version != source_version:
+            fail(f"inventory source_version mismatch for {slug}: manifest={version!r}, inventory={source_version!r}")
 
         for required in ("README.md",):
             if not (extension_dir / required).is_file():
@@ -72,7 +105,7 @@ def main() -> None:
             if len(review_text) < 200:
                 fail(f"{slug} broad host permission review is not substantive: {review}")
 
-    print(f"Validated {len(entries)} canonical GoreeCloud Firefox extensions.")
+    print(f"Validated {len(entries)} canonical GoreeCloud Firefox extensions with split source/Stable release state.")
 
 
 if __name__ == "__main__":
