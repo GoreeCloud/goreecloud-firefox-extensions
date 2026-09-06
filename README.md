@@ -48,7 +48,7 @@ Additional extension directories use concise lowercase kebab-case names under `e
 | GoreeCloud Redirector | `extensions/redirector/` | `redirector@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-redirector` |
 | GoreeCloud Source Resync | `extensions/source-resync/` | `source-resync@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-source-resync` |
 
-Machine-readable inventory lives in [`docs/extension-inventory.json`](docs/extension-inventory.json).
+Machine-readable inventory lives in [`docs/extension-inventory.json`](docs/extension-inventory.json). Inventory schema v2 deliberately records each checked-in manifest version and source lifecycle state separately from any independently accepted Mozilla-signed Stable version, so a newer source candidate cannot silently inherit an older release's Stable status.
 
 Legacy repositories may remain available for provenance, redirects, compatibility, or release continuity, but new Firefox-specific development belongs in the canonical directory after migration acceptance.
 
@@ -60,7 +60,7 @@ Repository-wide source validation:
 python shared/scripts/validate_repository.py
 ```
 
-The shared validator checks the canonical inventory, Manifest V3 status, GoreeCloud product names, unique Firefox add-on IDs, version syntax, required documentation, and required-host permission boundaries. Broad required host access is accepted only when the extension inventory points to a substantive review document.
+The shared validator checks the schema-v2 inventory, exact manifest-to-inventory source-version agreement, source-versus-Stable lifecycle separation, Manifest V3 status, GoreeCloud product names, unique Firefox add-on IDs, version syntax, required documentation, and required-host permission boundaries. Broad required host access is accepted only when the extension inventory points to a substantive review document.
 
 Extension-specific validation remains available where an extension needs stricter checks. GitHub Actions runs repository-wide validation, JavaScript syntax checks, deterministic unsigned packaging, and archive-integrity checks for maintained extensions.
 
