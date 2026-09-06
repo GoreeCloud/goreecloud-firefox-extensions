@@ -5,6 +5,7 @@
   const LP = globalThis.PrivacyShieldLoggerPrivacy;
   const LOG_LIMIT = 2000;
   const REMOTE_RULE_LIMIT = 60000;
+  const COUNTER_STORAGE_KEY = "runtimeTabCounters";
   const PAGE_FILTER_REASONS = new Set(["cosmetic-content", "annoyance-overlay", "element-picker", "zapper"]);
   const TAB_COUNTER_KEYS = new Set(["blocked", "cleaned", "hidden", "local"]);
   const BADGE_BACKGROUND = "#356DC7";
@@ -15,6 +16,53 @@
   let combinedRules = C.mergeParsedRules(userRules, remoteRules);
   let logs = [];
   const countersByTab = new Map();
+  let counterPersistQueue = Promise.resolve();
+
+  function emptyTabCounters() {
+    return { blocked: 0, cleaned: 0, hidden: 0, local: 0 };
+  }
+
+  function normalizeStoredCounters(value) {
+    const normalized = emptyTabCounters();
+    for (const key of TAB_COUNTER_KEYS) normalized[key] = Math.max(0, Math.floor(Number(value?.[key]) || 0));
+    return normalized;
+  }
+
+  function serializeTabCounters() {
+    const out = {};
+    for (const [tabId, counters] of countersByTab) {
+      if (!Number.isInteger(tabId) || tabId < 0) continue;
+      out[String(tabId)] = normalizeStoredCounters(counters);
+    }
+    return out;
+  }
+
+  async function restoreTabCounters() {
+    if (!browser.storage?.session) return;
+    try {
+      const stored = await browser.storage.session.get(COUNTER_STORAGE_KEY);
+      const entries = stored?.[COUNTER_STORAGE_KEY] || {};
+      for (const [rawTabId, counters] of Object.entries(entries)) {
+        const tabId = Number(rawTabId);
+        if (!Number.isInteger(tabId) || tabId < 0) continue;
+        countersByTab.set(tabId, normalizeStoredCounters(counters));
+      }
+    } catch (error) {
+      console.warn("Privacy Shield could not restore session counters", error);
+    }
+  }
+
+  function persistTabCounters() {
+    if (!browser.storage?.session) return Promise.resolve();
+    const snapshot = serializeTabCounters();
+    counterPersistQueue = counterPersistQueue
+      .catch(() => {})
+      .then(() => browser.storage.session.set({ [COUNTER_STORAGE_KEY]: snapshot }))
+      .catch((error) => {
+        console.warn("Privacy Shield could not persist session counters", error);
+      });
+    return counterPersistQueue;
+  }
 
   const ready = (async () => {
     try {
@@ -23,15 +71,18 @@
       userRules = C.parseFilterText(settings.customRules || "");
       remoteRules = C.parseFilterText(stored.remoteRuleText || "");
       combinedRules = C.mergeParsedRules(userRules, remoteRules);
+    } catch (error) {
+      console.error("Privacy Shield settings initialization failed", error);
+    }
+
+    try {
       builtin = await fetch(browser.runtime.getURL("rules/builtin.json")).then((r) => r.json());
     } catch (error) {
-      console.error("Privacy Shield initialization failed", error);
+      console.error("Privacy Shield built-in rules initialization failed", error);
     }
-  })();
 
-  function emptyTabCounters() {
-    return { blocked: 0, cleaned: 0, hidden: 0, local: 0 };
-  }
+    await restoreTabCounters();
+  })();
 
   function tabCounters(tabId) {
     if (!countersByTab.has(tabId)) countersByTab.set(tabId, emptyTabCounters());
@@ -57,18 +108,20 @@
     browser.action.setBadgeText({ tabId, text }).catch(() => {});
   }
 
-  function incrementTabCounter(tabId, stat, amount = 1) {
+  async function incrementTabCounter(tabId, stat, amount = 1) {
     const counters = tabCounters(tabId);
     if (!TAB_COUNTER_KEYS.has(stat)) return counters;
     const delta = Math.min(500, Math.max(1, Number(amount) || 1));
     counters[stat] += delta;
     updateTabBadge(tabId);
+    await persistTabCounters();
     return counters;
   }
 
-  function resetTabCounters(tabId) {
+  async function resetTabCounters(tabId) {
     countersByTab.set(tabId, emptyTabCounters());
     updateTabBadge(tabId);
+    await persistTabCounters();
   }
 
   function logEvent(details, verdict, reason, finalUrl = null, extra = {}) {
@@ -159,7 +212,8 @@
   }
 
   browser.webRequest.onBeforeRequest.addListener(
-    (details) => {
+    async (details) => {
+      await ready;
       if (!/^https?:/i.test(details.url)) return {};
       const site = settingsFor(details);
       if (!site.enabled) return {};
@@ -167,7 +221,7 @@
       if (site.stripTrackingParams && details.type === "main_frame") {
         const cleaned = C.cleanUrl(details.url, { bypassRedirects: site.bypassRedirects });
         if (cleaned !== details.url) {
-          incrementTabCounter(details.tabId, "cleaned");
+          await incrementTabCounter(details.tabId, "cleaned");
           logEvent(details, "redirected", "tracking-parameter-cleanup", cleaned);
           return { redirectUrl: cleaned };
         }
@@ -177,7 +231,7 @@
         const resource = localResourceFor(details.url);
         if (resource) {
           const target = browser.runtime.getURL(resource);
-          incrementTabCounter(details.tabId, "local");
+          await incrementTabCounter(details.tabId, "local");
           logEvent(details, "redirected", "local-resource-substitution", target);
           return { redirectUrl: target };
         }
@@ -185,7 +239,7 @@
 
       const reason = blockReason(details, site);
       if (reason) {
-        incrementTabCounter(details.tabId, "blocked");
+        await incrementTabCounter(details.tabId, "blocked");
         logEvent(details, "blocked", reason);
         return { cancel: true };
       }
@@ -197,7 +251,8 @@
   );
 
   browser.webRequest.onBeforeSendHeaders.addListener(
-    (details) => {
+    async (details) => {
+      await ready;
       const site = settingsFor(details);
       if (!site.enabled || !site.stripETags) return {};
       const requestHeaders = (details.requestHeaders || []).filter((header) => header.name.toLowerCase() !== "if-none-match");
@@ -208,7 +263,8 @@
   );
 
   browser.webRequest.onHeadersReceived.addListener(
-    (details) => {
+    async (details) => {
+      await ready;
       const site = settingsFor(details);
       if (!site.enabled || !site.stripETags) return {};
       const responseHeaders = (details.responseHeaders || []).filter((header) => header.name.toLowerCase() !== "etag");
@@ -303,16 +359,22 @@
       const reason = String(message.reason || "");
       if (!PAGE_FILTER_REASONS.has(reason)) return false;
       const amount = Math.min(500, Math.max(1, Number(message.amount) || 1));
-      const counters = incrementTabCounter(sender.tab.id, "hidden", amount);
+      const counters = await incrementTabCounter(sender.tab.id, "hidden", amount);
       logPageFilter(sender, reason, amount);
       return counters;
     }
     return undefined;
   });
 
-  browser.tabs.onRemoved.addListener((tabId) => countersByTab.delete(tabId));
-  browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
-    if (changeInfo.status === "loading") resetTabCounters(tabId);
+  browser.tabs.onRemoved.addListener(async (tabId) => {
+    await ready;
+    countersByTab.delete(tabId);
+    await persistTabCounters();
+  });
+  browser.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
+    if (changeInfo.status !== "loading") return;
+    await ready;
+    await resetTabCounters(tabId);
   });
 
   browser.runtime.onInstalled.addListener(async () => {
@@ -323,11 +385,13 @@
     browser.menus.create({ id: "privacy-shield-picker", title: "Block element with Privacy Shield", contexts: ["page", "frame"] });
   });
 
-  browser.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === "privacy-shield-filter-lists" && (settings.filterLists || []).length) updateSubscriptions();
+  browser.alarms.onAlarm.addListener(async (alarm) => {
+    await ready;
+    if (alarm.name === "privacy-shield-filter-lists" && (settings.filterLists || []).length) await updateSubscriptions();
   });
 
   browser.menus.onClicked.addListener(async (info, tab) => {
+    await ready;
     if (info.menuItemId === "copy-clean-link" && info.linkUrl) {
       const cleaned = C.cleanUrl(info.linkUrl, { bypassRedirects: true });
       try { await navigator.clipboard.writeText(cleaned); } catch { /* Firefox may require a focused extension document */ }

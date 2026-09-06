@@ -17,7 +17,8 @@ for permission in ("webRequest", "webRequestBlocking", "storage", "clipboardWrit
 for required in (
     "README.md", "PRIVACY.md", "SECURITY.md", "ARCHITECTURE.md", "BROAD_HOST_PERMISSION_REVIEW.md",
     "vendor/THIRD_PARTY_NOTICES.md", "hidden.html", "src/cosmetic-rules.js", "src/hidden.js",
-    "src/logger-privacy.js", "scripts/test_logger_privacy.js", "scripts/test_background_activity.js"
+    "src/logger-privacy.js", "scripts/test_logger_privacy.js", "scripts/test_background_activity.js",
+    "tests/event_page_recovery_smoke.py"
 ):
     assert (ROOT / required).is_file(), required
 for resource in ("vendor/normalize-8.0.1.css", "src/page-guard.js"):
@@ -40,5 +41,9 @@ assert 'selector' not in background_js.split('function logPageFilter', 1)[1].spl
 assert 'TAB_COUNTER_KEYS' in background_js and 'setBadgeText' in background_js, "combined This tab toolbar badge missing"
 assert 'blocked", "cleaned", "hidden", "local' in background_js, "toolbar badge counter set is incomplete"
 assert '999+' in background_js, "toolbar badge compact overflow behavior missing"
+assert 'browser.storage?.session' in background_js and 'runtimeTabCounters' in background_js, "MV3 event-page counter recovery missing"
+assert 'onBeforeRequest.addListener(\n    async (details) => {\n      await ready;' in background_js, "request blocking must await MV3 event-page initialization"
+assert 'onBeforeSendHeaders.addListener(\n    async (details) => {\n      await ready;' in background_js, "request-header protection must await MV3 event-page initialization"
+assert 'onHeadersReceived.addListener(\n    async (details) => {\n      await ready;' in background_js, "response-header protection must await MV3 event-page initialization"
 
 print("Privacy Shield source contract validated.")

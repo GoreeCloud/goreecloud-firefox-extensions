@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GoreeCloud Privacy Shield",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Advanced local-first privacy, content blocking, link cleaning, request controls, and reviewed local CDN substitution for Firefox.",
   "homepage_url": "https://github.com/GoreeCloud/goreecloud-firefox-extensions/tree/main/extensions/privacy-shield",
   "icons": {

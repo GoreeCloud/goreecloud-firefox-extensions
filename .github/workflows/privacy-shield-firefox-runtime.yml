@@ -27,9 +27,18 @@ jobs:
         run: python -m pip install --disable-pip-version-check selenium
       - name: Package Privacy Shield unsigned XPI
         run: python shared/scripts/package_extension.py privacy-shield
+      - name: Resolve packaged Privacy Shield XPI
+        shell: bash
+        run: |
+          VERSION="$(python -c 'import json; print(json.load(open("extensions/privacy-shield/manifest.json", encoding="utf-8"))["version"])')"
+          XPI="dist/goreecloud-privacy-shield-${VERSION}.xpi"
+          test -f "$XPI"
+          echo "PRIVACY_SHIELD_XPI=$XPI" >> "$GITHUB_ENV"
       - name: Route test-only third-party and reviewed site hosts locally
         shell: bash
         run: |
           echo '127.0.0.1 google-analytics.com doubleclick.net coinhive.com cdn.jsdelivr.net reddit.com www.reddit.com pinterest.com www.pinterest.com' | sudo tee -a /etc/hosts
       - name: Run real Firefox runtime smoke suite
-        run: python extensions/privacy-shield/tests/runtime_smoke.py dist/goreecloud-privacy-shield-0.1.0.xpi
+        run: python extensions/privacy-shield/tests/runtime_smoke.py "$PRIVACY_SHIELD_XPI"
+      - name: Force MV3 event-page termination and verify wake recovery
+        run: python extensions/privacy-shield/tests/event_page_recovery_smoke.py "$PRIVACY_SHIELD_XPI"
