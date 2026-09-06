@@ -2,6 +2,19 @@ name: Privacy Shield Mozilla Signing
 
 on:
   workflow_dispatch:
+    inputs:
+      target_acceptance_source_revision:
+        description: 'Exact source revision recorded by the completed privacy-safe target acceptance record'
+        required: true
+        type: string
+      target_acceptance_xpi_sha256:
+        description: 'SHA-256 of the exact unsigned XPI reviewed in the completed target acceptance record'
+        required: true
+        type: string
+      target_acceptance_record_sha256:
+        description: 'SHA-256 of the completed local target acceptance JSON record; do not upload private record contents as an input'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -42,16 +55,45 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "PRIVACY_SHIELD_VERSION=$VERSION" >> "$GITHUB_ENV"
 
+      - name: Bind target acceptance provenance to exact signing source
+        env:
+          TARGET_ACCEPTANCE_SOURCE_REVISION: ${{ inputs.target_acceptance_source_revision }}
+          TARGET_ACCEPTANCE_XPI_SHA256: ${{ inputs.target_acceptance_xpi_sha256 }}
+          TARGET_ACCEPTANCE_RECORD_SHA256: ${{ inputs.target_acceptance_record_sha256 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$TARGET_ACCEPTANCE_SOURCE_REVISION" =~ ^[0-9a-f]{40}$ ]] || { echo '::error::Target acceptance source revision must be a full lowercase Git SHA.'; exit 1; }
+          [[ "$TARGET_ACCEPTANCE_XPI_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo '::error::Target acceptance XPI SHA-256 must be 64 lowercase hex characters.'; exit 1; }
+          [[ "$TARGET_ACCEPTANCE_RECORD_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo '::error::Target acceptance record SHA-256 must be 64 lowercase hex characters.'; exit 1; }
+          if [[ "$TARGET_ACCEPTANCE_SOURCE_REVISION" != "$GITHUB_SHA" ]]; then
+            echo "::error::Target acceptance source revision does not match the exact workflow source revision."
+            echo "Expected: $GITHUB_SHA"
+            echo "Recorded: $TARGET_ACCEPTANCE_SOURCE_REVISION"
+            exit 1
+          fi
+          mkdir -p dist
+          {
+            echo "target_acceptance_source_revision=$TARGET_ACCEPTANCE_SOURCE_REVISION"
+            echo "target_acceptance_xpi_sha256=$TARGET_ACCEPTANCE_XPI_SHA256"
+            echo "target_acceptance_record_sha256=$TARGET_ACCEPTANCE_RECORD_SHA256"
+          } > dist/target-acceptance-evidence.txt
+
       - name: Validate exact source candidate
         run: |
           python shared/scripts/validate_repository.py
           python extensions/privacy-shield/scripts/validate.py
+          python extensions/privacy-shield/scripts/validate_target_acceptance_source.py
           node extensions/privacy-shield/scripts/test_core.js
           node extensions/privacy-shield/scripts/test_site_profiles.js
           node extensions/privacy-shield/scripts/test_support_snapshot.js
+          python extensions/privacy-shield/scripts/test_target_acceptance.py
           node extensions/privacy-shield/scripts/test_logger_privacy.js
           node extensions/privacy-shield/scripts/test_background_activity.js
           python -m py_compile \
+            extensions/privacy-shield/scripts/target_acceptance.py \
+            extensions/privacy-shield/scripts/test_target_acceptance.py \
+            extensions/privacy-shield/scripts/validate_target_acceptance_source.py \
             extensions/privacy-shield/tests/runtime_smoke.py \
             extensions/privacy-shield/tests/popup_quick_controls_smoke.py \
             extensions/privacy-shield/tests/compatibility_recovery_smoke.py \
@@ -62,13 +104,15 @@ jobs:
         run: python shared/scripts/package_extension.py privacy-shield --output-dir dist/candidate
 
       - name: Stage exact packaged payload for Mozilla
+        env:
+          TARGET_ACCEPTANCE_XPI_SHA256: ${{ inputs.target_acceptance_xpi_sha256 }}
         shell: bash
         run: |
           set -euo pipefail
           candidate="$(find dist/candidate -maxdepth 1 -type f -name 'goreecloud-privacy-shield-*.xpi' -print -quit)"
           test -n "$candidate"
           mkdir -p signing-source dist/mozilla
-          python - "$candidate" "$PRIVACY_SHIELD_VERSION" <<'PY'
+          python - "$candidate" "$PRIVACY_SHIELD_VERSION" "$TARGET_ACCEPTANCE_XPI_SHA256" <<'PY'
           import hashlib
           import json
           import sys
@@ -77,6 +121,7 @@ jobs:
 
           candidate = Path(sys.argv[1])
           expected_version = sys.argv[2]
+          reviewed_digest = sys.argv[3]
           stage = Path('signing-source')
           with zipfile.ZipFile(candidate) as archive:
               bad = archive.testzip()
@@ -89,8 +134,11 @@ jobs:
           if manifest.get('version') != expected_version:
               raise SystemExit(f"unexpected candidate version: {manifest.get('version')} (expected {expected_version})")
           digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
+          if digest != reviewed_digest:
+              raise SystemExit(f'target acceptance XPI digest mismatch: reviewed {reviewed_digest}, signing candidate {digest}')
           Path('dist/candidate-sha256.txt').write_text(f'{digest}  {candidate.name}\n', encoding='utf-8')
           print(f'Candidate SHA-256: {digest}')
+          print('Target acceptance XPI digest matches exact signing candidate.')
           PY
 
       - name: Require AMO signing credentials
@@ -181,3 +229,4 @@ jobs:
             dist/goreecloud-privacy-shield-*-signed.xpi
             dist/candidate-sha256.txt
             dist/signed-sha256.txt
+            dist/target-acceptance-evidence.txt
