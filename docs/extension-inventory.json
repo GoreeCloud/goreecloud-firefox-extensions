@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "repository": "GoreeCloud/goreecloud-firefox-extensions",
   "extensions": [
     {
@@ -7,7 +7,9 @@
       "name": "GoreeCloud Bookmarks",
       "directory": "extensions/bookmarks",
       "gecko_id": "goreecloud-bookmarks@goreecloud.com",
-      "release_status": "authenticated-source-candidate",
+      "source_version": "0.1.1",
+      "source_state": "source-candidate",
+      "accepted_stable_version": null,
       "legacy_repository": "GoreeCloud/goreecloud-bookmark-browser-extension"
     },
     {
@@ -15,7 +17,9 @@
       "name": "GoreeCloud Redirector",
       "directory": "extensions/redirector",
       "gecko_id": "redirector@goreecloud.com",
-      "release_status": "canonical-source",
+      "source_version": "0.2.1",
+      "source_state": "canonical-source",
+      "accepted_stable_version": "0.2.0",
       "legacy_repository": "GoreeCloud/goreecloud-redirector"
     },
     {
@@ -23,7 +27,9 @@
       "name": "GoreeCloud Source Resync",
       "directory": "extensions/source-resync",
       "gecko_id": "source-resync@goreecloud.com",
-      "release_status": "canonical-source",
+      "source_version": "1.1.2",
+      "source_state": "canonical-source",
+      "accepted_stable_version": null,
       "legacy_repository": "GoreeCloud/goreecloud-source-resync"
     },
     {
@@ -31,7 +37,9 @@
       "name": "GoreeCloud Privacy Shield",
       "directory": "extensions/privacy-shield",
       "gecko_id": "privacy-shield@goreecloud.com",
-      "release_status": "stable",
+      "source_version": "0.2.0",
+      "source_state": "candidate",
+      "accepted_stable_version": "0.1.1",
       "legacy_repository": null,
       "broad_host_permission_review": "extensions/privacy-shield/BROAD_HOST_PERMISSION_REVIEW.md"
     }
