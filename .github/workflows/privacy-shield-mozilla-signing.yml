@@ -47,9 +47,15 @@ jobs:
           python shared/scripts/validate_repository.py
           python extensions/privacy-shield/scripts/validate.py
           node extensions/privacy-shield/scripts/test_core.js
+          node extensions/privacy-shield/scripts/test_site_profiles.js
+          node extensions/privacy-shield/scripts/test_support_snapshot.js
           node extensions/privacy-shield/scripts/test_logger_privacy.js
           node extensions/privacy-shield/scripts/test_background_activity.js
-          python -m py_compile extensions/privacy-shield/tests/runtime_smoke.py extensions/privacy-shield/tests/signed_restart_smoke.py
+          python -m py_compile \
+            extensions/privacy-shield/tests/runtime_smoke.py \
+            extensions/privacy-shield/tests/popup_quick_controls_smoke.py \
+            extensions/privacy-shield/tests/event_page_recovery_smoke.py \
+            extensions/privacy-shield/tests/signed_restart_smoke.py
 
       - name: Build deterministic unsigned candidate
         run: python shared/scripts/package_extension.py privacy-shield --output-dir dist/candidate
@@ -144,8 +150,19 @@ jobs:
           PY
           unzip -t "dist/goreecloud-privacy-shield-${PRIVACY_SHIELD_VERSION}-signed.xpi"
 
-      - name: Route controlled tracker host locally
-        run: echo '127.0.0.1 google-analytics.com' | sudo tee -a /etc/hosts
+      - name: Route controlled runtime fixture hosts locally
+        shell: bash
+        run: |
+          echo '127.0.0.1 google-analytics.com doubleclick.net coinhive.com thirdparty.test cdn.jsdelivr.net reddit.com www.reddit.com pinterest.com www.pinterest.com' | sudo tee -a /etc/hosts
+
+      - name: Signed XPI real Firefox runtime regression
+        run: python extensions/privacy-shield/tests/runtime_smoke.py "dist/goreecloud-privacy-shield-${PRIVACY_SHIELD_VERSION}-signed.xpi"
+
+      - name: Signed XPI popup quick-control acceptance
+        run: python extensions/privacy-shield/tests/popup_quick_controls_smoke.py "dist/goreecloud-privacy-shield-${PRIVACY_SHIELD_VERSION}-signed.xpi"
+
+      - name: Signed XPI MV3 event-page recovery acceptance
+        run: python extensions/privacy-shield/tests/event_page_recovery_smoke.py "dist/goreecloud-privacy-shield-${PRIVACY_SHIELD_VERSION}-signed.xpi"
 
       - name: Persistent signed-XPI install and Firefox restart acceptance
         run: python extensions/privacy-shield/tests/signed_restart_smoke.py "dist/goreecloud-privacy-shield-${PRIVACY_SHIELD_VERSION}-signed.xpi"
