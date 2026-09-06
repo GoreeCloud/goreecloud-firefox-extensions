@@ -2,20 +2,28 @@
 
 ## 0.2.0 popup quick-controls and support-diagnostics candidate
 
-Version 0.2.0 is a **candidate**, not a Stable release.
+Version 0.2.0 is a **candidate**, not a Stable release. Stable 0.1.1 remains the current accepted Mozilla-unlisted Firefox release until every applicable 0.2.0 gate is satisfied.
 
-The candidate builds on Stable 0.1.1 and adds user-facing Firefox popup controls without broadening permissions or introducing a new remote data path:
+The candidate builds on Stable 0.1.1 and adds user-facing Firefox popup controls without broadening permissions or introducing a new GoreeCloud remote data path:
 
 1. **Copy clean URL** for the current page using the same canonical local URL sanitizer already used by Privacy Shield navigation/link cleanup;
 2. per-site **Standard**, **Strict**, and **Compatible** protection modes using the existing local `siteOverrides` settings boundary;
 3. **Reset site** to remove the complete host-specific override and return to global Privacy Shield settings;
 4. **Protection details** that aggregates current-tab blocked/redirected/hidden reason codes from already-redacted in-memory logger entries and displays only friendly reason labels plus counts;
-5. **Refresh** to re-read the current tab counters and privacy-safe Protection-details state without reloading the page or creating a new history store;
+5. **Refresh** to re-read the current-tab counters and privacy-safe Protection-details state without reloading the page or creating a new history store;
 6. a compact local protection-state line showing On/Off plus the active site mode without claiming remote health, trust, or certification;
 7. **Copy support snapshot**, an explicit local clipboard diagnostic that includes only extension/browser version, hostname, enabled state, site mode, current-tab counters, and friendly aggregate reason counts;
 8. dedicated site-profile and support-snapshot helpers with regression tests and source-contract enforcement.
 
-The initial quick-controls source/runtime candidate was accepted through PR #26 and squash-merged to canonical `main` as `8ebe049738e8eaa6fb62fbfb77dcc406644ab6e0` after exact PR head `caf41e9f69c839164b8d359a1227d190f7d9c7f4` passed Firefox Repository run `34038601483` and Privacy Shield Firefox Runtime run `34038601302`. That establishes source/runtime candidate integration only; it does not promote 0.2.0 to Stable. The support-diagnostics additions are later candidate work and require their own exact-head validation before merge.
+### Accepted source/runtime integration evidence
+
+Quick-control PR #26 exact accepted head `caf41e9f69c839164b8d359a1227d190f7d9c7f4` passed Firefox Repository run `34038601483` and Privacy Shield Firefox Runtime run `34038601302`, then was squash-merged to canonical `main` as `8ebe049738e8eaa6fb62fbfb77dcc406644ab6e0`. Post-merge Firefox Repository run `34039281839` passed.
+
+Privacy-safe support-diagnostics PR #27 exact accepted head `4ff981fc0a9f7a005aca45de3c86ec79606a2940` passed Firefox Repository run `34039723202` and Privacy Shield Firefox Runtime run `34039723198`, then was squash-merged to canonical `main` as `dc7517d412997250c8a609a49464e1af2df59b6a`. Post-merge Firefox Repository run `34039798025` passed.
+
+Automated popup-acceptance PR #28 exact accepted head `5d51f6286a12cb08694a3bf2a1999a208b0e7137` passed Firefox Repository run `34040856513` and Privacy Shield Firefox Runtime run `34040856577` on Firefox 155.0.1. The runtime gate passed the existing real-Firefox smoke suite, the complete 0.2.0 popup quick-control exercise, and forced Manifest V3 event-page termination/wake recovery. PR #28 was squash-merged with expected-head protection as `41c4f615664d21e7ecaa162c6f8ff6a7ec31df4c`; post-merge Firefox Repository run `34040969920` passed on that exact main revision.
+
+PR #28 changed only the permanent Firefox runtime workflow, Python source validation, and Python runtime acceptance test. The canonical packager excludes Markdown, Python files, `scripts/`, and `.github` workflow material from the extension XPI. Therefore PR #28 strengthened acceptance without altering the packaged 0.2.0 product payload that had already been integrated through PR #27.
 
 ### Candidate privacy and authority boundary
 
@@ -28,26 +36,54 @@ The initial quick-controls source/runtime candidate was accepted through PR #26 
 - Protection details do not display raw URLs, selectors, DOM text, page content, credentials, identifiers, or other private payloads;
 - Refresh reuses existing current-tab counter and redacted logger authorities and does not create storage or remote traffic;
 - Copy support snapshot uses an explicit positive allowlist and excludes raw request/final URLs, query strings, page content, selectors, credentials, cookies, and logger identifiers even if unknown sensitive fields are supplied by a caller;
+- the copied support snapshot intentionally includes the current hostname because it is a site-scoped diagnostic; it does not include the raw path, query, fragment, or request activity payload;
 - support snapshots are created only after user action, copied only to the local clipboard, and are not retained, uploaded, transmitted, or added to the Activity Logger;
-- the existing Activity Logger remains memory-only; Protection details therefore cover the current logger/background session rather than pretending to be durable historical evidence.
+- the existing Activity Logger remains bounded memory-only state; Protection details therefore covers the current logger/background session rather than pretending to be durable historical evidence;
+- current-tab Blocked/Cleaned/Hidden/Local counters use Firefox `browser.storage.session` only so they survive Manifest V3 event-page recreation; they reset on new navigation and are removed when the tab closes.
+
+### Release privacy review
+
+This release-review change adds `RELEASE-PRIVACY-REVIEW-0.2.0.md`, which records the source-level 0.2.0 release privacy review. The review confirms that the quick controls and support diagnostics remain local-first, use bounded derived state, do not create a new GoreeCloud telemetry/support backend, and do not create a durable browsing-history store.
+
+The source-level privacy review does **not** authorize automatic signing or Stable promotion. A final target-environment inspection of the copied support-snapshot text remains part of release acceptance so the human-visible diagnostic can be checked directly before promotion.
+
+### Mozilla signing and signed-artifact acceptance
+
+The canonical manual-only `.github/workflows/privacy-shield-mozilla-signing.yml` is version-dynamic and resolves the exact manifest version selected for a deliberate release operation. This release-review change strengthens that workflow so the exact candidate is revalidated with core, site-profile, support-snapshot, logger-privacy, and unified-background tests before signing.
+
+After Mozilla returns the signed XPI, the workflow now requires the **signed artifact itself** to pass:
+
+1. the complete real-Firefox Privacy Shield runtime smoke suite;
+2. the 0.2 popup quick-control acceptance matrix;
+3. forced non-persistent Manifest V3 event-page wake recovery; and
+4. persistent signed installation plus full same-profile Firefox restart acceptance.
+
+The workflow continues to use pinned `web-ext` 10.5.0 with Node.js 22, the unlisted/self-distribution channel, the fixed extension ID `privacy-shield@goreecloud.com`, exact unsigned/signed SHA-256 evidence, Mozilla signature-metadata verification, and AMO credentials sourced only from encrypted GitHub repository secrets.
 
 ### Required 0.2.0 acceptance before promotion
 
-The 0.2.0 candidate must not supersede Stable 0.1.1 until the exact release revision passes:
+The following gates are already complete at source/runtime level:
 
-1. repository and extension source validation;
-2. site-profile, support-snapshot, core, logger-privacy, and unified-background regression tests;
-3. maintained JavaScript syntax checks;
-4. deterministic package and archive verification;
-5. real Firefox runtime regression coverage on the accepted target Firefox version;
-6. manual popup acceptance for Copy clean URL, all site modes, Reset site, Protection details, Refresh, local protection-state presentation, and Copy support snapshot;
-7. privacy review of a copied support snapshot confirming the expected diagnostic fields are present and private URL/query/page/selector/credential/logger content is absent;
-8. compatibility review demonstrating Standard/Strict/Compatible behavior on representative sites and recovery from a strict-mode site breakage through Compatible or Reset site;
-9. Mozilla unlisted signing of the exact packaged payload;
-10. persistent signed installation and full Firefox restart acceptance using the same profile;
-11. release-specific privacy review confirming the quick controls and support diagnostics remain local-first and evidence-bounded.
+- repository and extension source validation;
+- site-profile, support-snapshot, core, logger-privacy, and unified-background regression tests;
+- maintained JavaScript syntax checks;
+- deterministic package and archive verification;
+- real Firefox 155.0.1 runtime regression coverage for the candidate;
+- automated real-Firefox popup acceptance for Copy clean URL, Standard/Strict/Compatible, Reset site, Protection details, Refresh, local protection-state presentation, and Copy support snapshot;
+- forced Manifest V3 event-page termination and wake recovery for the unsigned candidate;
+- source-level release privacy review of the 0.2 quick-control/support-diagnostic data boundaries.
 
-Until those gates pass, **0.1.1 remains the current Stable Privacy Shield Firefox release**.
+The remaining release gates are:
+
+1. **manual target-environment popup/user-interaction review** of the complete 0.2.0 control set;
+2. **representative-site compatibility review**, including a demonstrated recovery path from Strict-mode breakage through Compatible or Reset site;
+3. **target-environment copied-support-snapshot inspection** confirming expected diagnostic fields are present and private URL/query/page/selector/credential/logger content is absent;
+4. **Mozilla unlisted signing of the exact 0.2.0 packaged payload** through the canonical manual signing workflow;
+5. **signed-artifact full runtime, popup, and MV3 wake-recovery acceptance** on the returned Mozilla-signed XPI;
+6. **persistent signed installation and full same-profile Firefox restart acceptance**;
+7. **governed Stable promotion evidence** and release-record reconciliation.
+
+Until those remaining gates pass, **0.1.1 remains the current Stable Privacy Shield Firefox release**.
 
 ## Stable 0.1.1 — Firefox 155 compatibility hotfix
 
@@ -83,8 +119,6 @@ The accepted correction:
 - Distribution channel: Mozilla unlisted/self-distribution
 
 The commits between the signed packaged-payload revision and the final accepted PR head affect CI/test/source-validation material only. Comparison of `4468d15c49a7ea19dae6e8dda49e07572134a019` through `87a8a8b1105f3d8ad7658abc2937c3b80e91f94c` contains no packaged extension payload files, preserving exact signed-payload identity while strengthening release acceptance.
-
-The signing workflow remains `.github/workflows/privacy-shield-mozilla-signing.yml`; signed restart acceptance is implemented by `tests/signed_restart_smoke.py`, and Firefox event-page lifecycle acceptance is implemented by `tests/event_page_recovery_smoke.py`.
 
 Public AMO listing is not part of this Stable release. A public listing remains a separate explicit publication decision.
 
