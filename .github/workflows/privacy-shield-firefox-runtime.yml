@@ -37,10 +37,12 @@ jobs:
       - name: Route test-only third-party and reviewed site hosts locally
         shell: bash
         run: |
-          echo '127.0.0.1 google-analytics.com doubleclick.net coinhive.com thirdparty.test cdn.jsdelivr.net reddit.com www.reddit.com pinterest.com www.pinterest.com' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 google-analytics.com doubleclick.net coinhive.com thirdparty.test cdn.jsdelivr.net reddit.com www.reddit.com pinterest.com www.pinterest.com app.test static.test frame.test' | sudo tee -a /etc/hosts
       - name: Run real Firefox runtime smoke suite
         run: python extensions/privacy-shield/tests/runtime_smoke.py "$PRIVACY_SHIELD_XPI"
       - name: Exercise Privacy Shield 0.2 popup quick controls
         run: python extensions/privacy-shield/tests/popup_quick_controls_smoke.py "$PRIVACY_SHIELD_XPI"
+      - name: Exercise Strict compatibility and recovery archetypes
+        run: python extensions/privacy-shield/tests/compatibility_recovery_smoke.py "$PRIVACY_SHIELD_XPI"
       - name: Force MV3 event-page termination and verify wake recovery
         run: python extensions/privacy-shield/tests/event_page_recovery_smoke.py "$PRIVACY_SHIELD_XPI"
