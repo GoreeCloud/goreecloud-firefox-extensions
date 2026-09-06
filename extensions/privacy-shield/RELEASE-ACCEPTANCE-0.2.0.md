@@ -8,6 +8,42 @@
 
 This checklist is an acceptance aid, not evidence by itself. A box is complete only when the exact candidate/artifact and target environment are identified and the observed result is recorded. Automated controlled fixtures supplement but do not replace real-site or human interaction review.
 
+## Privacy-safe machine-readable evidence
+
+`extensions/privacy-shield/scripts/target_acceptance.py` provides a local, standard-library-only recorder and validator for target review. The machine-readable record is intentionally closed and privacy-minimized: it can store exact source/XPI provenance, bounded Firefox/OS/device metadata, boolean checklist results, public hostnames, governed site-archetype outcomes, bounded blocker codes, and the final decision. It cannot store raw URLs, paths, queries, page content, request logs, cookies, credentials, copied support-snapshot text, arbitrary identity strings, or free-form browsing notes.
+
+Create an incomplete target record from the exact candidate XPI while checked out at the exact source revision:
+
+```bash
+python extensions/privacy-shield/scripts/target_acceptance.py new \
+  --xpi dist/goreecloud-privacy-shield-0.2.0.xpi \
+  --firefox-version 155.0.1 \
+  --operating-system "Zorin OS 17.3" \
+  --device-class laptop \
+  --installation-mode temporary-unsigned \
+  --output privacy-shield-0.2-target-acceptance.json
+```
+
+The tool computes the XPI SHA-256, verifies the Firefox add-on ID and exact 0.2.0 manifest version, and binds the template to the current full Git source revision. Complete the governed fields locally after the human review, then validate the record against the same exact checkout:
+
+```bash
+python extensions/privacy-shield/scripts/target_acceptance.py validate \
+  privacy-shield-0.2-target-acceptance.json \
+  --require-release-ready
+```
+
+A decision of `accepted` fails closed unless all required popup and support-snapshot checks are true, there are no unresolved blocker codes, the article/news, script-app/dashboard, and third-party-embed archetypes were actually tested, every tested site passed Standard/Strict/Compatible/Reset review, core protection remained present after recovery, and at least one real Strict compatibility impact was recovered through Compatible or Reset.
+
+A privacy-safe Markdown summary can be produced without copying support-snapshot text or raw browsing data:
+
+```bash
+python extensions/privacy-shield/scripts/target_acceptance.py summary \
+  privacy-shield-0.2-target-acceptance.json \
+  --require-release-ready
+```
+
+Keep the full local machine-readable record only where appropriate for release evidence. Do not commit a review record merely because the validator accepts it. Reviewer/approval identity and governance provenance, when required, belong in the governed PR/release evidence rather than inside the browsing-evidence JSON.
+
 ## Evidence header
 
 Record before review:
@@ -16,10 +52,10 @@ Record before review:
 - manifest version;
 - packaged XPI SHA-256;
 - Firefox version;
-- operating system/device;
+- operating system/device class;
 - installation mode: temporary unsigned candidate or Mozilla-signed candidate;
 - date/time of review;
-- reviewer.
+- reviewer/approval provenance in the governed release or PR record rather than private browsing evidence.
 
 Do not paste AMO credentials, cookies, authentication headers, private browsing history, account identifiers, full private URLs, or unrelated page content into this record.
 
@@ -52,7 +88,7 @@ Cover at least these site archetypes where available:
 - [ ] form/login/account flow that you can safely exercise;
 - [ ] media-rich page where normal playback or viewing is expected.
 
-For each representative site, record the hostname, mode tested, whether core content/navigation/actions worked, and any visible breakage. Do not copy private page contents into the acceptance record.
+For each representative site, record the hostname, mode tested, whether core content/navigation/actions worked, and any visible breakage. Store only the hostname in machine-readable evidence; do not copy private page paths, queries, account identifiers, form values, page contents, or credentials.
 
 ## 3. Strict-mode breakage recovery
 
@@ -90,6 +126,8 @@ Verify:
 - [ ] Logger identifiers are absent.
 - [ ] Snapshot is copied only after explicit user action and no upload/transmission occurs.
 
+The machine-readable acceptance record stores only these boolean inspection results and the reviewed hostname. Do not paste the copied snapshot itself into the JSON record.
+
 ## 5. Candidate decision before signing
 
 Before deliberate Mozilla unlisted signing:
@@ -99,6 +137,7 @@ Before deliberate Mozilla unlisted signing:
 - [ ] Controlled Strict → Compatible → Reset compatibility recovery passes on the exact candidate.
 - [ ] Forced MV3 event-page termination/wake recovery passes on the exact candidate.
 - [ ] Sections 1–4 above have target-environment evidence with no unresolved release-blocking defect.
+- [ ] The privacy-safe target acceptance record passes `target_acceptance.py validate --require-release-ready` against the exact source revision.
 - [ ] Source-level release privacy review remains valid for the exact packaged payload.
 - [ ] Exact candidate XPI digest is recorded.
 
