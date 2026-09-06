@@ -19,7 +19,7 @@ for required in (
     "vendor/THIRD_PARTY_NOTICES.md", "hidden.html", "src/cosmetic-rules.js", "src/hidden.js",
     "src/logger-privacy.js", "src/site-profiles.js", "src/support-snapshot.js",
     "scripts/test_logger_privacy.js", "scripts/test_background_activity.js", "scripts/test_site_profiles.js",
-    "scripts/test_support_snapshot.js", "tests/event_page_recovery_smoke.py"
+    "scripts/test_support_snapshot.js", "tests/event_page_recovery_smoke.py", "tests/popup_quick_controls_smoke.py"
 ):
     assert (ROOT / required).is_file(), required
 for resource in ("vendor/normalize-8.0.1.css", "src/page-guard.js"):
@@ -32,6 +32,7 @@ popup_js = (ROOT / "src/popup.js").read_text(encoding="utf-8")
 profile_js = (ROOT / "src/site-profiles.js").read_text(encoding="utf-8")
 support_snapshot_js = (ROOT / "src/support-snapshot.js").read_text(encoding="utf-8")
 support_snapshot_test = (ROOT / "scripts/test_support_snapshot.js").read_text(encoding="utf-8")
+popup_runtime_test = (ROOT / "tests/popup_quick_controls_smoke.py").read_text(encoding="utf-8")
 background_js = (ROOT / "src/background.js").read_text(encoding="utf-8")
 content_js = (ROOT / "src/content.js").read_text(encoding="utf-8")
 assert 'src/logger-privacy.js' in logger_html, "logger page must load privacy helper"
@@ -85,5 +86,18 @@ for required_test_marker in ('raw-secret', 'utm_source', 'session=secret', 'priv
     assert required_test_marker in support_snapshot_test, f"support snapshot leak regression marker missing: {required_test_marker}"
 assert 'Privacy boundary:' in support_snapshot_js, "support snapshot must disclose its privacy boundary"
 assert 'refreshActivity' in popup_js and 'Protection details refreshed.' in popup_js, "popup live detail refresh missing"
+
+# Real-Firefox candidate acceptance must cover the complete 0.2 quick-control path.
+for marker in (
+    'Copy clean URL executes through popup in real Firefox',
+    'privacy-safe support snapshot copies through popup in real Firefox',
+    'Strict mode blocks otherwise-allowed third-party script',
+    'Compatible mode reduces page alteration by disabling cosmetic filtering',
+    'Reset site returns popup to Standard mode',
+    'Protection details refreshes without page reload'
+):
+    assert marker in popup_runtime_test, f"popup runtime acceptance marker missing: {marker}"
+assert 'WebExtensionPolicy.getByID' in popup_runtime_test, "popup runtime test must inspect the installed extension origin"
+assert 'inBackground: true' in popup_runtime_test, "popup runtime test must preserve the protected active tab during popup initialization"
 
 print("Privacy Shield source contract validated.")
