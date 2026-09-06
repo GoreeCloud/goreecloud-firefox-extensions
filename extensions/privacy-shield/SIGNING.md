@@ -29,9 +29,10 @@ For the exact revision deliberately selected for signing, the workflow:
 8. requires exactly one returned signed XPI, verifies archive integrity and Mozilla signature metadata, normalizes its filename, and records its SHA-256;
 9. runs the returned **signed XPI** through the full real-Firefox runtime regression suite;
 10. runs the returned signed XPI through the 0.2 popup quick-control acceptance path, including Standard/Strict/Compatible behavior, Reset, Refresh, Copy clean URL, and Copy support snapshot when those controls are present in the signed version;
-11. runs the returned signed XPI through explicit Manifest V3 event-page termination and wake-recovery acceptance;
-12. installs the returned signed XPI persistently into a Firefox profile, executes critical protections, fully closes Firefox, launches a second Firefox process on the same profile without reinstalling the add-on, and repeats the critical checks;
-13. retains the signed XPI plus unsigned/signed digest evidence as a GitHub Actions artifact only after every signing and signed-runtime gate succeeds.
+11. runs the returned signed XPI through the controlled representative-archetype compatibility matrix, requiring Strict breakage behavior and recovery through Compatible and Reset while known tracker blocking remains active;
+12. runs the returned signed XPI through explicit Manifest V3 event-page termination and wake-recovery acceptance;
+13. installs the returned signed XPI persistently into a Firefox profile, executes critical protections, fully closes Firefox, launches a second Firefox process on the same profile without reinstalling the add-on, and repeats the critical checks;
+14. retains the signed XPI plus unsigned/signed digest evidence as a GitHub Actions artifact only after every signing and signed-runtime gate succeeds.
 
 The signing workflow does not transform a candidate into Stable by itself. Stable promotion remains a separate governed decision requiring all release-specific source, runtime, privacy, compatibility, manual-review, signing, restart, and evidence gates applicable to that version.
 
@@ -41,8 +42,11 @@ Version 0.2.0 remains a candidate until its remaining release gates are complete
 
 - the normal real-Firefox Privacy Shield runtime regression matrix;
 - the installed popup quick-control acceptance matrix;
+- controlled article, script-dependent application, and third-party-embed Strict → Compatible → Reset recovery archetypes;
 - forced non-persistent MV3 event-page wake recovery; and
 - persistent same-profile Firefox restart acceptance.
+
+The deterministic compatibility fixtures are regression evidence only and do not replace target-environment representative-site review. The human release path is recorded in `RELEASE-ACCEPTANCE-0.2.0.md`.
 
 The 0.2.0 release privacy review is recorded separately in `RELEASE-PRIVACY-REVIEW-0.2.0.md`. That review does not authorize automatic signing or Stable promotion. Manual target-environment interaction review, representative-site compatibility/recovery review, exact copied-support-snapshot inspection, deliberate Mozilla signing, signed-artifact acceptance, and governed release promotion remain independently evidence-bound.
 
