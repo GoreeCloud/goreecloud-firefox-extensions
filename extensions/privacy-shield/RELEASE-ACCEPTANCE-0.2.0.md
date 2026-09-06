@@ -163,3 +163,11 @@ Record the signed XPI SHA-256 and exact signing workflow run. Do not record sign
 Stable promotion requires a separate governed release-record change after all required evidence is complete. Until that change is reviewed, validated, and merged, **0.1.1 remains Stable and 0.2.0 remains Candidate**.
 
 Public AMO listing, global Privacy Shield platform production acceptance, GoreeCloud Browser compiled-runtime acceptance, DNS/Network/application acceptance, and other product/runtime gates remain separate decisions.
+
+## 8. Exact target-review artifact generation
+
+The manual-only GitHub Actions workflow **Privacy Shield Target Review Candidate** (`.github/workflows/privacy-shield-target-review.yml`) exists only to produce a reproducible unsigned XPI for the human target-environment review. It requires a full exact source commit SHA, checks out that revision, validates the source/evidence contracts, builds the candidate twice and requires byte-for-byte equality, verifies manifest version `0.2.0` and add-on ID `privacy-shield@goreecloud.com`, records the candidate SHA-256 and source revision, and runs the complete real-Firefox runtime, popup, compatibility/recovery, and MV3 event-page recovery suites on the exact XPI before retaining it as an Actions artifact.
+
+The currently frozen target-review source ref is `release/privacy-shield-0.2.0-target-review-eb5e2ff4` at exact revision `eb5e2ff4c439d290ac3f61dc73e9e90b49f3181b`. Use the full revision as the workflow `source_revision` input. The target-review artifact is not human acceptance: successful workflow execution proves deterministic packaging and automated browser acceptance only. The user must still install that exact XPI in the target environment and complete Sections 1–4 locally.
+
+The retained artifact contains only the unsigned review XPI plus `candidate-sha256.txt` and `source-revision.txt`. It performs no Mozilla submission, uses no AMO signing credential, and cannot promote 0.2.0. After the human record validates as release-ready, its source SHA, XPI SHA-256, and local record SHA-256 become the provenance inputs for the separate manual Mozilla signing workflow.

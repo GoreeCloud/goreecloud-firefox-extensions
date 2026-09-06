@@ -1,0 +1,155 @@
+name: Privacy Shield Target Review Candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_revision:
+        description: 'Exact full commit SHA to package for Privacy Shield 0.2.0 target-environment review'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: privacy-shield-target-review-${{ inputs.source_revision }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-accept:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate requested source revision format
+        env:
+          TARGET_SOURCE_REVISION: ${{ inputs.source_revision }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$TARGET_SOURCE_REVISION" =~ ^[0-9a-f]{40}$ ]] || {
+            echo '::error::source_revision must be a full lowercase 40-character commit SHA.'
+            exit 1
+          }
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_revision }}
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - uses: browser-actions/setup-firefox@v1
+        with:
+          firefox-version: latest
+
+      - uses: browser-actions/setup-geckodriver@latest
+
+      - name: Install Selenium
+        run: python -m pip install --disable-pip-version-check selenium
+
+      - name: Bind checkout to requested exact revision
+        id: provenance
+        env:
+          TARGET_SOURCE_REVISION: ${{ inputs.source_revision }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$TARGET_SOURCE_REVISION" || {
+            echo "::error::Checked-out revision $actual does not match requested $TARGET_SOURCE_REVISION."
+            exit 1
+          }
+          version="$(python -c 'import json; print(json.load(open("extensions/privacy-shield/manifest.json", encoding="utf-8"))["version"])')"
+          test "$version" = '0.2.0' || {
+            echo "::error::Target-review workflow is release-specific to Privacy Shield 0.2.0; found $version."
+            exit 1
+          }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${actual:0:12}" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$actual" > target-review-source-revision.txt
+
+      - name: Validate exact review source
+        run: |
+          python shared/scripts/validate_repository.py
+          python extensions/privacy-shield/scripts/validate.py
+          python extensions/privacy-shield/scripts/validate_target_acceptance_source.py
+          node extensions/privacy-shield/scripts/test_core.js
+          node extensions/privacy-shield/scripts/test_site_profiles.js
+          node extensions/privacy-shield/scripts/test_support_snapshot.js
+          python extensions/privacy-shield/scripts/test_target_acceptance.py
+          node extensions/privacy-shield/scripts/test_logger_privacy.js
+          node extensions/privacy-shield/scripts/test_background_activity.js
+
+      - name: Build candidate twice and prove deterministic bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python shared/scripts/package_extension.py privacy-shield --output-dir dist/review-a
+          python shared/scripts/package_extension.py privacy-shield --output-dir dist/review-b
+          first="dist/review-a/goreecloud-privacy-shield-${{ steps.provenance.outputs.version }}.xpi"
+          second="dist/review-b/goreecloud-privacy-shield-${{ steps.provenance.outputs.version }}.xpi"
+          test -f "$first"
+          test -f "$second"
+          cmp "$first" "$second"
+          mkdir -p dist/target-review
+          cp "$first" "dist/target-review/goreecloud-privacy-shield-${{ steps.provenance.outputs.version }}-target-review.xpi"
+
+      - name: Inspect exact target-review XPI and record digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          xpi="dist/target-review/goreecloud-privacy-shield-${{ steps.provenance.outputs.version }}-target-review.xpi"
+          python - "$xpi" "${{ inputs.source_revision }}" <<'PY'
+          import hashlib
+          import json
+          import sys
+          import zipfile
+          from pathlib import Path
+
+          xpi = Path(sys.argv[1])
+          source_revision = sys.argv[2]
+          with zipfile.ZipFile(xpi) as archive:
+              bad = archive.testzip()
+              if bad:
+                  raise SystemExit(f'candidate archive integrity failure: {bad}')
+              manifest = json.loads(archive.read('manifest.json').decode('utf-8'))
+          if manifest.get('version') != '0.2.0':
+              raise SystemExit(f"unexpected manifest version: {manifest.get('version')!r}")
+          addon_id = manifest.get('browser_specific_settings', {}).get('gecko', {}).get('id')
+          if addon_id != 'privacy-shield@goreecloud.com':
+              raise SystemExit(f'unexpected add-on ID: {addon_id!r}')
+          digest = hashlib.sha256(xpi.read_bytes()).hexdigest()
+          Path('dist/target-review/candidate-sha256.txt').write_text(f'{digest}  {xpi.name}\n', encoding='utf-8')
+          Path('dist/target-review/source-revision.txt').write_text(source_revision + '\n', encoding='utf-8')
+          print(f'Target-review candidate SHA-256: {digest}')
+          PY
+          unzip -t "$xpi"
+
+      - name: Route controlled runtime fixture hosts locally
+        shell: bash
+        run: |
+          echo '127.0.0.1 google-analytics.com doubleclick.net coinhive.com thirdparty.test cdn.jsdelivr.net reddit.com www.reddit.com pinterest.com www.pinterest.com app.test static.test frame.test' | sudo tee -a /etc/hosts
+
+      - name: Real Firefox runtime acceptance on exact target-review XPI
+        run: python extensions/privacy-shield/tests/runtime_smoke.py "dist/target-review/goreecloud-privacy-shield-${{ steps.provenance.outputs.version }}-target-review.xpi"
+
+      - name: Popup quick-control acceptance on exact target-review XPI
+        run: python extensions/privacy-shield/tests/popup_quick_controls_smoke.py "dist/target-review/goreecloud-privacy-shield-${{ steps.provenance.outputs.version }}-target-review.xpi"
+
+      - name: Compatibility and recovery acceptance on exact target-review XPI
+        run: python extensions/privacy-shield/tests/compatibility_recovery_smoke.py "dist/target-review/goreecloud-privacy-shield-${{ steps.provenance.outputs.version }}-target-review.xpi"
+
+      - name: MV3 event-page recovery acceptance on exact target-review XPI
+        run: python extensions/privacy-shield/tests/event_page_recovery_smoke.py "dist/target-review/goreecloud-privacy-shield-${{ steps.provenance.outputs.version }}-target-review.xpi"
+
+      - name: Retain exact target-review candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: goreecloud-privacy-shield-${{ steps.provenance.outputs.version }}-target-review-${{ steps.provenance.outputs.short_sha }}
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            dist/target-review/goreecloud-privacy-shield-*-target-review.xpi
+            dist/target-review/candidate-sha256.txt
+            dist/target-review/source-revision.txt
