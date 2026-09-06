@@ -58,9 +58,15 @@ A successful source merge, validation run, or unsigned XPI build is not equivale
 
 ## Shared validation and packaging
 
-`docs/extension-inventory.json` is the machine-readable inventory for canonical Firefox extensions.
+`docs/extension-inventory.json` is the machine-readable inventory for canonical Firefox extensions. Inventory schema v2 separates checked-in source state from independently accepted Stable release state. Every entry records:
 
-`shared/scripts/validate_repository.py` validates repository-wide identity and manifest invariants, including unique Firefox add-on IDs and broad required-host permission checks. An extension that genuinely requires broad host access must declare a `broad_host_permission_review` path in the inventory, and that review must exist and document the functional requirement and privacy constraints.
+- `source_version`, which must exactly match the extension's current `manifest.json` version;
+- `source_state`, describing the lifecycle of the checked-in source;
+- `accepted_stable_version`, which is null until a version has passed that extension's required signing, runtime, restart, and governed Stable acceptance gates, and which may identify an older Stable release while newer candidate source remains under development.
+
+The legacy single `release_status` field is prohibited because it can conflate a repository's current source with a different historically accepted release. A candidate source version must not be represented as Stable solely because the same extension has an older accepted Stable artifact.
+
+`shared/scripts/validate_repository.py` validates schema-v2 lifecycle separation plus repository-wide identity and manifest invariants, including exact source-version agreement, unique Firefox add-on IDs, and broad required-host permission checks. An extension that genuinely requires broad host access must declare a `broad_host_permission_review` path in the inventory, and that review must exist and document the functional requirement and privacy constraints.
 
 `shared/scripts/package_extension.py` creates deterministic unsigned XPI candidates from canonical extension directories while excluding maintenance-only documentation and tooling. Generated packages belong under `dist/` and are not authoritative source.
 
@@ -87,6 +93,6 @@ Privacy Shield adapters must not treat branding as evidence of implementation. B
 - `GoreeCloud/goreecloud-source-resync` → `extensions/source-resync/`: canonical Firefox source migration accepted.
 - `GoreeCloud/goreecloud-redirector` → `extensions/redirector/`: canonical Firefox source migration accepted; later canonical source versions retain independent signing gates from the historically accepted signed v0.2.0 release.
 - `GoreeCloud/goreecloud-bookmark-browser-extension` → `extensions/bookmarks/`: legacy cross-browser Linkwarden-derived repository inspected; canonical Firefox-specific first-party replacement foundation accepted. Bookmarks remains a source baseline rather than a Stable release.
-- `extensions/privacy-shield/`: first-party Firefox Privacy Shield adapter introduced directly in the canonical repository; no legacy standalone Firefox extension repository exists.
+- `extensions/privacy-shield/`: first-party Firefox Privacy Shield adapter introduced directly in the canonical repository; no legacy standalone Firefox extension repository exists. Current checked-in source is 0.2.0 candidate while 0.1.1 remains the accepted Stable Firefox release until the 0.2.0 release gates are completed.
 
 Legacy repositories remain useful only to the extent required for provenance, cross-browser boundaries, redirects, compatibility, or historical release continuity.
