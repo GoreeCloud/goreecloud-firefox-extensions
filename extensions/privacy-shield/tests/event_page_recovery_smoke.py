@@ -2,9 +2,10 @@
 """Real-Firefox MV3 event-page termination and wake recovery acceptance.
 
 The test temporarily installs the packaged Privacy Shield XPI, proves protection,
-uses Firefox's own about:debugging control to force-terminate the non-persistent
-background script, then proves that the next navigation wakes the event page and
-retains URL-cleaning and tracker-blocking behavior.
+uses Firefox's privileged WebExtension DebugUtils path to force-terminate the same
+non-persistent background script targeted by about:debugging, then proves that the
+next navigation wakes the event page and retains URL-cleaning and tracker-blocking
+behavior.
 """
 
 from __future__ import annotations
@@ -21,11 +22,11 @@ from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 
 
 EXPECTED_ADDON_ID = "privacy-shield@goreecloud.com"
-EXPECTED_NAME = "GoreeCloud Privacy Shield"
 
 
 class FixtureHandler(BaseHTTPRequestHandler):
@@ -125,31 +126,48 @@ def prove_protection(driver: webdriver.Firefox, base: str, phase: str) -> None:
 
 
 def terminate_event_page(driver: webdriver.Firefox) -> None:
-    driver.get("about:debugging#/runtime/this-firefox")
-    wait_for(
-        driver,
-        lambda d: EXPECTED_NAME in d.find_element(By.TAG_NAME, "body").text
-        and EXPECTED_ADDON_ID in d.find_element(By.TAG_NAME, "body").text,
-        "Privacy Shield did not appear in about:debugging",
-        timeout=15.0,
-    )
+    """Terminate the non-persistent background through Firefox's own DebugUtils.
 
-    xpath = (
-        "//button[contains(translate(normalize-space(.), "
-        "'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), "
-        "'terminate background script')]"
-    )
-    wait_for(driver, lambda d: d.find_elements(By.XPATH, xpath), "Terminate background script control did not appear")
-    buttons = driver.find_elements(By.XPATH, xpath)
-    require(len(buttons) == 1, "one temporary event-page terminate control is present", str(len(buttons)))
-    buttons[0].click()
+    Firefox 138+ requires explicit system-access opt-in for parent-process UI/API
+    automation. The WebDriver session is therefore created with geckodriver's
+    --allow-system-access flag, used only by this isolated acceptance test.
+    """
 
-    wait_for(
-        driver,
-        lambda d: "Stopped" in d.find_element(By.TAG_NAME, "body").text,
-        "Firefox did not report the Privacy Shield background event page as stopped",
-    )
-    require(True, "Firefox about:debugging terminated Privacy Shield event page")
+    driver.set_context("chrome")
+    try:
+        result = driver.execute_async_script(
+            """
+            const addonId = arguments[0];
+            const done = arguments[arguments.length - 1];
+            (async () => {
+              try {
+                const { ExtensionParent } = ChromeUtils.importESModule(
+                  "resource://gre/modules/ExtensionParent.sys.mjs"
+                );
+                const persistent = ExtensionParent.DebugUtils.hasPersistentBackgroundScript(addonId);
+                const before = ExtensionParent.DebugUtils.isBackgroundScriptRunning(addonId);
+                if (persistent !== false) {
+                  throw new Error(`expected non-persistent background, got ${persistent}`);
+                }
+                if (before !== true) {
+                  throw new Error(`expected running background before termination, got ${before}`);
+                }
+                await ExtensionParent.DebugUtils.terminateBackgroundScript(addonId);
+                const after = ExtensionParent.DebugUtils.isBackgroundScriptRunning(addonId);
+                done({ persistent, before, after });
+              } catch (error) {
+                done({ error: String(error), stack: error?.stack || "" });
+              }
+            })();
+            """,
+            EXPECTED_ADDON_ID,
+        )
+    finally:
+        driver.set_context("content")
+
+    require(isinstance(result, dict) and not result.get("error"), "Firefox DebugUtils event-page termination", json.dumps(result))
+    require(result.get("before") is True, "Privacy Shield background was running before termination", json.dumps(result))
+    require(result.get("after") is False, "Privacy Shield background stopped after termination", json.dumps(result))
 
 
 def main() -> int:
@@ -173,9 +191,14 @@ def main() -> int:
     options.set_preference("toolkit.telemetry.reportingpolicy.firstRun", False)
     options.set_preference("network.stricttransportsecurity.preloadlist", False)
 
+    # Firefox 138+ gates chrome-context automation behind an explicit geckodriver
+    # system-access flag. This test opts in only so it can invoke Firefox's own
+    # non-persistent WebExtension termination utility in an isolated CI profile.
+    service = Service(service_args=["--allow-system-access"])
+
     driver: webdriver.Firefox | None = None
     try:
-        driver = webdriver.Firefox(options=options)
+        driver = webdriver.Firefox(options=options, service=service)
         addon_id = driver.install_addon(str(xpi), temporary=True)
         require(addon_id == EXPECTED_ADDON_ID, "temporary Firefox installation", str(addon_id))
         time.sleep(0.75)
