@@ -143,7 +143,15 @@ class TargetAcceptanceTests(unittest.TestCase):
         summary = T._summary(record, result)
         self.assertIn("script-app-dashboard", summary)
         self.assertIn("app.example.com", summary)
-        for forbidden in ("?", "cookie", "authorization:", "bearer ", "/private"):
+        self.assertIn("raw URLs, paths, queries", summary)
+        for forbidden in (
+            "https://",
+            "/private",
+            "?token=secret",
+            "session=secret",
+            "cookie=secret",
+            "authorization: bearer",
+        ):
             self.assertNotIn(forbidden, summary.lower())
 
     def test_new_template_binds_xpi_identity_and_starts_incomplete(self) -> None:
