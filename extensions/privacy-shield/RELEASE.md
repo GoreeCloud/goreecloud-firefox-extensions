@@ -25,6 +25,12 @@ Automated popup-acceptance PR #28 exact accepted head `5d51f6286a12cb08694a3bf2a
 
 PR #28 changed only the permanent Firefox runtime workflow, Python source validation, and Python runtime acceptance test. The canonical packager excludes Markdown, Python files, `scripts/`, and `.github` workflow material from the extension XPI. Therefore PR #28 strengthened acceptance without altering the packaged 0.2.0 product payload that had already been integrated through PR #27.
 
+### Controlled compatibility-recovery acceptance
+
+The 0.2 release path now includes a permanent real-Firefox `compatibility_recovery_smoke.py` gate using deterministic local archetypes for a long-form/article page, a third-party-script-dependent web application, and a third-party embedded-content page. The gate requires Standard to retain ordinary dependencies while blocking a known tracker; Strict to block ordinary third-party script/frame dependencies while retaining tracker and cosmetic protection; Compatible to restore the affected ordinary dependencies while continuing to block the tracker; and Reset site to restore Standard behavior.
+
+This is controlled regression evidence, not a claim about arbitrary public websites. It deliberately supplements rather than replaces the manual target-environment representative-site review. `RELEASE-ACCEPTANCE-0.2.0.md` defines the human release checklist, including real-site interaction, Strict breakage recovery, and support-snapshot inspection. The same deterministic compatibility/recovery test is required on the Mozilla-returned signed XPI by the manual signing workflow.
+
 ### Candidate privacy and authority boundary
 
 - no new extension permissions are requested;
@@ -55,8 +61,9 @@ After Mozilla returns the signed XPI, the workflow now requires the **signed art
 
 1. the complete real-Firefox Privacy Shield runtime smoke suite;
 2. the 0.2 popup quick-control acceptance matrix;
-3. forced non-persistent Manifest V3 event-page wake recovery; and
-4. persistent signed installation plus full same-profile Firefox restart acceptance.
+3. the controlled Strict → Compatible → Reset compatibility/recovery archetype matrix;
+4. forced non-persistent Manifest V3 event-page wake recovery; and
+5. persistent signed installation plus full same-profile Firefox restart acceptance.
 
 The workflow continues to use pinned `web-ext` 10.5.0 with Node.js 22, the unlisted/self-distribution channel, the fixed extension ID `privacy-shield@goreecloud.com`, exact unsigned/signed SHA-256 evidence, Mozilla signature-metadata verification, and AMO credentials sourced only from encrypted GitHub repository secrets.
 
@@ -73,13 +80,15 @@ The following gates are already complete at source/runtime level:
 - forced Manifest V3 event-page termination and wake recovery for the unsigned candidate;
 - source-level release privacy review of the 0.2 quick-control/support-diagnostic data boundaries.
 
+The controlled compatibility/recovery gate is now a permanent candidate and signed-artifact requirement. Its exact-candidate acceptance is established only by a successful workflow result for the revision being considered for release; its presence in source is not itself acceptance evidence.
+
 The remaining release gates are:
 
 1. **manual target-environment popup/user-interaction review** of the complete 0.2.0 control set;
-2. **representative-site compatibility review**, including a demonstrated recovery path from Strict-mode breakage through Compatible or Reset site;
+2. **manual target-environment representative-site compatibility review**, including a demonstrated recovery path from Strict-mode breakage through Compatible or Reset site; controlled fixture acceptance does not close this human/live-site gate;
 3. **target-environment copied-support-snapshot inspection** confirming expected diagnostic fields are present and private URL/query/page/selector/credential/logger content is absent;
 4. **Mozilla unlisted signing of the exact 0.2.0 packaged payload** through the canonical manual signing workflow;
-5. **signed-artifact full runtime, popup, and MV3 wake-recovery acceptance** on the returned Mozilla-signed XPI;
+5. **signed-artifact full runtime, popup, compatibility/recovery, and MV3 wake-recovery acceptance** on the returned Mozilla-signed XPI;
 6. **persistent signed installation and full same-profile Firefox restart acceptance**;
 7. **governed Stable promotion evidence** and release-record reconciliation.
 
