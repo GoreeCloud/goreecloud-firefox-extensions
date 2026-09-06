@@ -1,0 +1,56 @@
+name: Temporary Privacy Shield 0.2 XPI Export
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/tmp-export-privacy-shield-0.2-xpi.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  export-xpi:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out frozen target-review source
+        uses: actions/checkout@v4
+        with:
+          ref: eb5e2ff4c439d290ac3f61dc73e9e90b49f3181b
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Build deterministic Privacy Shield 0.2.0 XPI twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 'eb5e2ff4c439d290ac3f61dc73e9e90b49f3181b'
+          python shared/scripts/package_extension.py privacy-shield --output-dir dist/a
+          python shared/scripts/package_extension.py privacy-shield --output-dir dist/b
+          cmp dist/a/goreecloud-privacy-shield-0.2.0.xpi dist/b/goreecloud-privacy-shield-0.2.0.xpi
+          mkdir -p dist/export
+          cp dist/a/goreecloud-privacy-shield-0.2.0.xpi dist/export/goreecloud-privacy-shield-0.2.0-target-review.xpi
+          sha256sum dist/export/goreecloud-privacy-shield-0.2.0-target-review.xpi > dist/export/SHA256SUMS.txt
+          printf '%s\n' 'eb5e2ff4c439d290ac3f61dc73e9e90b49f3181b' > dist/export/source-revision.txt
+          python - <<'PY'
+          import json, zipfile
+          p='dist/export/goreecloud-privacy-shield-0.2.0-target-review.xpi'
+          with zipfile.ZipFile(p) as z:
+              assert z.testzip() is None
+              m=json.loads(z.read('manifest.json').decode())
+          assert m['version']=='0.2.0'
+          assert m['browser_specific_settings']['gecko']['id']=='privacy-shield@goreecloud.com'
+          PY
+
+      - name: Upload exported XPI
+        uses: actions/upload-artifact@v4
+        with:
+          name: goreecloud-privacy-shield-0.2.0-target-review
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            dist/export/goreecloud-privacy-shield-0.2.0-target-review.xpi
+            dist/export/SHA256SUMS.txt
+            dist/export/source-revision.txt
