@@ -19,6 +19,7 @@ GoreeCloud Privacy Shield is the first-party Firefox adapter for GoreeCloud's pl
 - a local-only ephemeral **Activity Logger** covering both network decisions and privacy-safe page-filter events, with default URL redaction, optional stricter **Privacy view**, domain/type/verdict filters, safe-URL copy, explicit temporary full-URL reveal, and distinct ping/beacon reasons;
 - explicit **This tab** popup counters for blocked requests, cleaned links, hidden page elements, and reviewed local-resource substitutions;
 - a Firefox toolbar badge showing the combined current-tab total: **Blocked + Cleaned + Hidden + Local**;
+- MV3 event-page-safe current-tab counter recovery through memory-only `browser.storage.session`, with blocking listeners awaiting background initialization before making protection decisions;
 - exact-version local-resource substitution for reviewed CDN resources, initially normalize.css 8.0.1 across supported jsDelivr, cdnjs, and unpkg URLs;
 - daily refresh of user-configured HTTPS filter lists, with no default remote subscription.
 
@@ -56,7 +57,7 @@ Ping and beacon traffic are reported separately as `hyperlink-auditing-ping` and
 
 Popup counts are explicitly labeled **This tab** and reset as that tab begins a new page load. They include network blocks, cleaned links, observed page-filter matches, and local-resource substitutions for that tab.
 
-The toolbar badge is derived from the same in-memory per-tab counters and shows their combined total: **Blocked + Cleaned + Hidden + Local**. A zero total clears the badge, totals from 1 through 999 are displayed directly, and larger totals display `999+`. The badge resets when the tab begins a new navigation, matching the popup's **This tab** scope.
+The toolbar badge is derived from the same current-tab counters and shows their combined total: **Blocked + Cleaned + Hidden + Local**. A zero total clears the badge, totals from 1 through 999 are displayed directly, and larger totals display `999+`. The counters are mirrored to Firefox `storage.session`, so a non-persistent Manifest V3 event-page recreation does not silently erase the current browser-session values. The badge still resets when the tab begins a new navigation, matching the popup's **This tab** scope.
 
 Logger summary counts are explicitly labeled **This logger session** and can include activity from multiple tabs until the in-memory logger is cleared or the background state ends. The logger and toolbar badge therefore should not be expected to display the same totals.
 
@@ -76,7 +77,7 @@ The initial parser supports a useful subset rather than claiming complete uBlock
 
 This adapter requires broad HTTP/HTTPS host access because its documented role is to inspect, clean, cancel, redirect, and modify requests across ordinary websites. The exception is documented in `BROAD_HOST_PERMISSION_REVIEW.md` and enforced by repository validation.
 
-## Development
+## Development and release status
 
 From the repository root:
 
@@ -91,4 +92,4 @@ node --check extensions/privacy-shield/src/content.js
 python shared/scripts/package_extension.py privacy-shield
 ```
 
-This is a source candidate. Successful validation and unsigned packaging do not make it a Mozilla-signed Stable release.
+Privacy Shield **0.1.1** is the current Stable Firefox release for Mozilla unlisted/self-distribution within the accepted Firefox 155.0.1 evidence. The signed artifact passed persistent installation, full restart acceptance, real MV3 event-page termination/wake recovery, and target-environment popup-counter verification. See `RELEASE.md` and `FIREFOX-155-HOTFIX.md` for exact revision and artifact evidence. Development after 0.1.1 must use a new candidate version and pass its own release gates; source validation or unsigned packaging alone never creates a Stable claim.
