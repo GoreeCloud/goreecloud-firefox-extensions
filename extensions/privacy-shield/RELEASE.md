@@ -1,6 +1,6 @@
 # Release Gate
 
-## 0.2.0 popup quick-controls candidate
+## 0.2.0 popup quick-controls and support-diagnostics candidate
 
 Version 0.2.0 is a **candidate**, not a Stable release.
 
@@ -10,7 +10,12 @@ The candidate builds on Stable 0.1.1 and adds user-facing Firefox popup controls
 2. per-site **Standard**, **Strict**, and **Compatible** protection modes using the existing local `siteOverrides` settings boundary;
 3. **Reset site** to remove the complete host-specific override and return to global Privacy Shield settings;
 4. **Protection details** that aggregates current-tab blocked/redirected/hidden reason codes from already-redacted in-memory logger entries and displays only friendly reason labels plus counts;
-5. a dedicated site-profile helper and regression tests, plus source-contract requirements that Protection details do not render request/final URLs.
+5. **Refresh** to re-read the current tab counters and privacy-safe Protection-details state without reloading the page or creating a new history store;
+6. a compact local protection-state line showing On/Off plus the active site mode without claiming remote health, trust, or certification;
+7. **Copy support snapshot**, an explicit local clipboard diagnostic that includes only extension/browser version, hostname, enabled state, site mode, current-tab counters, and friendly aggregate reason counts;
+8. dedicated site-profile and support-snapshot helpers with regression tests and source-contract enforcement.
+
+The initial quick-controls source/runtime candidate was accepted through PR #26 and squash-merged to canonical `main` as `8ebe049738e8eaa6fb62fbfb77dcc406644ab6e0` after exact PR head `caf41e9f69c839164b8d359a1227d190f7d9c7f4` passed Firefox Repository run `34038601483` and Privacy Shield Firefox Runtime run `34038601302`. That establishes source/runtime candidate integration only; it does not promote 0.2.0 to Stable. The support-diagnostics additions are later candidate work and require their own exact-head validation before merge.
 
 ### Candidate privacy and authority boundary
 
@@ -21,6 +26,9 @@ The candidate builds on Stable 0.1.1 and adds user-facing Firefox popup controls
 - Strict mode adds third-party script/frame blocking but does not silently enable reviewed annoyance hiding or media blocking;
 - Compatible mode keeps core tracker/malware/miner/URL/ping/ETag/popup/ad-request protections while reducing page-altering cosmetic/local-resource behavior;
 - Protection details do not display raw URLs, selectors, DOM text, page content, credentials, identifiers, or other private payloads;
+- Refresh reuses existing current-tab counter and redacted logger authorities and does not create storage or remote traffic;
+- Copy support snapshot uses an explicit positive allowlist and excludes raw request/final URLs, query strings, page content, selectors, credentials, cookies, and logger identifiers even if unknown sensitive fields are supplied by a caller;
+- support snapshots are created only after user action, copied only to the local clipboard, and are not retained, uploaded, transmitted, or added to the Activity Logger;
 - the existing Activity Logger remains memory-only; Protection details therefore cover the current logger/background session rather than pretending to be durable historical evidence.
 
 ### Required 0.2.0 acceptance before promotion
@@ -28,15 +36,16 @@ The candidate builds on Stable 0.1.1 and adds user-facing Firefox popup controls
 The 0.2.0 candidate must not supersede Stable 0.1.1 until the exact release revision passes:
 
 1. repository and extension source validation;
-2. site-profile, core, logger-privacy, and unified-background regression tests;
+2. site-profile, support-snapshot, core, logger-privacy, and unified-background regression tests;
 3. maintained JavaScript syntax checks;
 4. deterministic package and archive verification;
 5. real Firefox runtime regression coverage on the accepted target Firefox version;
-6. manual popup acceptance for Copy clean URL, all site modes, Reset site, and Protection details;
-7. compatibility review demonstrating Standard/Strict/Compatible behavior on representative sites and recovery from a strict-mode site breakage through Compatible or Reset site;
-8. Mozilla unlisted signing of the exact packaged payload;
-9. persistent signed installation and full Firefox restart acceptance using the same profile;
-10. release-specific privacy review confirming the quick controls remain local-first and evidence-bounded.
+6. manual popup acceptance for Copy clean URL, all site modes, Reset site, Protection details, Refresh, local protection-state presentation, and Copy support snapshot;
+7. privacy review of a copied support snapshot confirming the expected diagnostic fields are present and private URL/query/page/selector/credential/logger content is absent;
+8. compatibility review demonstrating Standard/Strict/Compatible behavior on representative sites and recovery from a strict-mode site breakage through Compatible or Reset site;
+9. Mozilla unlisted signing of the exact packaged payload;
+10. persistent signed installation and full Firefox restart acceptance using the same profile;
+11. release-specific privacy review confirming the quick controls and support diagnostics remain local-first and evidence-bounded.
 
 Until those gates pass, **0.1.1 remains the current Stable Privacy Shield Firefox release**.
 

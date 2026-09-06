@@ -20,6 +20,9 @@ GoreeCloud Privacy Shield is the first-party Firefox adapter for GoreeCloud's pl
 - controls for third-party scripts, third-party frames, and media/object requests;
 - a local-only ephemeral **Activity Logger** covering both network decisions and privacy-safe page-filter events, with default URL redaction, optional stricter **Privacy view**, domain/type/verdict filters, safe-URL copy, explicit temporary full-URL reveal, and distinct ping/beacon reasons;
 - popup **Protection details** that summarizes current-tab protection reason counts from already-redacted in-memory logger metadata without displaying request URLs or page content;
+- on-demand **Refresh** for current-tab counters and Protection details without page reload or new history storage;
+- an explicit **Copy support snapshot** action that exports only bounded derived diagnostic state to the local clipboard and excludes raw activity URLs, query strings, page content, selectors, credentials, cookies, and logger identifiers;
+- a compact live protection-state line showing the current local On/Off state and active site mode;
 - explicit **This tab** popup counters for blocked requests, cleaned links, hidden page elements, and reviewed local-resource substitutions;
 - a Firefox toolbar badge showing the combined current-tab total: **Blocked + Cleaned + Hidden + Local**;
 - MV3 event-page-safe current-tab counter recovery through memory-only `browser.storage.session`, with blocking listeners awaiting background initialization before making protection decisions;
@@ -39,6 +42,10 @@ The popup exposes three per-site protection modes:
 Changing a site mode preserves the independent site enabled/disabled state. **Reset site** removes the complete host-specific override and returns the site to global Privacy Shield settings. Site modes are stored in the existing local `siteOverrides` settings structure; no browsing-history store or new network service is introduced.
 
 **Protection details** is an intentionally bounded explanation surface. It groups the current tab's blocked, redirected, and hidden logger events by stable reason code and displays only friendly reason labels plus aggregate counts. It does not display request URLs, final URLs, selectors, DOM text, page content, credentials, or identifiers. Because the Activity Logger is intentionally memory-only, detail rows cover the current logger/background session while the separate This tab counters can survive an MV3 event-page recreation through `storage.session`.
+
+**Refresh** asks the existing background authorities for the current tab counters and already-redacted logger entries again. It does not reload the page, create persistent history, or contact a remote endpoint. The popup's small protection-state line is derived from local enabled/profile state and is not a remote health, trust, or certification indicator.
+
+**Copy support snapshot** creates a user-requested text diagnostic from an explicit allowlist: extension version, local Firefox name/version, hostname, enabled state, site mode, This tab counters, and friendly Protection-details labels/counts. The formatter ignores unknown caller fields, and regression tests inject secret-looking raw URL/query/DOM/logger fields to prove they do not cross the snapshot boundary. The resulting text is copied locally, includes a visible privacy-boundary statement, and is neither retained nor transmitted by Privacy Shield.
 
 ## Reviewed page controls
 
@@ -94,7 +101,7 @@ The initial parser supports a useful subset rather than claiming complete uBlock
 
 This adapter requires broad HTTP/HTTPS host access because its documented role is to inspect, clean, cancel, redirect, and modify requests across ordinary websites. The exception is documented in `BROAD_HOST_PERMISSION_REVIEW.md` and enforced by repository validation.
 
-The 0.2.0 quick-control candidate adds no new extension permission. Clipboard use remains covered by the existing `clipboardWrite` permission, per-site modes reuse existing local settings, and Protection details reuse the existing privacy-safe in-memory logger boundary.
+The 0.2.0 quick-control/support-diagnostics candidate adds no new extension permission. Clipboard use remains covered by the existing `clipboardWrite` permission, per-site modes reuse existing local settings, Protection details reuse the existing privacy-safe in-memory logger boundary, and support snapshots are built locally from bounded derived state.
 
 ## Development and release status
 
@@ -105,14 +112,16 @@ python shared/scripts/validate_repository.py
 python extensions/privacy-shield/scripts/validate.py
 node extensions/privacy-shield/scripts/test_core.js
 node extensions/privacy-shield/scripts/test_site_profiles.js
+node extensions/privacy-shield/scripts/test_support_snapshot.js
 node extensions/privacy-shield/scripts/test_logger_privacy.js
 node extensions/privacy-shield/scripts/test_background_activity.js
 node --check extensions/privacy-shield/src/background.js
 node --check extensions/privacy-shield/src/content.js
 node --check extensions/privacy-shield/src/popup.js
+node --check extensions/privacy-shield/src/support-snapshot.js
 python shared/scripts/package_extension.py privacy-shield
 ```
 
 Privacy Shield **0.1.1** remains the current Stable Firefox release for Mozilla unlisted/self-distribution within the accepted Firefox 155.0.1 evidence. The signed artifact passed persistent installation, full restart acceptance, real MV3 event-page termination/wake recovery, and target-environment popup-counter verification.
 
-Privacy Shield **0.2.0** is a feature **candidate** adding popup quick controls, site protection modes, site reset, and privacy-bounded Protection details. It is not Stable and must pass exact candidate repository/runtime validation, compatibility review, Mozilla signing, persistent-install/restart acceptance, and user-facing acceptance before it may supersede 0.1.1. Source validation or unsigned packaging alone never creates a Stable claim.
+Privacy Shield **0.2.0** is a feature **candidate** adding popup quick controls, site protection modes, site reset, live Protection-details refresh, local protection-state presentation, and privacy-safe support snapshots. It is not Stable and must pass exact candidate repository/runtime validation, compatibility review, Mozilla signing, persistent-install/restart acceptance, and user-facing acceptance before it may supersede 0.1.1. Source validation or unsigned packaging alone never creates a Stable claim.
