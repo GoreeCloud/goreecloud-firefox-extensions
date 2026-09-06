@@ -27,11 +27,16 @@ Signing credentials must be supplied at execution time through an approved secre
 
 ## Independent release status
 
-A repository merge may establish accepted canonical source without creating a Stable release. The extension inventory intentionally distinguishes source state from signed-release acceptance.
+A repository merge may establish accepted canonical source without creating a Stable release. `docs/extension-inventory.json` schema v2 therefore records the checked-in `source_version` and `source_state` independently from `accepted_stable_version`.
 
-GoreeCloud Redirector already has historical Mozilla-signed acceptance for version 0.2.0 in its project records; a later canonical source version still requires its own signing and runtime acceptance before that later version can be called Stable.
+The manifest version must match `source_version` exactly. `accepted_stable_version` is evidence-backed release metadata and may be null, equal to the source version only when the source itself is Stable, or identify an older independently accepted Stable release while a newer source candidate continues development. A candidate source must never inherit Stable status merely because an older version was accepted.
 
-GoreeCloud Bookmarks version 0.1.0 is currently a source baseline and requires its server contract, Firefox runtime acceptance, signing, persistent installation, restart, and post-restart validation before Stable promotion.
+Current examples:
+
+- GoreeCloud Privacy Shield checks in source version 0.2.0 as a candidate while 0.1.1 remains the independently accepted Mozilla-unlisted Stable Firefox release. The 0.2.0 candidate still requires its remaining manual compatibility/UI, Mozilla signing, signed-artifact runtime, persistent-install/restart, and governed promotion gates.
+- GoreeCloud Redirector checks in source version 0.2.1 while historical Mozilla-signed Stable acceptance remains version 0.2.0. The later source version requires its own signing and runtime acceptance before it can be called Stable.
+- GoreeCloud Bookmarks checks in source version 0.1.1 as a source candidate with no accepted Stable version yet. Its server contract, Firefox runtime acceptance, signing, persistent installation, restart, and post-restart validation remain required before Stable promotion.
+- GoreeCloud Source Resync checks in source version 1.1.2 as canonical source with no accepted Stable version currently recorded in the shared inventory.
 
 ## Packaging helper
 
@@ -47,6 +52,7 @@ Examples:
 python shared/scripts/package_extension.py bookmarks
 python shared/scripts/package_extension.py redirector
 python shared/scripts/package_extension.py source-resync
+python shared/scripts/package_extension.py privacy-shield
 ```
 
 Generated packages are written beneath `dist/` by default. `dist/` is build output and must not be treated as authoritative source.
