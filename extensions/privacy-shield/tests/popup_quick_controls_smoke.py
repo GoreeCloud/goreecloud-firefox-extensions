@@ -180,11 +180,16 @@ def open_popup_for_active_site(driver: webdriver.Firefox, site_handle: str) -> s
             const done = arguments[arguments.length - 1];
             (async () => {
               try {
-                const { Services } = ChromeUtils.importESModule('resource://gre/modules/Services.sys.mjs');
-                const tab = gBrowser.addTab(url, {
-                  inBackground: true,
-                  triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal()
-                });
+                const options = {inBackground: true};
+                let tab;
+                if (typeof gBrowser.addTrustedTab === 'function') {
+                  tab = gBrowser.addTrustedTab(url, options);
+                } else {
+                  tab = gBrowser.addTab(url, {
+                    ...options,
+                    triggeringPrincipal: document.nodePrincipal
+                  });
+                }
                 const browser = tab.linkedBrowser;
                 const deadline = Date.now() + 10000;
                 while (Date.now() < deadline) {
