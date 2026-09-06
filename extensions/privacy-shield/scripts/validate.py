@@ -17,11 +17,12 @@ for permission in ("webRequest", "webRequestBlocking", "storage", "clipboardWrit
     assert permission in manifest.get("permissions", []), permission
 for required in (
     "README.md", "PRIVACY.md", "SECURITY.md", "ARCHITECTURE.md", "BROAD_HOST_PERMISSION_REVIEW.md",
-    "RELEASE.md", "SIGNING.md", "RELEASE-PRIVACY-REVIEW-0.2.0.md",
+    "RELEASE.md", "SIGNING.md", "RELEASE-PRIVACY-REVIEW-0.2.0.md", "RELEASE-ACCEPTANCE-0.2.0.md",
     "vendor/THIRD_PARTY_NOTICES.md", "hidden.html", "src/cosmetic-rules.js", "src/hidden.js",
     "src/logger-privacy.js", "src/site-profiles.js", "src/support-snapshot.js",
     "scripts/test_logger_privacy.js", "scripts/test_background_activity.js", "scripts/test_site_profiles.js",
-    "scripts/test_support_snapshot.js", "tests/event_page_recovery_smoke.py", "tests/popup_quick_controls_smoke.py"
+    "scripts/test_support_snapshot.js", "tests/event_page_recovery_smoke.py", "tests/popup_quick_controls_smoke.py",
+    "tests/compatibility_recovery_smoke.py"
 ):
     assert (ROOT / required).is_file(), required
 for resource in ("vendor/normalize-8.0.1.css", "src/page-guard.js"):
@@ -35,12 +36,15 @@ profile_js = (ROOT / "src/site-profiles.js").read_text(encoding="utf-8")
 support_snapshot_js = (ROOT / "src/support-snapshot.js").read_text(encoding="utf-8")
 support_snapshot_test = (ROOT / "scripts/test_support_snapshot.js").read_text(encoding="utf-8")
 popup_runtime_test = (ROOT / "tests/popup_quick_controls_smoke.py").read_text(encoding="utf-8")
+compatibility_runtime_test = (ROOT / "tests/compatibility_recovery_smoke.py").read_text(encoding="utf-8")
+release_acceptance = (ROOT / "RELEASE-ACCEPTANCE-0.2.0.md").read_text(encoding="utf-8")
 background_js = (ROOT / "src/background.js").read_text(encoding="utf-8")
 content_js = (ROOT / "src/content.js").read_text(encoding="utf-8")
 release_doc = (ROOT / "RELEASE.md").read_text(encoding="utf-8")
 signing_doc = (ROOT / "SIGNING.md").read_text(encoding="utf-8")
 release_privacy_review = (ROOT / "RELEASE-PRIVACY-REVIEW-0.2.0.md").read_text(encoding="utf-8")
 signing_workflow = (REPO_ROOT / ".github/workflows/privacy-shield-mozilla-signing.yml").read_text(encoding="utf-8")
+runtime_workflow = (REPO_ROOT / ".github/workflows/privacy-shield-firefox-runtime.yml").read_text(encoding="utf-8")
 assert 'src/logger-privacy.js' in logger_html, "logger page must load privacy helper"
 assert 'id="privacyView"' in logger_html, "logger Privacy view control missing"
 assert 'id="hiddenCountSummary"' in logger_html, "logger hidden summary missing"
@@ -106,6 +110,33 @@ for marker in (
 assert 'WebExtensionPolicy.getByID' in popup_runtime_test, "popup runtime test must inspect the installed extension origin"
 assert 'inBackground: true' in popup_runtime_test, "popup runtime test must preserve the protected active tab during popup initialization"
 
+# Controlled compatibility acceptance must prove Strict breakage and both recovery paths without pretending fixtures are live-site review.
+for marker in (
+    'Strict demonstrates script-dependent app breakage',
+    'Strict blocks third-party embedded frame',
+    'Compatible recovers script-dependent web app',
+    'Compatible restores third-party embedded frame',
+    'Reset-to-Standard recovery',
+    'live representative-site/manual compatibility review remains required'
+):
+    assert marker in compatibility_runtime_test, f"compatibility recovery marker missing: {marker}"
+for host in ('app.test', 'static.test', 'frame.test', 'google-analytics.com'):
+    assert host in runtime_workflow, f"runtime compatibility fixture host missing: {host}"
+assert 'compatibility_recovery_smoke.py' in runtime_workflow, "unsigned candidate compatibility recovery gate missing"
+
+# Human acceptance remains explicit and privacy-safe rather than being inferred from automation.
+acceptance_lower = release_acceptance.lower()
+for marker in (
+    'popup and interaction review',
+    'representative-site compatibility review',
+    'strict-mode breakage recovery',
+    'copied support-snapshot privacy inspection',
+    'signed-artifact acceptance'
+):
+    assert marker in acceptance_lower, f"0.2 target acceptance checklist missing section: {marker}"
+assert 'automated controlled fixtures supplement but do not replace real-site or human interaction review' in acceptance_lower, "target checklist must preserve human/live-site boundary"
+assert '0.1.1 remains stable and 0.2.0 remains candidate' in acceptance_lower, "target checklist must preserve current Stable/candidate distinction"
+
 # Release governance must preserve the current Stable/candidate distinction and the reviewed privacy boundary.
 release_lower = release_doc.lower()
 review_lower = release_privacy_review.lower()
@@ -119,6 +150,8 @@ for boundary in ('raw request', 'query', 'page content', 'selectors', 'credentia
 assert 'hostname is intentionally included' in review_lower, "release privacy review must disclose hostname inclusion"
 assert 'manual target-environment' in release_lower and 'representative-site compatibility' in release_lower, "remaining human/compatibility gates missing from release record"
 assert 'mozilla unlisted signing' in release_lower and 'persistent signed installation' in release_lower, "remaining signing/restart gates missing from release record"
+assert 'controlled compatibility-recovery acceptance' in release_lower, "controlled compatibility release gate missing from release record"
+assert 'controlled fixture acceptance does not close this human/live-site gate' in release_lower, "release record must not equate controlled fixtures with representative-site acceptance"
 
 # Signing guidance/workflow must be deliberate, version-dynamic, unlisted, secret-bound, and test the returned signed XPI.
 assert 'manual-only' in signing_lower and 'version-dynamic' in signing_lower, "signing guidance must describe manual version-dynamic release operation"
@@ -127,6 +160,7 @@ assert 'AMO_JWT_ISSUER' in signing_doc and 'AMO_JWT_SECRET' in signing_doc, "sig
 assert 'workflow_dispatch:' in signing_workflow, "Mozilla signing workflow must remain manual-only"
 assert 'test_site_profiles.js' in signing_workflow and 'test_support_snapshot.js' in signing_workflow, "signing preflight must validate 0.2 profiles/support snapshot"
 assert 'popup_quick_controls_smoke.py' in signing_workflow, "signed XPI popup acceptance missing from signing workflow"
+assert 'compatibility_recovery_smoke.py' in signing_workflow, "signed XPI compatibility recovery acceptance missing from signing workflow"
 assert 'event_page_recovery_smoke.py' in signing_workflow, "signed XPI MV3 recovery acceptance missing from signing workflow"
 assert 'signed_restart_smoke.py' in signing_workflow, "persistent signed restart acceptance missing from signing workflow"
 assert '--channel=unlisted' in signing_workflow and 'web-ext@10.5.0' in signing_workflow, "Mozilla unlisted signing tool/channel boundary drifted"
