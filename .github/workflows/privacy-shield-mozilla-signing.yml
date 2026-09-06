@@ -54,6 +54,7 @@ jobs:
           python -m py_compile \
             extensions/privacy-shield/tests/runtime_smoke.py \
             extensions/privacy-shield/tests/popup_quick_controls_smoke.py \
+            extensions/privacy-shield/tests/compatibility_recovery_smoke.py \
             extensions/privacy-shield/tests/event_page_recovery_smoke.py \
             extensions/privacy-shield/tests/signed_restart_smoke.py
 
@@ -153,13 +154,16 @@ jobs:
       - name: Route controlled runtime fixture hosts locally
         shell: bash
         run: |
-          echo '127.0.0.1 google-analytics.com doubleclick.net coinhive.com thirdparty.test cdn.jsdelivr.net reddit.com www.reddit.com pinterest.com www.pinterest.com' | sudo tee -a /etc/hosts
+          echo '127.0.0.1 google-analytics.com doubleclick.net coinhive.com thirdparty.test cdn.jsdelivr.net reddit.com www.reddit.com pinterest.com www.pinterest.com app.test static.test frame.test' | sudo tee -a /etc/hosts
 
       - name: Signed XPI real Firefox runtime regression
         run: python extensions/privacy-shield/tests/runtime_smoke.py "dist/goreecloud-privacy-shield-${PRIVACY_SHIELD_VERSION}-signed.xpi"
 
       - name: Signed XPI popup quick-control acceptance
         run: python extensions/privacy-shield/tests/popup_quick_controls_smoke.py "dist/goreecloud-privacy-shield-${PRIVACY_SHIELD_VERSION}-signed.xpi"
+
+      - name: Signed XPI Strict compatibility and recovery acceptance
+        run: python extensions/privacy-shield/tests/compatibility_recovery_smoke.py "dist/goreecloud-privacy-shield-${PRIVACY_SHIELD_VERSION}-signed.xpi"
 
       - name: Signed XPI MV3 event-page recovery acceptance
         run: python extensions/privacy-shield/tests/event_page_recovery_smoke.py "dist/goreecloud-privacy-shield-${PRIVACY_SHIELD_VERSION}-signed.xpi"
