@@ -82,6 +82,7 @@
     const host = normalizeHost(hostname);
     const override = settings?.siteOverrides?.[host];
     if (!override) return "standard";
+    if (!PROFILE_KEYS.some((key) => Object.prototype.hasOwnProperty.call(override, key))) return "standard";
     for (const name of ["strict", "compatible"]) {
       const values = PROFILES[name].values;
       if (PROFILE_KEYS.every((key) => override[key] === values[key])) return name;
