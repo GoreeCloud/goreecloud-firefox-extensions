@@ -1,6 +1,21 @@
 # Release Gate
 
-Version 0.1.0 is **Stable** for Firefox unlisted/self-distribution.
+## 0.1.1 Firefox 155 compatibility hotfix candidate
+
+Version 0.1.1 is a **candidate**, not a Stable release yet.
+
+The candidate addresses a defect observed after moving the Firefox adapter to Manifest V3 event-page semantics: protection state and per-tab observability were held in ordinary background-page memory even though Firefox may unload and recreate an MV3 background event page while idle. The hotfix:
+
+1. makes blocking `webRequest` handlers await asynchronous settings, subscribed-rule, and built-in-rule initialization before making a network decision;
+2. stores **This tab** counters in `browser.storage.session`, which remains memory-only for the browser session but survives background event-page recreation;
+3. restores those counters when the event page wakes again and continues to clear them when a new navigation begins or the tab closes;
+4. adds regression coverage for a cold-start tracker request and simulated event-page recreation.
+
+This candidate must not be promoted over 0.1.0 until repository validation, JavaScript checks, packaging, real Firefox 155 runtime acceptance, Mozilla signing, persistent-install acceptance, and restart acceptance pass on the exact release revision. See `FIREFOX-155-HOTFIX.md`.
+
+## Stable 0.1.0
+
+Version 0.1.0 is **Stable** for Firefox unlisted/self-distribution within its accepted compatibility evidence.
 
 All required release gates passed for the accepted candidate:
 
@@ -14,7 +29,7 @@ All required release gates passed for the accepted candidate:
 8. Mozilla signing succeeded through the unlisted/self-distribution channel;
 9. the returned Mozilla-signed XPI passed persistent installation, critical protection checks before restart, a full Firefox restart using the same profile without reinstalling the add-on, and the same critical checks after restart.
 
-## Stable 0.1.0 evidence
+### Stable 0.1.0 evidence
 
 - Release-source revision: `5546097d6985935c14ac36518008e54039ef7e94`
 - Deterministic unsigned candidate SHA-256: `cf794ca17f8443f1a05162d16305315714fb432a9245c98513bbf131490a4e97`
