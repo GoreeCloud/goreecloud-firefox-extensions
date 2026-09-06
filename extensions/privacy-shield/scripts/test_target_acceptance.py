@@ -141,9 +141,10 @@ class TargetAcceptanceTests(unittest.TestCase):
         record = accepted_record()
         result = T.validate_record(record, expected_source_revision=REVISION, require_release_ready=True)
         summary = T._summary(record, result)
+        summary_lower = summary.lower()
         self.assertIn("script-app-dashboard", summary)
         self.assertIn("app.example.com", summary)
-        self.assertIn("raw URLs, paths, queries", summary)
+        self.assertIn("raw urls, paths, queries", summary_lower)
         for forbidden in (
             "https://",
             "/private",
@@ -152,7 +153,7 @@ class TargetAcceptanceTests(unittest.TestCase):
             "cookie=secret",
             "authorization: bearer",
         ):
-            self.assertNotIn(forbidden, summary.lower())
+            self.assertNotIn(forbidden, summary_lower)
 
     def test_new_template_binds_xpi_identity_and_starts_incomplete(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
