@@ -45,12 +45,12 @@ const capabilities = [...api.REQUIRED_CAPABILITIES];
             r'''
             const result = api.validateNativeHello({
               type: "hello",
-              version: "0.2.8",
+              version: "0.2.9",
               protocolVersion: 2,
               capabilities
             });
             assert.strictEqual(result.compatible, true);
-            assert.strictEqual(result.helperVersion, "0.2.8");
+            assert.strictEqual(result.helperVersion, "0.2.9");
             assert.strictEqual(result.protocolVersion, 2);
             assert.deepStrictEqual(Array.from(result.missingCapabilities), []);
             '''
@@ -86,12 +86,12 @@ const capabilities = [...api.REQUIRED_CAPABILITIES];
             r'''
             const result = api.validateNativeHello({
               type: "hello",
-              version: "0.2.7",
+              version: "0.2.8",
               protocolVersion: 2,
               capabilities
             });
             assert.strictEqual(result.compatible, false);
-            assert.match(result.error, /older than the supported 0\.2\.8/);
+            assert.match(result.error, /older than the supported 0\.2\.9/);
             '''
         )
 
@@ -117,7 +117,7 @@ const capabilities = [...api.REQUIRED_CAPABILITIES];
             const missing = capabilities.filter((item) => item !== "no-overwrite-publish");
             const result = api.validateNativeHello({
               type: "hello",
-              version: "0.2.8",
+              version: "0.2.9",
               protocolVersion: 2,
               capabilities: missing
             });
@@ -133,7 +133,7 @@ const capabilities = [...api.REQUIRED_CAPABILITIES];
             const duplicated = [...capabilities, capabilities[0], "  future-capability  ", ""];
             const result = api.validateNativeHello({
               type: "hello",
-              version: "0.2.8+test",
+              version: "0.2.9+test",
               protocolVersion: "2",
               capabilities: duplicated
             });
@@ -148,7 +148,7 @@ const capabilities = [...api.REQUIRED_CAPABILITIES];
             r'''
             const result = api.validateNativeHello({
               type: "progress",
-              version: "0.2.8",
+              version: "0.2.9",
               protocolVersion: 2,
               capabilities
             });
