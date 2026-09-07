@@ -1,5 +1,15 @@
 # Change Log — GoreeCloud Download Manager Extension
 
+## 0.2.2 — Source candidate
+
+- Added same-job recovery for interrupted or errored native downloads so the existing GoreeCloud job ID and `.goreecloud-downloads/<job-id>/` staging data are preserved.
+- Added a recovery controller that verifies the native helper is reachable before requeueing a recoverable native job, preventing an unavailable helper from silently converting a recovery attempt into a Firefox fallback.
+- Added background-context/startup reconciliation for native jobs persisted in stale active states. Paused and already-interrupted jobs remain user-controlled.
+- Added explicit **Resume** treatment for recoverable native jobs in the popup and Manager while keeping ordinary Retry behavior for non-recoverable jobs.
+- Added recovery-state UI messaging and suppressed misleading ETA output for paused/interrupted/error/cancelled/completed jobs in the Manager.
+- Added Node-backed recovery controller tests covering same-ID progress preservation, browser-job exclusion, host-unavailable behavior, and stale-active startup recovery.
+- Carried forward the accepted Firefox 155.0.1 8-segment transfer evidence from 0.2.1. Runtime restart-recovery acceptance remains pending until the 0.2.2 candidate is exercised on the target browser.
+
 ## 0.2.1 — Source candidate
 
 - Hardened the Linux native-host installer around the validated durable user install path `~/.local/lib/goreecloud-download-manager/` instead of pointing Firefox at a source-checkout path.
