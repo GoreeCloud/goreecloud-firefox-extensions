@@ -2,19 +2,42 @@
 
 ## Status
 
-Version 0.2.3 source candidate.
+Version 0.2.5 source candidate. Unsigned; not Release Candidate or Stable.
 
 ## Components
 
 ### Firefox extension
 
-The Manifest V3 extension owns user interaction, queue state, Firefox-download integration, settings, optional permission acquisition, notification behavior, Native Messaging coordination, and recovery orchestration.
+The Manifest V3 extension owns user interaction, queue state, Firefox-download integration, settings, optional permission acquisition, notification behavior, Native Messaging coordination, scheduler-state hardening, and recovery orchestration.
 
-The queue is stored in `browser.storage.local`. Download jobs have a stable GoreeCloud job ID independent of Firefox's numeric `downloadId`, allowing queued and native jobs to share one state model.
+The queue is stored in `browser.storage.local`. Download jobs have a stable GoreeCloud job ID independent of Firefox's numeric `downloadId`, allowing queued and native jobs to share one managed state model. Jobs also receive a persistent monotonic `queueOrder` tie breaker. `createdAt` remains the primary ordering signal, while `queueOrder` preserves FIFO order for jobs whose timestamps are equal.
 
 ### Firefox download engine
 
 The browser engine starts and controls downloads with the Firefox `downloads` API. A queued browser job does not call `downloads.download()` until a concurrency slot becomes available. Paused browser downloads can re-enter the queue and resume when a slot is available.
+
+GoreeCloud's managed job state and Firefox's underlying download state are related but not identical. A paused Firefox download can legitimately remain `queued` in GoreeCloud while it waits for a managed scheduler slot. The scheduler state adapter protects this distinction so an underlying Firefox paused snapshot does not overwrite the managed queue state.
+
+Firefox launch allocation is also treated as an asynchronous lifecycle boundary. Before a new browser download has a numeric `downloadId`, the managed job enters `starting` with `launchPending`. Pause or cancel requests that occur during this interval are persisted and reconciled after Firefox returns the ID. If cancellation won the race, the newly allocated Firefox download is cancelled rather than becoming an unmanaged active transfer. If pause won, the allocated download is immediately paused and the managed job remains paused.
+
+### Scheduler and lifecycle state adapter
+
+`scheduler_hardening.js` is loaded after the primary background controller and recovery controller. It is a state-boundary adapter, not a third download engine.
+
+Its current responsibilities include:
+
+1. preserving GoreeCloud `queued` state for an existing paused Firefox download waiting for a resume slot;
+2. suppressing intentional Firefox `USER_CANCELED` noise during pause and cancellation workflows;
+3. treating managed `complete` and explicit `cancelled` states as immutable against late browser/native progress or terminal-state regression;
+4. preventing stale Firefox or Native Messaging events from recreating removed managed jobs;
+5. reconciling pause/cancel requests that arrive during Firefox download-ID allocation;
+6. assigning durable same-timestamp FIFO queue-order tie breakers;
+7. normalizing absolute Firefox destination paths before ordinary retry reuses them as requested filenames; and
+8. suppressing duplicate `error`/`interrupted` notifications for the same unresolved problem incident.
+
+The adapter does not reinterpret genuine remote or browser failures as successful operations. Real `error` and `interrupted` states remain problem states and continue to support notification and retry/recovery behavior.
+
+Deterministic Node regressions load the real background scripts into a VM with mocked Firefox and Native Messaging APIs. Browser-only, mixed-engine, and lifecycle-fault harnesses verify scheduler ceilings, cross-engine slot promotion, same-download-ID resume, hostile cancellation event ordering, late-event finality, removed-job protection, queue ordering, retry filename normalization, and notification behavior. These tests are source-level evidence and are distinct from target-device runtime acceptance.
 
 ### Native segmented helper
 
@@ -77,7 +100,7 @@ When Firefox is distributed as a Flatpak, native-host startup can traverse `org.
 
 Cookie forwarding is disabled by default. Firefox's `cookies` permission and `<all_urls>` host permission remain optional.
 
-In 0.2.3, permission acquisition occurs directly from the Settings page's **Grant optional cookie permission** click handler so `browser.permissions.request()` executes in Firefox's required user-action context. Save does not attempt to request this permission indirectly or after unrelated asynchronous work.
+Permission acquisition occurs directly from the Settings page's **Grant optional cookie permission** click handler so `browser.permissions.request()` executes in Firefox's required user-action context. Save does not attempt to request this permission indirectly or after unrelated asynchronous work.
 
 After explicit permission has been granted and cookie forwarding is enabled, the extension reads cookies matching only the target download URL at launch or resume time. It constructs a `Cookie` header in memory and sends that header through Native Messaging for the active request. The helper accepts only allowlisted forwarded headers and does not persist request credentials in `metadata.json`.
 
@@ -88,5 +111,9 @@ Detailed evidence is maintained in `docs/AUTHENTICATED_COOKIE_ACCEPTANCE.md`.
 ## Current boundaries
 
 The native helper currently supports HTTP/HTTPS GET-style downloads. It does not reproduce arbitrary browser request bodies, JavaScript execution, DRM, service-worker state, anti-bot challenge flows, or every form of authorization header generation.
+
+Ordinary retry currently creates a fresh GoreeCloud managed job using the current configured engine; it does not promise to preserve every engine/configuration snapshot from the failed job. Native same-job recovery is a separate path and preserves the original native job identity and staged partial data.
+
+The 0.2.4/0.2.5 browser, mixed-engine, and lifecycle-race regressions are deterministic source-level validation. They do not replace a real target-device gate when a behavior materially depends on Firefox/Flatpak/native-host runtime state.
 
 Mozilla signing is outside the download engine. An unsigned candidate may be loaded temporarily for development but is not a persistent Stable Firefox release.
