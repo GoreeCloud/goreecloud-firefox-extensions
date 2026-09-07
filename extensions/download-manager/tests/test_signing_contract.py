@@ -108,6 +108,9 @@ class SigningContractTests(unittest.TestCase):
         self.assertIn("window.gBrowser.addTrustedTab(target)", text)
         self.assertIn("window.gBrowser.selectedTab = tab", text)
         self.assertIn("driver.set_context(driver.CONTEXT_CONTENT)", text)
+        self.assertIn("previous_handles = set(driver.window_handles)", text)
+        self.assertIn("set(driver.window_handles) - previous_handles", text)
+        self.assertIn("driver.switch_to.window(new_handles[0])", text)
         self.assertIn("driver.current_url == target", text)
         self.assertNotIn("driver.get(extension_url(path))", text)
 

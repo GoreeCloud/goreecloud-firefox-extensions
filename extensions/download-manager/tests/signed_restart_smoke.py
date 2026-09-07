@@ -194,16 +194,16 @@ def extension_url(path: str) -> str:
 
 
 def navigate_extension(driver: webdriver.Firefox, path: str) -> None:
-    """Open an installed extension document through Firefox browser chrome.
+    """Open an installed extension document and bind WebDriver to its trusted tab.
 
     Firefox 155 keeps WebDriver navigation commands content-context-only while also
-    rejecting direct moz-extension navigation from ordinary content scope. With the
-    geckodriver system-access opt-in already enabled, create a trusted tab through the
-    browser window's gBrowser API in chrome context, select it, then immediately return
-    to content context for normal DOM interaction with the extension document.
+    rejecting direct moz-extension navigation from ordinary content scope. Create a
+    trusted tab with gBrowser in chrome context, then explicitly switch WebDriver to
+    the new tab handle before interacting with the extension from content context.
     """
 
     target = extension_url(path)
+    previous_handles = set(driver.window_handles)
     driver.set_context(driver.CONTEXT_CHROME)
     try:
         opened = driver.execute_script(
@@ -225,6 +225,14 @@ def navigate_extension(driver: webdriver.Firefox, path: str) -> None:
     finally:
         driver.set_context(driver.CONTEXT_CONTENT)
 
+    wait_until(
+        lambda: len(set(driver.window_handles) - previous_handles) == 1,
+        15,
+        f"WebDriver discovered trusted extension tab for {path}",
+    )
+    new_handles = list(set(driver.window_handles) - previous_handles)
+    require(len(new_handles) == 1, "trusted extension WebDriver handle discovered", repr(new_handles))
+    driver.switch_to.window(new_handles[0])
     wait_until(
         lambda: driver.current_url == target,
         15,
