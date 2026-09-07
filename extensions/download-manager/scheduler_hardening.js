@@ -133,7 +133,20 @@
     try {
       const stored = await browser.storage.local.get(QUEUE_SEQUENCE_KEY);
       const prior = Number(stored[QUEUE_SEQUENCE_KEY]);
-      const next = (Number.isFinite(prior) && prior >= 0 ? Math.trunc(prior) : 0) + 1;
+      let baseline = Number.isFinite(prior) && prior >= 0 ? Math.trunc(prior) : 0;
+
+      // A profile upgraded from an older source candidate can contain jobs with
+      // queueOrder values while the sequence key itself is absent/stale. Never
+      // allocate an order behind persisted history; reconcile to the highest
+      // managed order before assigning the next queue-tail position.
+      const all = await browser.storage.local.get(null);
+      for (const [key, value] of Object.entries(all)) {
+        if (!key.startsWith("job:")) continue;
+        const order = Number(value?.queueOrder);
+        if (Number.isFinite(order) && order >= 0) baseline = Math.max(baseline, Math.trunc(order));
+      }
+
+      const next = baseline + 1;
       await browser.storage.local.set({ [QUEUE_SEQUENCE_KEY]: next });
       return next;
     } finally {
