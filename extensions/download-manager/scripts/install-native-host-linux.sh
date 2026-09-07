@@ -55,7 +55,7 @@ import struct
 import subprocess
 import sys
 
-EXPECTED_VERSION = "0.2.8"
+EXPECTED_VERSION = "0.2.9"
 EXPECTED_PROTOCOL = 2
 REQUIRED_CAPABILITIES = {
     "segmented-range-integrity",
@@ -133,7 +133,7 @@ PY
 printf 'Installed native messaging manifest: %s\n' "$TARGET"
 printf 'Native host: %s\n' "$HOST"
 printf 'Firefox add-on ID: download-manager@goreecloud.com\n'
-printf 'Native host version/protocol self-test: PASS (0.2.8 / protocol 2)\n'
+printf 'Native host version/protocol self-test: PASS (0.2.9 / protocol 2)\n'
 
 if command -v flatpak >/dev/null 2>&1 && flatpak info org.mozilla.firefox >/dev/null 2>&1; then
   printf '\nFirefox Flatpak detected: org.mozilla.firefox\n'
