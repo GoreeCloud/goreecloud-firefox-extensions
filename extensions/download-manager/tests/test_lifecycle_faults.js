@@ -7,6 +7,12 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const root = path.resolve(__dirname, "..");
+const NATIVE_CAPABILITIES = [
+  "segmented-range-integrity",
+  "same-job-recovery",
+  "no-overwrite-publish",
+  "ephemeral-request-headers"
+];
 
 function event() {
   const listeners = [];
@@ -65,9 +71,15 @@ function createHarness() {
         nativePort = {
           onMessage: event(),
           onDisconnect: event(),
+          disconnect() {},
           postMessage(message) { nativePosts.push(message); }
         };
-        setTimeout(() => nativePort.onMessage.emit({ type: "hello", version: "0.2.5" }), 0);
+        setTimeout(() => nativePort.onMessage.emit({
+          type: "hello",
+          version: "0.2.8",
+          protocolVersion: 2,
+          capabilities: [...NATIVE_CAPABILITIES]
+        }), 0);
         return nativePort;
       }
     },
@@ -146,8 +158,9 @@ function createHarness() {
     crypto: { randomUUID: () => `job-${uuid++}` }
   });
   context.globalThis = context;
-  vm.runInContext(fs.readFileSync(path.join(root, "background.js"), "utf8"), context);
-  vm.runInContext(fs.readFileSync(path.join(root, "scheduler_hardening.js"), "utf8"), context);
+  vm.runInContext(fs.readFileSync(path.join(root, "native_protocol.js"), "utf8"), context, { filename: "native_protocol.js" });
+  vm.runInContext(fs.readFileSync(path.join(root, "background.js"), "utf8"), context, { filename: "background.js" });
+  vm.runInContext(fs.readFileSync(path.join(root, "scheduler_hardening.js"), "utf8"), context, { filename: "scheduler_hardening.js" });
 
   const messageListener = onMessage.listeners.at(-1);
   async function message(value) { return messageListener(value, {}); }
@@ -380,7 +393,10 @@ async function main() {
 
   const statusPromise = h.message({ type: "native-status" });
   await h.settle();
-  assert.equal((await statusPromise).available, true);
+  const status = await statusPromise;
+  assert.equal(status.available, true);
+  assert.equal(status.helperVersion, "0.2.8");
+  assert.equal(status.protocolVersion, 2);
   await h.nativePort.onMessage.emit({
     type: "progress",
     jobId: "native-fault",
@@ -427,6 +443,7 @@ async function main() {
   console.log("- late Firefox terminal-event protection: PASS");
   console.log("- removed Firefox job protection: PASS");
   console.log("- retry path normalization and tail placement: PASS");
+  console.log("- protocol-compatible native status path: PASS");
   console.log("- failure notification de-duplication: PASS");
   console.log("- removed native job protection: PASS");
 }
