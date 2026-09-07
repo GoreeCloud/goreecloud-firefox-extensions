@@ -24,8 +24,8 @@
   ],
   "background": {
     "scripts": [
-      "background.js",
       "native_protocol.js",
+      "background.js",
       "recovery.js",
       "scheduler_hardening.js"
     ]
