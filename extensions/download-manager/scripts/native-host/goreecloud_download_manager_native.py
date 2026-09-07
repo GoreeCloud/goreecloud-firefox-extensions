@@ -12,7 +12,14 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-VERSION = "0.2.7"
+VERSION = "0.2.8"
+PROTOCOL_VERSION = 2
+PROTOCOL_CAPABILITIES = [
+    "segmented-range-integrity",
+    "same-job-recovery",
+    "no-overwrite-publish",
+    "ephemeral-request-headers",
+]
 USER_AGENT = f"GoreeCloudDownloadManager/{VERSION}"
 WRITE_LOCK = threading.Lock()
 DESTINATION_LOCK = threading.Lock()
@@ -22,6 +29,15 @@ DESTINATION_RESERVATIONS = {}
 TERMINAL_NATIVE_STATES = {"complete", "cancelled", "error"}
 IMMUTABLE_NATIVE_STATES = {"complete", "cancelled"}
 CONTENT_RANGE_RE = re.compile(r"^bytes\s+(\d+)-(\d+)/(\d+|\*)$", re.I)
+
+
+def hello_message():
+    return {
+        "type": "hello",
+        "version": VERSION,
+        "protocolVersion": PROTOCOL_VERSION,
+        "capabilities": list(PROTOCOL_CAPABILITIES),
+    }
 
 
 def send(obj):
@@ -192,10 +208,6 @@ def release_destination(job_id, path):
 
 
 def thread_is_alive(job):
-    return BooleanThread(job)
-
-
-def BooleanThread(job):
     thread = getattr(job, "thread", None)
     return bool(thread and thread.is_alive())
 
@@ -638,7 +650,7 @@ def handle_message(msg):
     typ = msg.get("type")
     job_id = str(msg.get("jobId")) if msg.get("jobId") is not None else None
     if typ == "ping":
-        send({"type": "hello", "version": VERSION})
+        send(hello_message())
     elif typ == "start" and job_id is not None:
         start_job(msg)
     elif typ == "pause" and job_id is not None:
@@ -650,7 +662,7 @@ def handle_message(msg):
 
 
 def main():
-    send({"type": "hello", "version": VERSION})
+    send(hello_message())
     while True:
         msg = recv()
         if msg is None:
