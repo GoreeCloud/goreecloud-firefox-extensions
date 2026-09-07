@@ -194,19 +194,42 @@ def extension_url(path: str) -> str:
 
 
 def navigate_extension(driver: webdriver.Firefox, path: str) -> None:
-    """Navigate to an installed extension document under Firefox's privileged scope.
+    """Open an installed extension document through Firefox browser chrome.
 
-    Firefox 153+ intentionally rejects moz-extension navigation from ordinary
-    WebDriver content scope. Switch only for the navigation command, then return
-    immediately to content scope so the test interacts with the extension page as
-    a normal rendered document rather than executing privileged browser JS.
+    Firefox 155 keeps WebDriver navigation commands content-context-only while also
+    rejecting direct moz-extension navigation from ordinary content scope. With the
+    geckodriver system-access opt-in already enabled, create a trusted tab through the
+    browser window's gBrowser API in chrome context, select it, then immediately return
+    to content context for normal DOM interaction with the extension document.
     """
 
+    target = extension_url(path)
     driver.set_context(driver.CONTEXT_CHROME)
     try:
-        driver.get(extension_url(path))
+        opened = driver.execute_script(
+            """
+            const target = arguments[0];
+            if (!window.gBrowser) {
+              throw new Error('Firefox chrome context does not expose gBrowser');
+            }
+            const tab = window.gBrowser.addTrustedTab(target);
+            if (!tab) {
+              throw new Error('Firefox could not create trusted extension tab');
+            }
+            window.gBrowser.selectedTab = tab;
+            return true;
+            """,
+            target,
+        )
+        require(opened is True, "trusted extension tab created", target)
     finally:
         driver.set_context(driver.CONTEXT_CONTENT)
+
+    wait_until(
+        lambda: driver.current_url == target,
+        15,
+        f"trusted extension navigation completed for {path}",
+    )
 
 
 def configure_native(driver: webdriver.Firefox, download_dir: Path) -> None:
