@@ -3,6 +3,7 @@
   const PROBLEM_TERMINAL_STATES = new Set(["error", "interrupted"]);
   const QUEUE_SEQUENCE_KEY = "download-manager:queue-sequence";
   let queueOrderLock = Promise.resolve();
+  let queueSequenceReconciled = false;
 
   function isBrowserResumeWaiting(job) {
     return Boolean(
@@ -19,17 +20,35 @@
     return Boolean(job && IMMUTABLE_TERMINAL_STATES.has(job.state));
   }
 
+  function sanitizeFilenameSegment(value) {
+    let segment = String(value || "")
+      .replace(/[\x00-\x1f\x7f<>:"|?*]/g, "_")
+      .replace(/[ .]+$/g, "");
+    if (!segment || segment === "." || segment === "..") return null;
+    if (/^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/i.test(segment)) {
+      segment = `_${segment}`;
+    }
+    return segment;
+  }
+
   function sanitizeRequestedFilename(value) {
     if (value == null || value === "") return null;
     const filename = String(value).trim();
     if (!filename) return null;
 
-    // Firefox's downloads API accepts a path relative to the download directory.
-    // Never feed a completed absolute destination path back into a retry.
-    if (filename.startsWith("/") || /^[A-Za-z]:[\\/]/.test(filename)) {
-      return filename.split(/[\\/]/).filter(Boolean).pop() || null;
-    }
-    return filename;
+    // Firefox accepts a path relative to the download directory. Preserve clean
+    // relative subdirectories, but never replay an absolute/completed path or a
+    // traversal path into a new download. Backslashes are normalized first so
+    // the same policy applies to Unix, Windows drive, and UNC-style inputs.
+    const normalized = filename.replace(/\\/g, "/");
+    const absolute = normalized.startsWith("/") || normalized.startsWith("~/") || /^[A-Za-z]:\//.test(normalized);
+    const rawParts = normalized.split("/").filter(Boolean);
+    const hasTraversal = rawParts.some((part) => part === "..");
+    const candidateParts = absolute || hasTraversal
+      ? rawParts.filter((part) => part !== "." && part !== "..").slice(-1)
+      : rawParts.filter((part) => part !== ".");
+    const sanitizedParts = candidateParts.map(sanitizeFilenameSegment).filter(Boolean);
+    return sanitizedParts.length ? sanitizedParts.join("/") : null;
   }
 
   function sanitizeJobPatch(current, patch = {}) {
@@ -115,7 +134,23 @@
     try {
       const stored = await browser.storage.local.get(QUEUE_SEQUENCE_KEY);
       const prior = Number(stored[QUEUE_SEQUENCE_KEY]);
-      const next = (Number.isFinite(prior) && prior >= 0 ? Math.trunc(prior) : 0) + 1;
+      let baseline = Number.isFinite(prior) && prior >= 0 ? Math.trunc(prior) : 0;
+
+      // A profile upgraded from an older source candidate can contain jobs with
+      // queueOrder values while the sequence key itself is absent/stale. Reconcile
+      // once per background context to the highest persisted managed order, then
+      // continue with the lightweight sequence key for subsequent allocations.
+      if (!queueSequenceReconciled) {
+        const all = await browser.storage.local.get(null);
+        for (const [key, value] of Object.entries(all)) {
+          if (!key.startsWith("job:")) continue;
+          const order = Number(value?.queueOrder);
+          if (Number.isFinite(order) && order >= 0) baseline = Math.max(baseline, Math.trunc(order));
+        }
+        queueSequenceReconciled = true;
+      }
+
+      const next = baseline + 1;
       await browser.storage.local.set({ [QUEUE_SEQUENCE_KEY]: next });
       return next;
     } finally {

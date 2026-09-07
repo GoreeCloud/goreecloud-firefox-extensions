@@ -2,7 +2,7 @@
 
 ## Status
 
-Version 0.2.5 source candidate. Unsigned; not Release Candidate or Stable.
+Version 0.2.6 source candidate. Unsigned; not Release Candidate or Stable.
 
 ## Components
 
@@ -10,7 +10,7 @@ Version 0.2.5 source candidate. Unsigned; not Release Candidate or Stable.
 
 The Manifest V3 extension owns user interaction, queue state, Firefox-download integration, settings, optional permission acquisition, notification behavior, Native Messaging coordination, scheduler-state hardening, and recovery orchestration.
 
-The queue is stored in `browser.storage.local`. Download jobs have a stable GoreeCloud job ID independent of Firefox's numeric `downloadId`, allowing queued and native jobs to share one managed state model. Jobs also receive a persistent monotonic `queueOrder` tie breaker. `createdAt` remains the primary ordering signal, while `queueOrder` preserves FIFO order for jobs whose timestamps are equal.
+The queue is stored in `browser.storage.local`. Download jobs have a stable GoreeCloud job ID independent of Firefox's numeric `downloadId`, allowing queued and native jobs to share one managed state model. Jobs also receive a persistent monotonic `queueOrder` tie breaker. `createdAt` remains the primary ordering signal, while `queueOrder` preserves FIFO order for jobs whose timestamps are equal. Queue-sequence allocation reconciles against the highest persisted `queueOrder` before issuing a new position so an absent or stale sequence key cannot place a new/retried job behind already-persisted queue history.
 
 ### Firefox download engine
 
@@ -31,13 +31,16 @@ Its current responsibilities include:
 3. treating managed `complete` and explicit `cancelled` states as immutable against late browser/native progress or terminal-state regression;
 4. preventing stale Firefox or Native Messaging events from recreating removed managed jobs;
 5. reconciling pause/cancel requests that arrive during Firefox download-ID allocation;
-6. assigning durable same-timestamp FIFO queue-order tie breakers;
-7. normalizing absolute Firefox destination paths before ordinary retry reuses them as requested filenames; and
-8. suppressing duplicate `error`/`interrupted` notifications for the same unresolved problem incident.
+6. assigning durable same-timestamp FIFO queue-order tie breakers and reconciling the sequence allocator against persisted queue history;
+7. preserving ordinary-retry engine, segment-count, retry-count, native-directory, and requested-filename snapshots from the source managed job;
+8. normalizing requested filenames so clean relative subdirectories remain valid while absolute, traversal, UNC/Windows-style, control-character, reserved-character, trailing-space/dot, and reserved-device-name inputs cannot be replayed unsafely; and
+9. suppressing duplicate `error`/`interrupted` notifications for the same unresolved problem incident.
 
 The adapter does not reinterpret genuine remote or browser failures as successful operations. Real `error` and `interrupted` states remain problem states and continue to support notification and retry/recovery behavior.
 
-Deterministic Node regressions load the real background scripts into a VM with mocked Firefox and Native Messaging APIs. Browser-only, mixed-engine, and lifecycle-fault harnesses verify scheduler ceilings, cross-engine slot promotion, same-download-ID resume, hostile cancellation event ordering, late-event finality, removed-job protection, queue ordering, retry filename normalization, and notification behavior. These tests are source-level evidence and are distinct from target-device runtime acceptance.
+Ordinary Retry and native same-job recovery remain distinct lifecycle operations. Ordinary Retry creates a fresh GoreeCloud job ID and fresh queue-tail position but carries forward the source job's effective transport/configuration snapshot. Native recovery retains the existing GoreeCloud job ID and job-scoped staging directory so partially downloaded segments can be reused.
+
+Deterministic Node regressions load the real background scripts into a VM with mocked Firefox and Native Messaging APIs. Browser-only, mixed-engine, lifecycle-fault, and retry-snapshot harnesses verify scheduler ceilings, cross-engine slot promotion, same-download-ID resume, hostile cancellation event ordering, late-event finality, removed-job protection, queue ordering, settings-drift resistance, retry filename normalization, legacy absolute-destination compatibility, and notification behavior. These tests are source-level evidence and are distinct from target-device runtime acceptance.
 
 ### Native segmented helper
 
@@ -112,8 +115,8 @@ Detailed evidence is maintained in `docs/AUTHENTICATED_COOKIE_ACCEPTANCE.md`.
 
 The native helper currently supports HTTP/HTTPS GET-style downloads. It does not reproduce arbitrary browser request bodies, JavaScript execution, DRM, service-worker state, anti-bot challenge flows, or every form of authorization header generation.
 
-Ordinary retry currently creates a fresh GoreeCloud managed job using the current configured engine; it does not promise to preserve every engine/configuration snapshot from the failed job. Native same-job recovery is a separate path and preserves the original native job identity and staged partial data.
+Ordinary retry preserves the source managed job's effective engine and relevant configuration snapshot but creates a fresh GoreeCloud job ID and does not reuse partial segment staging. Native same-job recovery is the separate identity-preserving path for interrupted/errored native transfers with reusable staged partial data.
 
-The 0.2.4/0.2.5 browser, mixed-engine, and lifecycle-race regressions are deterministic source-level validation. They do not replace a real target-device gate when a behavior materially depends on Firefox/Flatpak/native-host runtime state.
+The 0.2.4–0.2.6 browser, mixed-engine, lifecycle-race, and retry-snapshot regressions are deterministic source-level validation. They do not replace a real target-device gate when a behavior materially depends on Firefox/Flatpak/native-host runtime state.
 
 Mozilla signing is outside the download engine. An unsigned candidate may be loaded temporarily for development but is not a persistent Stable Firefox release.

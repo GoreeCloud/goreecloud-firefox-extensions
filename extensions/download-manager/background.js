@@ -524,7 +524,16 @@ browser.runtime.onMessage.addListener(async (message) => {
     case "retry-job": {
       const job = await getJob(message.id);
       if (!job) return false;
-      return queueDownload({ url: job.url, filename: job.filename });
+      const requestedFilename = job.requestedFilename ?? job.filename;
+      return queueDownload({
+        url: job.url,
+        filename: requestedFilename,
+        requestedFilename,
+        engine: job.engine,
+        segments: job.segments,
+        retryCount: job.retryCount,
+        directory: job.directory
+      });
     }
     case "remove-job":
       return removeJob(message.id);

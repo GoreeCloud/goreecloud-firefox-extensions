@@ -1,6 +1,6 @@
 # GoreeCloud Download Manager Extension
 
-**Status:** 0.2.5 source candidate — unsigned, not Stable
+**Status:** 0.2.6 source candidate — unsigned, not Stable
 
 GoreeCloud Download Manager Extension is a Firefox Manifest V3 download-management extension with queueing, pause/resume, retries, batch URL input, download telemetry, and an optional Linux native helper for segmented HTTP range downloads and durable partial-file resume.
 
@@ -17,11 +17,24 @@ GoreeCloud Download Manager Extension is a Firefox Manifest V3 download-manageme
 - Collision-safe final filenames for native downloads.
 - Optional cookie forwarding for authenticated native downloads. This capability is disabled by default and requires an explicit Firefox optional permission grant.
 - Completion/failure notifications.
-- Deterministic managed queue ordering, including jobs created in the same millisecond.
+- Deterministic managed queue ordering, including jobs created in the same millisecond and migration-safe queue-sequence reconciliation.
 - Lifecycle-race protection for cancellation, pending Firefox launches, late browser/native events, removed jobs, and retry filename reuse.
+- Ordinary retry preservation of the source job's effective engine, segment-count, retry-count, native destination, and requested-filename snapshots.
 - GoreeCloud product icon and updated Glaze-aligned Firefox UI.
 - Firefox add-on ID: `download-manager@goreecloud.com`.
 - Native messaging host: `goreecloud_download_manager`.
+
+## 0.2.6 retry snapshot and requested-filename hardening
+
+0.2.6 makes ordinary Retry a true replay of the managed job configuration rather than a new download implicitly governed by whatever Settings happen to contain later. A retry now carries forward the terminal job's effective browser/native engine assignment, configured native segment count, native retry count, destination directory, and original requested filename. This keeps a settings change made after the original job was queued from silently changing the retry's transport behavior.
+
+The retry path now prefers `requestedFilename` over a later `filename` value reported by Firefox or the native helper. This distinction matters because Firefox may replace the managed display filename with a completed absolute destination path. Older jobs that do not yet contain `requestedFilename` remain compatible: an absolute legacy destination is reduced to a safe basename before the retry is queued.
+
+Requested filenames now use one cross-platform normalization policy. Clean relative subdirectories are preserved, while Unix absolute paths, Windows drive paths, UNC/backslash paths, home-relative paths, and any path containing `..` traversal are reduced to a safe basename. Control characters and cross-platform reserved filename characters are replaced, trailing spaces/dots are removed from path segments, and Windows reserved device names are prefixed rather than replayed literally.
+
+Queue sequencing is also migration-safe. If persisted jobs already contain `queueOrder` values but the sequence key is absent or stale, the allocator reconciles against the highest persisted managed order before assigning the next retry/download position. New retries therefore remain at the managed FIFO tail even across profile/source-candidate transitions.
+
+A deterministic Node regression exercises requested-filename normalization, absolute/traversal/UNC reduction, clean relative-subdirectory preservation, settings drift, engine/configuration snapshot preservation, legacy absolute Firefox destination compatibility, and retry queue-tail sequencing. It runs in Firefox Repository CI alongside the browser scheduler, mixed-engine scheduler, lifecycle-fault, native-core, syntax, packaging, and archive-verification gates.
 
 ## 0.2.5 lifecycle fault hardening
 
@@ -114,7 +127,7 @@ The authenticated-cookie path was exercised against a controlled cookie-protecte
 
 A controlled Firefox-engine five-job batch accepted the initial scheduler ceiling: the Manager showed 3 Active and 2 Queued with Firefox engine badges while the server independently reported three active requests and a peak of three. Completion-driven promotion moved the remaining queued jobs into the freed slots. Later pause/resume timing attempts exposed the queued-resume state race corrected in 0.2.4; corrected browser-only and mixed-engine scheduler behavior is now covered by deterministic CI rather than repeated manual timing races.
 
-This target evidence accepts the tested native segmented transfer, live pause/resume, helper-interruption recovery, non-persistent background-context recovery, existing-segment reuse, collision-safe naming, authenticated cookie forwarding, assembly, integrity, credential non-persistence for the controlled test, staging cleanup, initial Firefox-engine queue ceiling, and completion-driven queue promotion for the tested Firefox 155.0.1 Flatpak environment. The additional 0.2.4/0.2.5 scheduler and lifecycle race behavior is currently accepted at deterministic source-test level, not yet as separate target-device race evidence. Full-browser restart recovery, Mozilla signing, persistent signed-install/restart acceptance, and governed target-runtime release acceptance remain open.
+This target evidence accepts the tested native segmented transfer, live pause/resume, helper-interruption recovery, non-persistent background-context recovery, existing-segment reuse, collision-safe naming, authenticated cookie forwarding, assembly, integrity, credential non-persistence for the controlled test, staging cleanup, initial Firefox-engine queue ceiling, and completion-driven queue promotion for the tested Firefox 155.0.1 Flatpak environment. The additional 0.2.4–0.2.6 scheduler, lifecycle-race, retry-snapshot, and filename-hardening behavior is currently accepted at deterministic source-test level, not yet as separate target-device race evidence. Full-browser restart recovery, Mozilla signing, persistent signed-install/restart acceptance, and governed target-runtime release acceptance remain open.
 
 ## Cookie forwarding
 
@@ -130,7 +143,7 @@ From the canonical `GoreeCloud/goreecloud-firefox-extensions` repository root:
 python shared/scripts/package_extension.py download-manager
 ```
 
-The resulting `dist/goreecloud-download-manager-0.2.5.xpi` is deterministic and unsigned. Packaging excludes the native helper and source-only test scripts. Packaging success is not Mozilla signing and does not make the version Stable.
+The resulting `dist/goreecloud-download-manager-0.2.6.xpi` is deterministic and unsigned. Packaging excludes the native helper and source-only test scripts. Packaging success is not Mozilla signing and does not make the version Stable.
 
 ## Validation
 
@@ -141,6 +154,7 @@ node --check extensions/download-manager/scheduler_hardening.js
 node extensions/download-manager/tests/test_browser_scheduler.js
 node extensions/download-manager/tests/test_mixed_scheduler.js
 node extensions/download-manager/tests/test_lifecycle_faults.js
+node extensions/download-manager/tests/test_retry_snapshots.js
 node --check extensions/download-manager/ui/popup.js
 node --check extensions/download-manager/ui/manager.js
 node --check extensions/download-manager/ui/options.js
@@ -152,4 +166,4 @@ python shared/scripts/package_extension.py download-manager
 
 ## Release state
 
-0.2.5 remains an unsigned Active Development source candidate. It is not a Release Candidate or Stable release. Mozilla signing, persistent signed installation, full Firefox restart/native-host acceptance against the signed add-on, and explicit governed promotion remain required before those lifecycle states can be claimed.
+0.2.6 remains an unsigned Active Development source candidate. It is not a Release Candidate or Stable release. Mozilla signing, persistent signed installation, full Firefox restart/native-host acceptance against the signed add-on, and explicit governed promotion remain required before those lifecycle states can be claimed.

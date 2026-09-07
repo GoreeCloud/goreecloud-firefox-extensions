@@ -56,6 +56,8 @@ jobs:
         run: node extensions/download-manager/tests/test_mixed_scheduler.js
       - name: Test Download Manager lifecycle faults
         run: node extensions/download-manager/tests/test_lifecycle_faults.js
+      - name: Test Download Manager retry snapshots
+        run: node extensions/download-manager/tests/test_retry_snapshots.js
       - name: Check maintained JavaScript syntax
         shell: bash
         run: |
