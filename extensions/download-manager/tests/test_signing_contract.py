@@ -98,10 +98,16 @@ class SigningContractTests(unittest.TestCase):
     def test_signed_restart_smoke_exercises_user_controlled_same_job_resume(self):
         text = SMOKE.read_text(encoding="utf-8")
         self.assertIn("persisted native job rendered after restart", text)
+        self.assertIn("extension_job_snapshot", text)
+        self.assertIn("{type: 'list-jobs'}", text)
+        self.assertIn("recoveryRequestedAt", text)
+        self.assertIn("POST-RESTART JOB", text)
         self.assertIn("//div[@id='jobs']//button[normalize-space()='Resume']", text)
         self.assertIn("recoverable native job resumed through Manager after restart", text)
-        self.assertIn("persisted native job recovery already active after restart", text)
+        self.assertIn("post-restart same-job recovery request observed", text)
+        self.assertIn("restart recovery required at most one user Resume action", text)
         self.assertIn("same-job native transfer completed after restart", text)
+        self.assertNotIn("persisted native job recovery already active after restart", text)
 
     def test_signed_restart_smoke_uses_geckodriver_system_access_service(self):
         text = SMOKE.read_text(encoding="utf-8")
