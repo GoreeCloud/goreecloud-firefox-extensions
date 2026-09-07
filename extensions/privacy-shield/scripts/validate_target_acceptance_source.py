@@ -7,6 +7,8 @@ REPO_ROOT = ROOT.parents[1]
 tool = (ROOT / "scripts/target_acceptance.py").read_text(encoding="utf-8")
 tests = (ROOT / "scripts/test_target_acceptance.py").read_text(encoding="utf-8")
 acceptance = (ROOT / "RELEASE-ACCEPTANCE-0.2.0.md").read_text(encoding="utf-8")
+target_acceptance = (ROOT / "RELEASE-TARGET-ACCEPTANCE-0.2.0.md").read_text(encoding="utf-8")
+promotion = (ROOT / "RELEASE-PROMOTION-0.2.0.md").read_text(encoding="utf-8")
 signing = (ROOT / "SIGNING.md").read_text(encoding="utf-8")
 repository_workflow = (REPO_ROOT / ".github/workflows/firefox-repository.yml").read_text(encoding="utf-8")
 signing_workflow = (REPO_ROOT / ".github/workflows/privacy-shield-mozilla-signing.yml").read_text(encoding="utf-8")
@@ -19,11 +21,13 @@ for required in (
     ROOT / "scripts/test_target_acceptance.py",
     ROOT / "scripts/validate_target_acceptance_source.py",
     ROOT / "RELEASE-ACCEPTANCE-0.2.0.md",
+    ROOT / "RELEASE-TARGET-ACCEPTANCE-0.2.0.md",
+    ROOT / "RELEASE-PROMOTION-0.2.0.md",
     target_review_workflow_path,
 ):
     assert required.is_file(), required
 
-# The record is deliberately closed, bounded, and release-specific.
+# The local record contract remains deliberately closed, bounded, release-specific, and fail-closed after promotion.
 for marker in (
     'EXPECTED_ADDON_ID = "privacy-shield@goreecloud.com"',
     'EXPECTED_RELEASE = "0.2.0"',
@@ -69,7 +73,7 @@ for gate in (
 ):
     assert gate in tool, f"release-ready target evidence gate missing: {gate}"
 
-# Regression coverage must prove both valid and rejected evidence shapes.
+# Regression coverage must continue proving both valid and rejected evidence shapes.
 for marker in (
     'test_release_ready_record_passes',
     'test_accepted_record_requires_real_recovery_demonstration',
@@ -88,7 +92,7 @@ assert 'python extensions/privacy-shield/scripts/validate_target_acceptance_sour
 assert 'python extensions/privacy-shield/scripts/test_target_acceptance.py' in repository_workflow, \
     "repository workflow must run target acceptance evidence tests"
 
-# The manual target-review packaging path must bind exact source, deterministic bytes, and browser-observable acceptance.
+# The manual target-review packaging path remains reproducible, exact-source-bound, browser-tested, and incapable of signing.
 assert 'workflow_dispatch:' in target_review_workflow, "target-review candidate workflow must remain manual-only"
 assert 'source_revision:' in target_review_workflow, "target-review workflow must require an exact source revision input"
 assert 'ref: ${{ inputs.source_revision }}' in target_review_workflow, "target-review checkout must use the requested exact revision"
@@ -109,7 +113,7 @@ assert 'actions/upload-artifact@v4' in target_review_workflow, "target-review ar
 assert 'AMO_JWT_' not in target_review_workflow and 'web-ext' not in target_review_workflow, \
     "target-review packaging must never sign or require Mozilla signing credentials"
 
-# Manual signing must bind the private/local review record to exact source and exact XPI bytes.
+# Manual signing remains bound to the private/local human record, exact source, and exact reviewed unsigned XPI bytes.
 for input_name in (
     'target_acceptance_source_revision',
     'target_acceptance_xpi_sha256',
@@ -129,18 +133,50 @@ assert 'python extensions/privacy-shield/scripts/test_target_acceptance.py' in s
 assert 'extensions/privacy-shield/scripts/target_acceptance.py' in signing_workflow, \
     "signing preflight must syntax-check the target acceptance tool"
 
-# Documentation must not imply that a digest or generated artifact replaces human review.
+# Final release records must preserve human-review provenance and the privacy boundary rather than treating a digest as human proof.
 acceptance_lower = acceptance.lower()
+target_lower = target_acceptance.lower()
+promotion_lower = promotion.lower()
 signing_lower = signing.lower()
 for marker in (
-    'privacy-safe machine-readable evidence',
-    'target_acceptance.py validate',
-    '--require-release-ready',
-    'do not commit a review record merely because the validator accepts it',
-    'privacy shield target review candidate',
-    'target-review artifact is not human acceptance',
+    'human target-environment acceptance:** accepted',
+    'mozilla signing:** accepted',
+    'signed-artifact acceptance:** accepted',
+    'full privacy-minimized machine-readable target record remains local',
+    'copied support-snapshot inspection confirmed',
 ):
-    assert marker in acceptance_lower, f"target acceptance guidance missing: {marker}"
+    assert marker in acceptance_lower, f"completed target acceptance record missing: {marker}"
+for marker in (
+    'human target-environment acceptance:** accepted',
+    'installation mode reviewed: temporary unsigned candidate',
+    'complete machine-readable target-acceptance json remains local',
+    'compatible restored',
+    'support-snapshot privacy inspection',
+    'workflow run `34070682147`',
+):
+    assert marker in target_lower, f"target acceptance provenance summary missing: {marker}"
+
+# The Stable promotion record must bind the accepted human record to exact signing and signed-artifact evidence.
+for marker in (
+    'promotion decision:** accepted',
+    'mozilla-signed xpi sha-256',
+    'persistent signed-xpi installation',
+    'full same-profile firefox restart',
+    'public amo listing:** not authorized',
+):
+    assert marker in promotion_lower, f"Stable promotion target-evidence boundary missing: {marker}"
+for evidence in (
+    'eb5e2ff4c439d290ac3f61dc73e9e90b49f3181b',
+    '23287a50aa7615f422ac1cab8ed3d124f89df1c39fb0173db889c9d7fd2f46e7',
+    'ece8f510df497dee9fdcc08775d115dbea57f43506527c4805125da7915631ea',
+    'c4d01e131fe4a18fdd7f0c13c22fd849f2e99d271fef43ca6cbb390430819b62',
+    '34070682147',
+    '101587331594',
+    '10000415077',
+):
+    assert evidence in promotion, f"Stable promotion provenance missing: {evidence}"
+
+# Signing guidance continues to explain that provenance linkage does not substitute for human review quality.
 for marker in (
     'target-acceptance evidence boundary',
     'record digest is provenance linkage, not proof that the human review was performed correctly',
