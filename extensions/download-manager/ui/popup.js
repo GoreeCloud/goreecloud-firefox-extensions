@@ -26,6 +26,9 @@ function engineLabel(job) {
   const count = Number(job.effectiveSegments || job.segments || 1);
   return count > 1 ? `native · ${count} segments` : "native · single stream";
 }
+function isRecoverableNative(job) {
+  return Boolean(job.native && job.nativeStarted && ["interrupted", "error"].includes(job.state));
+}
 function button(label, type, id) {
   const element = document.createElement("button");
   element.textContent = label;
@@ -78,8 +81,11 @@ async function render() {
 
     const meta = document.createElement("div");
     meta.className = "meta muted";
-    const eta = job.state === "paused" ? "—" : fmtEta(job.etaSeconds);
+    const noEtaStates = new Set(["paused", "interrupted", "error", "cancelled", "complete"]);
+    const eta = noEtaStates.has(job.state) ? "—" : fmtEta(job.etaSeconds);
     meta.textContent = `${engineLabel(job)} · ${fmtBytes(job.bytesReceived || 0)} / ${fmtBytes(job.totalBytes)} · ${fmtSpeed(job.speedBps)} · ETA ${eta}`;
+
+    wrap.append(top, progress, meta);
 
     if (job.fallbackReason) {
       const fallback = document.createElement("div");
@@ -87,17 +93,23 @@ async function render() {
       fallback.style.color = "var(--danger)";
       fallback.textContent = "Native helper fallback: this job is using Firefox.";
       fallback.title = job.fallbackReason;
-      wrap.append(top, progress, meta, fallback);
-    } else {
-      wrap.append(top, progress, meta);
+      wrap.appendChild(fallback);
+    }
+
+    if (isRecoverableNative(job)) {
+      const recovery = document.createElement("div");
+      recovery.className = "meta muted";
+      recovery.textContent = "Native partial data is recoverable; Resume keeps this job and its saved segments.";
+      wrap.appendChild(recovery);
     }
 
     const actions = document.createElement("div");
     actions.className = "actions";
     if (["starting", "in_progress", "downloading", "queued"].includes(job.state)) actions.appendChild(button("Pause", "pause-job", job.id));
     if (job.state === "paused") actions.appendChild(button("Resume", "resume-job", job.id));
+    if (isRecoverableNative(job)) actions.appendChild(button("Resume", "recover-job", job.id));
     if (!["complete", "cancelled", "error", "interrupted"].includes(job.state)) actions.appendChild(button("Cancel", "cancel-job", job.id));
-    if (["error", "interrupted", "cancelled"].includes(job.state)) actions.appendChild(button("Retry", "retry-job", job.id));
+    if (["error", "interrupted", "cancelled"].includes(job.state) && !isRecoverableNative(job)) actions.appendChild(button("Retry", "retry-job", job.id));
 
     wrap.appendChild(actions);
     root.appendChild(wrap);
