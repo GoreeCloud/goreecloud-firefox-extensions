@@ -1,5 +1,20 @@
 # Change Log — GoreeCloud Download Manager Extension
 
+## 0.2.10 — Source candidate
+
+- Hardened native staging against symbolic-link substitution and related filesystem-following hazards before persisted partial data, metadata, or assembled output can participate in recovery or publication.
+- Added `lstat`-based validation for the `.goreecloud-downloads` staging root and per-job staging directory; symbolic links and unexpected non-directory entries fail closed.
+- Added regular-file/non-link validation for `metadata.json`, `single.part`, `assembled.part`, and segmented part files before reuse.
+- Added no-follow regular-file opening for supported staging reads/writes so a symlink cannot be followed by the helper through ordinary part-file operations.
+- Hardened metadata replacement through an exclusive job-local temporary regular file, explicit flush/fsync, and atomic replacement after staging-directory validation.
+- Hardened invalid-staging cleanup so link entries are unlinked as entries rather than traversed into external targets.
+- Hardened final publication so the staging source must be a validated regular non-link file and `os.link(..., follow_symlinks=False)` is used for the no-overwrite commit path.
+- Added deterministic `test_staging_link_safety.py` coverage for staging-root links, job-directory links, metadata/part links, external-target preservation, invalid-staging cleanup, publication-source rejection, and ordinary regular-file behavior.
+- Advanced the native helper, manifest, inventory, Linux installer validation, protocol contracts, scheduler/lifecycle harnesses, Settings presentation, README, installation, architecture, staging trust documentation, and source changelog to 0.2.10 source-candidate state.
+- Extended Native Messaging protocol 2 capability requirements with `staging-link-rejection` and raised the compatible helper minimum to `0.2.10`, so a stale 0.2.9 helper fails closed until the matching helper is reinstalled.
+- The filesystem hardening materially reduces staging symlink-following risk on the supported Linux helper path. It does not claim a universal race-proof filesystem sandbox against a malicious process with unrestricted access to the same user account between every filesystem operation.
+- 0.2.10 remains deterministic source work until its exact PR head passes repository CI. It does not independently establish target-device 0.2.10 acceptance, Mozilla signing, persistent signed installation, full-browser restart/native-host acceptance, Release Candidate status, or Stable status.
+
 ## 0.2.9 — Source candidate
 
 - Hardened persisted native staging so partial files are reusable only when `metadata.json` passes the supported trust contract rather than merely because `.part` files exist.
@@ -32,10 +47,10 @@
 ## 0.2.7 — Source candidate
 
 - Hardened the native helper so its own transport boundary accepts only HTTP and HTTPS URLs with a network host, independently of the extension-side URL validator.
-- Treats persisted native staging metadata for a different URL as stale source identity and discards old partial files before starting the replacement source.
+- Treats persisted staging metadata for a different URL as stale source identity and discards old partial files before starting the replacement source.
 - Added strict `Content-Range` validation for resumed single transfers and segmented HTTP 206 workers: requested start, requested end, and known total source size must agree before response bytes are appended.
 - Added same-helper same-ID recovery for native jobs whose earlier worker thread ended in `error`, while keeping duplicate active `start` requests idempotent and refusing to restart completed or explicitly cancelled native jobs.
-- Hardened the extension recovery boundary so an already-started native recovery cannot silently fall back to a new Firefox download if the helper becomes unavailable between recovery preflight and queue launch. Fresh native jobs retain the existing compatibility fallback behavior.
+- Hardened the extension recovery boundary so an already-started native recovery cannot silently fall back to a new Firefox download if the helper becomes unavailable between recovery preflight and scheduler launch. Fresh native jobs retain the existing compatibility fallback behavior.
 - Serialized access to the native in-memory job registry and added destination reservations so parallel native jobs cannot choose the same not-yet-created destination path.
 - Changed final native publication to a no-overwrite commit from a staging file. If another process creates the selected destination after reservation, GoreeCloud selects a collision-safe alternate instead of truncating or replacing the external file.
 - Segmented assembly now completes under the job-scoped staging directory before the final no-overwrite destination commit.
@@ -52,7 +67,7 @@
 - Made Retry prefer the original `requestedFilename` over a later absolute destination reported through Firefox/native telemetry; legacy jobs without `requestedFilename` remain compatible through safe basename fallback.
 - Hardened requested-filename normalization across Unix absolute paths, Windows drive paths, UNC/backslash paths, home-relative paths, traversal inputs, control characters, cross-platform reserved filename characters, trailing spaces/dots, and Windows reserved device names while preserving clean relative subdirectories.
 - Made queue-sequence allocation migration-safe by reconciling the sequence key against the highest persisted `queueOrder` before allocating a new queue-tail position.
-- Added deterministic Node retry-snapshot regression coverage for requested-filename normalization, traversal/absolute/UNC reduction, clean relative-subdirectory preservation, Settings drift, engine/native-configuration snapshot preservation, legacy absolute Firefox destination compatibility, and retry queue-tail sequencing.
+- Added deterministic Node retry-snapshot regression coverage for requested-filename normalization, traversal/absolute/UNC path reduction, clean relative-subdirectory preservation, Settings drift, engine/native-configuration snapshot preservation, legacy absolute Firefox destination compatibility, and retry queue-tail sequencing.
 - Added the retry-snapshot regression to Firefox Repository CI and advanced manifest, inventory, Settings presentation, README, and changelog to 0.2.6 source-candidate state.
 - This is deterministic source hardening. It does not independently claim target-device retry-race acceptance, Mozilla signing, persistent signed installation, full-browser restart/native-host acceptance, Release Candidate status, or Stable status.
 
