@@ -22,6 +22,7 @@ The repository provides:
 ```text
 extensions/
 ├── bookmarks/
+├── download-manager/
 ├── privacy-shield/
 ├── redirector/
 └── source-resync/
@@ -44,7 +45,8 @@ Additional extension directories use concise lowercase kebab-case names under `e
 | Extension | Canonical directory | Firefox add-on ID | Canonical source state | Legacy repository |
 | --- | --- | --- | --- | --- |
 | GoreeCloud Bookmarks | `extensions/bookmarks/` | `goreecloud-bookmarks@goreecloud.com` | Source baseline; not Stable | `GoreeCloud/goreecloud-bookmark-browser-extension` |
-| GoreeCloud Privacy Shield | `extensions/privacy-shield/` | `privacy-shield@goreecloud.com` | 0.2.0 source candidate; Stable 0.1.1 remains Mozilla-signed / Firefox 155.0.1 accepted | None |
+| GoreeCloud Download Manager Extension | `extensions/download-manager/` | `download-manager@goreecloud.com` | 0.2.0 source candidate; unsigned; not Stable | None |
+| GoreeCloud Privacy Shield | `extensions/privacy-shield/` | `privacy-shield@goreecloud.com` | Stable 0.2.0 accepted for Mozilla unlisted/self-distribution | None |
 | GoreeCloud Redirector | `extensions/redirector/` | `redirector@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-redirector` |
 | GoreeCloud Source Resync | `extensions/source-resync/` | `source-resync@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-source-resync` |
 
@@ -75,7 +77,7 @@ python shared/scripts/package_extension.py <extension-slug>
 For example:
 
 ```bash
-python shared/scripts/package_extension.py privacy-shield
+python shared/scripts/package_extension.py download-manager
 ```
 
 Generated packages are written to `dist/` and are build outputs rather than authoritative source. Packaging success does not imply Mozilla signing or Stable acceptance.
@@ -84,9 +86,9 @@ Generated packages are written to `dist/` and are build outputs rather than auth
 
 See [`docs/MOZILLA_SIGNING.md`](docs/MOZILLA_SIGNING.md). Each extension keeps an independent release state. A source merge or unsigned package must never be described as Stable solely because repository validation passes.
 
-Privacy Shield 0.1.1 is the current Stable Privacy Shield Firefox release for Mozilla unlisted/self-distribution. Its exact packaged payload was Mozilla-signed and passed persistent installation, full Firefox 155.0.1 restart acceptance, real MV3 event-page termination/wake recovery, and target-environment popup-counter verification. Stable 0.1.0 remains preserved as the prior accepted Firefox 154.0.1 release record.
+Privacy Shield 0.2.0 is the current accepted Stable Privacy Shield Firefox release for Mozilla unlisted/self-distribution after exact-payload Mozilla signing, signed-artifact runtime and popup verification, persistent installation, full same-profile Firefox restart acceptance, and governed target-environment acceptance. Stable 0.1.1 remains preserved as the prior accepted release record.
 
-Privacy Shield 0.2.0 is an active feature candidate adding popup quick controls and per-site modes. It does not supersede 0.1.1 until its independent runtime, compatibility, manual UI, signing, persistent-install/restart, and privacy-review gates pass.
+GoreeCloud Download Manager Extension 0.2.0 is an unsigned source candidate. It remains outside Stable until its independent target-runtime, native-host, signing, persistent-install/restart, integrity, security, and privacy gates pass.
 
 ## Maintenance rule
 
