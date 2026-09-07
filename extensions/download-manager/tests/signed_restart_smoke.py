@@ -34,7 +34,7 @@ FIXED_EXTENSION_UUID = "8a92c583-f78e-4f61-a129-44c0a0b02110"
 PAYLOAD_SIZE = 64 * 1024 * 1024
 SEGMENTS = 8
 CHUNK_SIZE = 64 * 1024
-SEND_DELAY_SECONDS = 0.025
+SEND_DELAY_SECONDS = 0.05
 ETAG = '"goreecloud-download-manager-signed-restart-v1"'
 LAST_MODIFIED = "Mon, 07 Sep 2026 18:00:00 GMT"
 
@@ -153,13 +153,7 @@ def firefox_options(profile: Path) -> Options:
 
 
 def firefox_service() -> Service:
-    """Start geckodriver with the Firefox 138+ system-access opt-in.
-
-    geckodriver 0.37.1 rejects Firefox's --remote-allow-system-access flag when it
-    arrives through moz:firefoxOptions capabilities. Selenium's supported path for
-    privileged Firefox context is the geckodriver service flag --allow-system-access.
-    A fresh Service is required for each distinct Firefox process in this restart test.
-    """
+    """Start geckodriver with the Firefox 138+ system-access opt-in."""
 
     return Service(service_args=["--allow-system-access"])
 
@@ -189,23 +183,25 @@ def wait_text(driver: webdriver.Firefox, selector: str, expected: str, timeout: 
         raise AssertionError(f"FAIL text {selector}: expected {expected!r}, got {actual!r}") from exc
 
 
+def extension_jobs(driver: webdriver.Firefox) -> list[dict]:
+    result = driver.execute_async_script(
+        """
+        const done = arguments[arguments.length - 1];
+        browser.runtime.sendMessage({type: 'list-jobs'}).then(
+          jobs => done(jobs || []),
+          error => done({__error: String(error)})
+        );
+        """
+    )
+    if isinstance(result, dict) and result.get("__error"):
+        raise AssertionError(f"FAIL signed extension jobs snapshot: {result['__error']}")
+    return result if isinstance(result, list) else []
+
+
 def extension_job_snapshot(driver: webdriver.Firefox, job_id: str) -> dict | None:
     """Read the exact persisted managed job from the signed extension itself."""
 
-    result = driver.execute_async_script(
-        """
-        const jobId = arguments[0];
-        const done = arguments[arguments.length - 1];
-        browser.runtime.sendMessage({type: 'list-jobs'}).then(
-          jobs => done((jobs || []).find(job => job.id === jobId) || null),
-          error => done({__error: String(error)})
-        );
-        """,
-        job_id,
-    )
-    if isinstance(result, dict) and result.get("__error"):
-        raise AssertionError(f"FAIL signed extension job snapshot: {result['__error']}")
-    return result if isinstance(result, dict) else None
+    return next((job for job in extension_jobs(driver) if job.get("id") == job_id), None)
 
 
 def extension_url(path: str) -> str:
@@ -213,13 +209,7 @@ def extension_url(path: str) -> str:
 
 
 def navigate_extension(driver: webdriver.Firefox, path: str) -> None:
-    """Open an installed extension document and bind WebDriver to its trusted tab.
-
-    Firefox 155 keeps WebDriver navigation commands content-context-only while also
-    rejecting direct moz-extension navigation from ordinary content scope. Create a
-    trusted tab with gBrowser in chrome context, then explicitly switch WebDriver to
-    the new tab handle before interacting with the extension from content context.
-    """
+    """Open an installed extension document and bind WebDriver to its trusted tab."""
 
     target = extension_url(path)
     previous_handles = set(driver.window_handles)
@@ -283,29 +273,46 @@ def configure_native(driver: webdriver.Firefox, download_dir: Path) -> None:
     require(True, "pre-restart native helper handshake")
 
 
-def start_native_download(driver: webdriver.Firefox, url: str) -> None:
+def start_native_download(driver: webdriver.Firefox, url: str) -> str:
     navigate_extension(driver, "ui/manager.html")
     wait_until(lambda: driver.find_element("id", "start").is_enabled(), 10, "Manager page loaded")
+    prior_ids = {job.get("id") for job in extension_jobs(driver)}
     field = driver.find_element("id", "url")
     field.clear()
     field.send_keys(url)
     driver.find_element("id", "start").click()
+
+    def new_job() -> dict | None:
+        return next(
+            (
+                job
+                for job in extension_jobs(driver)
+                if job.get("id") not in prior_ids and job.get("url") == url
+            ),
+            None,
+        )
+
+    wait_until(lambda: new_job() is not None, 15, "signed extension created the managed job")
+    job = new_job()
+    assert job is not None
+    require(job.get("engine") == "native" and job.get("native") is True,
+            "managed job retained native engine assignment", repr(job))
+    job_id = str(job["id"])
     wait_until(
-        lambda: int(driver.find_element("id", "activeCount").text or "0") >= 1,
+        lambda: (extension_job_snapshot(driver, job_id) or {}).get("state")
+        in {"starting", "in_progress", "downloading"},
         15,
         "native managed job became active",
     )
     require(True, "native managed job started before restart")
+    require(True, "captured exact GoreeCloud job identity from signed extension", job_id)
+    return job_id
 
 
-def staged_job(download_dir: Path) -> tuple[Path, int]:
-    root = download_dir / ".goreecloud-downloads"
-    if not root.is_dir():
+def staged_job(download_dir: Path, job_id: str) -> tuple[Path, int]:
+    job = download_dir / ".goreecloud-downloads" / job_id
+    if not job.is_dir() or job.is_symlink():
         return Path(), 0
-    jobs = [entry for entry in root.iterdir() if entry.is_dir() and not entry.is_symlink()]
-    if len(jobs) != 1:
-        return Path(), 0
-    job = jobs[0]
     parts = [entry for entry in job.iterdir() if entry.name.endswith(".part") and entry.is_file()]
     total = sum(entry.stat().st_size for entry in parts)
     return job, total
@@ -367,18 +374,22 @@ def main() -> int:
             require(addon_id == EXPECTED_ADDON_ID, "persistent Mozilla-signed installation", str(addon_id))
 
             configure_native(first, download_dir)
-            start_native_download(first, url)
+            original_job_id = start_native_download(first, url)
 
             def partial_ready() -> bool:
-                nonlocal original_job_id
-                job, total = staged_job(download_dir)
-                if job:
-                    original_job_id = job.name
-                return bool(job) and 512 * 1024 <= total < PAYLOAD_SIZE
+                job, total = staged_job(download_dir, original_job_id)
+                return bool(job) and 64 * 1024 <= total < PAYLOAD_SIZE
 
-            wait_until(partial_ready, 20, "job-scoped native partial staging before browser restart")
-            require(bool(original_job_id), "captured original GoreeCloud job identity", original_job_id)
-            before_job, before_bytes = staged_job(download_dir)
+            try:
+                wait_until(partial_ready, 20, "job-scoped native partial staging before browser restart")
+            except AssertionError as exc:
+                snapshot = extension_job_snapshot(first, original_job_id)
+                raise AssertionError(
+                    "FAIL job-scoped native partial staging before browser restart: "
+                    f"job={snapshot!r} ranges={FixtureHandler.ranges()!r}"
+                ) from exc
+
+            before_job, before_bytes = staged_job(download_dir, original_job_id)
             require(before_job.name == original_job_id and 0 < before_bytes < PAYLOAD_SIZE,
                     "partial native bytes present before restart", f"{before_bytes} bytes")
 
@@ -386,7 +397,7 @@ def main() -> int:
             first = None
 
             time.sleep(0.8)
-            after_quit_job, after_quit_bytes = staged_job(download_dir)
+            after_quit_job, after_quit_bytes = staged_job(download_dir, original_job_id)
             require(after_quit_job.name == original_job_id and after_quit_bytes > 0,
                     "native staging survived full Firefox process exit", f"{after_quit_bytes} bytes")
             final_path = download_dir / "signed-restart.bin"
