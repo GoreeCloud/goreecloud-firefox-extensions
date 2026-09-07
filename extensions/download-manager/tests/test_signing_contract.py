@@ -35,7 +35,6 @@ class SigningContractTests(unittest.TestCase):
         recovery = AMO_RECOVERY.read_text(encoding="utf-8")
         self.assertIn("already exists", workflow)
         self.assertIn("amo_signed_version_recovery.py", workflow)
-        self.assertIn("amo_signed_version_recovery.py", workflow)
         self.assertIn("/api/v5/addons/addon/", recovery)
         self.assertIn("AMO existing file is not approved/public", recovery)
         self.assertIn("AMO existing file is missing a SHA-256 hash", recovery)
