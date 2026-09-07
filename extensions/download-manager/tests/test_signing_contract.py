@@ -29,6 +29,17 @@ class SigningContractTests(unittest.TestCase):
         self.assertIn("git rev-parse origin/main", text)
         self.assertIn('if [[ "$GITHUB_SHA" != "$main_sha" ]]', text)
 
+    def test_existing_signed_version_can_be_recovered_only_with_exact_payload_verification(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("already exists", text)
+        self.assertIn("https://addons.mozilla.org/api/v5/addons/addon/", text)
+        self.assertIn("is_mozilla_signed_extension", text)
+        self.assertIn("Mozilla-signed XPI payload inventory differs", text)
+        self.assertIn("Mozilla-signed XPI changed runtime payload bytes", text)
+        self.assertIn("signedPayloadMatchesCandidate", text)
+        self.assertIn("mozillaSigningSource", text)
+        self.assertIn("mozilla-signing-source.txt", text)
+
     def test_signed_restart_smoke_requires_persistent_install_and_no_reinstall(self):
         text = SMOKE.read_text(encoding="utf-8")
         self.assertIn('EXPECTED_ADDON_ID = "download-manager@goreecloud.com"', text)
