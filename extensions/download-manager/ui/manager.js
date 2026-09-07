@@ -22,6 +22,9 @@ function basename(job) {
   try { return new URL(job.url).pathname.split("/").pop() || job.url; } catch (_) { return job.url; }
 }
 function isActive(job) { return ["starting", "in_progress", "downloading"].includes(job.state); }
+function isRecoverableNative(job) {
+  return Boolean(job.native && job.nativeStarted && ["interrupted", "error"].includes(job.state));
+}
 function matchesFilter(job, filter) {
   if (filter === "all") return true;
   if (filter === "active") return isActive(job);
@@ -92,6 +95,12 @@ function render() {
     engine.className = "engine-badge muted";
     engine.textContent = job.native ? `native${job.effectiveSegments > 1 ? ` · ${job.effectiveSegments} segments` : ""}` : "Firefox";
     badges.append(status, engine);
+    if (isRecoverableNative(job)) {
+      const recoverable = document.createElement("span");
+      recoverable.className = "engine-badge muted";
+      recoverable.textContent = "recoverable";
+      badges.appendChild(recoverable);
+    }
     identity.append(title, url, badges);
 
     const progressBlock = document.createElement("div");
@@ -113,7 +122,8 @@ function render() {
     speed.textContent = fmtSpeed(job.speedBps);
     const eta = document.createElement("div");
     eta.className = "muted";
-    eta.textContent = `ETA ${fmtEta(job.etaSeconds)}`;
+    const noEtaStates = new Set(["paused", "interrupted", "error", "cancelled", "complete"]);
+    eta.textContent = `ETA ${noEtaStates.has(job.state) ? "—" : fmtEta(job.etaSeconds)}`;
     telemetry.append(speed, eta);
     if (job.error) {
       const error = document.createElement("div");
@@ -123,13 +133,20 @@ function render() {
       error.title = job.error;
       telemetry.appendChild(error);
     }
+    if (isRecoverableNative(job)) {
+      const recovery = document.createElement("div");
+      recovery.className = "muted";
+      recovery.textContent = "Resume preserves this job ID and reuses its saved native segments.";
+      telemetry.appendChild(recovery);
+    }
 
     const actions = document.createElement("div");
     actions.className = "actions";
     if (["starting", "in_progress", "downloading", "queued"].includes(job.state)) actions.appendChild(actionButton("Pause", "pause-job", job.id));
     if (job.state === "paused") actions.appendChild(actionButton("Resume", "resume-job", job.id));
+    if (isRecoverableNative(job)) actions.appendChild(actionButton("Resume", "recover-job", job.id));
     if (!["complete", "cancelled", "error", "interrupted"].includes(job.state)) actions.appendChild(actionButton("Cancel", "cancel-job", job.id, "danger"));
-    if (["error", "interrupted", "cancelled"].includes(job.state)) actions.appendChild(actionButton("Retry", "retry-job", job.id));
+    if (["error", "interrupted", "cancelled"].includes(job.state) && !isRecoverableNative(job)) actions.appendChild(actionButton("Retry", "retry-job", job.id));
     if (["complete", "cancelled", "error", "interrupted"].includes(job.state)) actions.appendChild(actionButton("Remove", "remove-job", job.id));
 
     row.append(identity, progressBlock, telemetry, actions);
