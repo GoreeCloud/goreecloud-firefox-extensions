@@ -2,12 +2,13 @@
 
 ## Status
 
-**Release state:** Candidate  
-**Current Stable Firefox release:** 0.1.1  
+**Release state:** Stable after governed promotion merge  
 **Human target-environment acceptance:** Accepted  
-**Next release gate:** Deliberate Mozilla unlisted signing of the exact reviewed payload
+**Mozilla signing:** Completed successfully  
+**Signed-artifact acceptance:** Completed successfully  
+**Stable promotion record:** `RELEASE-PROMOTION-0.2.0.md`
 
-This record documents completion of the governed human target-environment review for GoreeCloud Privacy Shield 0.2.0. It does not by itself promote 0.2.0 to Stable, replace signed-artifact acceptance, or authorize a public AMO listing.
+This record documents completion of the governed human target-environment review for GoreeCloud Privacy Shield 0.2.0 and the later signing/signed-artifact gates that consumed its exact provenance. Public AMO listing and non-Firefox production decisions remain separate.
 
 ## Exact reviewed provenance
 
@@ -18,29 +19,29 @@ This record documents completion of the governed human target-environment review
 - Firefox target environment: Firefox 155.0.1 on Zorin OS laptop
 - Installation mode reviewed: temporary unsigned candidate
 
-The complete machine-readable target-acceptance JSON remains local. The release path retains only the provenance digest required by the signing workflow; raw browsing evidence, copied support-snapshot text, URLs, paths, queries, page content, credentials, cookies, identifiers, and free-form browsing notes are not committed here.
+The complete machine-readable target-acceptance JSON remains local. Only its provenance digest is retained in release records; raw browsing evidence, copied support-snapshot text, URLs, paths, queries, page content, credentials, cookies, identifiers, and free-form browsing notes are not committed.
 
 ## Accepted human checks
 
-The target review confirmed all governed popup and support-diagnostic checks required by `RELEASE-ACCEPTANCE-0.2.0.md` and `scripts/target_acceptance.py`:
+The target review confirmed all governed popup and support-diagnostic checks required by the 0.2.0 acceptance contract:
 
 - popup opens reliably and reports the expected hostname;
 - per-site On/Off state is understandable and site-scoped;
 - Standard, Strict, and Compatible modes and their help text are understandable;
 - Apply reloads the protected site and changes only the intended host mode;
 - Reset site returns the host to Standard/global behavior;
-- Blocked, Cleaned, Hidden, and Local counters are readable and explicitly scoped to This tab;
-- Protection details displays only friendly aggregate reasons without raw request URLs or page content;
-- Refresh updates current-session protection details without reloading the protected page;
-- Copy clean URL removes Privacy Shield-recognized tracking parameters while preserving unrelated query parameters;
+- Blocked, Cleaned, Hidden, and Local counters are readable and scoped to This tab;
+- Protection details displays friendly aggregate reasons without raw request URLs or page content;
+- Refresh updates current-session details without reloading the protected page;
+- Copy clean URL removes Privacy Shield-recognized tracking parameters while preserving unrelated parameters;
 - Copy support snapshot succeeds and contains only the bounded diagnostic surface;
-- keyboard navigation reaches the quick controls and visible focus is present;
+- keyboard navigation reaches every quick control and visible focus is present;
 - controls remain usable at the target system/browser scaling;
-- site-scoped protection Off on `app.test` does not disable protection on another ordinary site.
+- disabling protection on `app.test` does not disable protection on another ordinary site.
 
 ## Representative compatibility and recovery evidence
 
-Public-site review included article/news behavior and live per-tab protection activity. A controlled loopback acceptance fixture using `app.test`, `static.test`, and `frame.test` demonstrated deterministic compatibility impact and recovery in the target Firefox environment:
+Public-site review covered article/news behavior and live per-tab protection activity. A controlled loopback acceptance fixture using `app.test`, `static.test`, and `frame.test` demonstrated deterministic compatibility impact and recovery in the target Firefox environment:
 
 - Standard allowed the ordinary third-party application bundle and embedded frame while core telemetry protection remained active;
 - Strict blocked the third-party script-dependent application behavior and embedded frame while Privacy Shield remained On;
@@ -53,29 +54,20 @@ The accepted record therefore contains the required article/news, script-applica
 
 The copied support snapshot was directly inspected in the target environment. It contained only the expected bounded fields: extension/browser version, hostname, protection state, site mode, current-tab counters, and friendly aggregate reason labels/counts. It contained no raw request/final URLs, page paths, query strings, fragments, page content, DOM selectors, credentials, cookies, or logger identifiers.
 
-## Signing provenance inputs
+## Signing provenance and completion
 
-The manual-only `Privacy Shield Mozilla Signing` workflow must be run from the frozen review source ref and supplied exactly these values:
+The manual `Privacy Shield Mozilla Signing` workflow consumed exactly:
 
 - `target_acceptance_source_revision`: `eb5e2ff4c439d290ac3f61dc73e9e90b49f3181b`
 - `target_acceptance_xpi_sha256`: `23287a50aa7615f422ac1cab8ed3d124f89df1c39fb0173db889c9d7fd2f46e7`
 - `target_acceptance_record_sha256`: `ece8f510df497dee9fdcc08775d115dbea57f43506527c4805125da7915631ea`
 
-The signing workflow must fail closed if the workflow source revision does not equal the reviewed source or if its deterministic rebuilt unsigned XPI does not equal the reviewed XPI digest.
+Workflow run `34070682147` on the frozen reviewed source completed successfully. The returned Mozilla-signed XPI SHA-256 is `c4d01e131fe4a18fdd7f0c13c22fd849f2e99d271fef43ca6cbb390430819b62`.
 
-## Remaining release gates
+The signed artifact independently passed signature/archive inspection, full real-Firefox runtime regression, popup quick-control acceptance, Strict/Compatible/Reset compatibility-recovery acceptance, forced Manifest V3 event-page wake recovery, persistent signed installation, full same-profile Firefox restart without reinstalling the extension, and critical post-restart protection checks.
 
-Human target-environment acceptance is complete. The remaining 0.2.0 gates are:
+## Release boundary
 
-1. deliberate Mozilla unlisted/self-distribution signing of the exact reviewed payload;
-2. Mozilla-returned signed-XPI signature/archive verification;
-3. full real-Firefox runtime regression on the signed artifact;
-4. signed-artifact popup quick-control acceptance;
-5. signed-artifact Strict/Compatible/Reset compatibility-recovery acceptance;
-6. forced Manifest V3 event-page wake recovery on the signed artifact;
-7. persistent signed installation and full same-profile Firefox restart without reinstalling the extension;
-8. governed Stable-promotion release record and repository metadata reconciliation.
-
-Until every remaining gate passes and the Stable-promotion change is reviewed, validated, and merged, **Privacy Shield 0.1.1 remains Stable and 0.2.0 remains Candidate**.
+All Firefox-adapter 0.2.0 human, signing, signed-artifact, persistence, and restart gates are complete. The separate governed Stable promotion record is `RELEASE-PROMOTION-0.2.0.md`.
 
 Public AMO listing, global platform Privacy Shield production acceptance, GoreeCloud Browser compiled-runtime acceptance, DNS/Network/application acceptance, and unrelated infrastructure production state remain separate decisions.
