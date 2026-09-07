@@ -7,7 +7,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 EXCLUDE_NAMES = {"LICENSE", ".source-baseline"}
 EXCLUDE_SUFFIXES = {".md", ".py", ".pyc"}
-EXCLUDE_PARTS = {"scripts", "tests", "__pycache__", ".git"}
+EXCLUDE_PARTS = {"scripts", "__pycache__", ".git"}
+EXCLUDE_PARTS.add("tests")
 
 
 def should_include(path: Path, extension_dir: Path) -> bool:
