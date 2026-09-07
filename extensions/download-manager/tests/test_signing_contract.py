@@ -102,6 +102,15 @@ class SigningContractTests(unittest.TestCase):
         self.assertGreaterEqual(text.count("service=firefox_service()"), 2)
         self.assertNotIn('options.add_argument("--remote-allow-system-access")', text)
 
+    def test_signed_restart_smoke_uses_trusted_chrome_tab_for_extension_navigation(self):
+        text = SMOKE.read_text(encoding="utf-8")
+        self.assertIn("driver.set_context(driver.CONTEXT_CHROME)", text)
+        self.assertIn("window.gBrowser.addTrustedTab(target)", text)
+        self.assertIn("window.gBrowser.selectedTab = tab", text)
+        self.assertIn("driver.set_context(driver.CONTEXT_CONTENT)", text)
+        self.assertIn("driver.current_url == target", text)
+        self.assertNotIn("driver.get(extension_url(path))", text)
+
     def test_signing_and_platform_review_docs_preserve_release_boundary(self):
         signing = SIGNING.read_text(encoding="utf-8")
         review = PLATFORM_REVIEW.read_text(encoding="utf-8")
