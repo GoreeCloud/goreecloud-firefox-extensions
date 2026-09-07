@@ -2,7 +2,7 @@
 
 ## Status
 
-Version 0.2.0 source candidate.
+Version 0.2.1 source candidate.
 
 ## Components
 
@@ -32,6 +32,24 @@ Native staging layout:
 `metadata.json` stores source and destination metadata but never cookies or other request credentials.
 
 Before resuming existing parts, the helper compares available ETag, Last-Modified, and source-size information. If the source identity changed, old partial data is discarded before the new transfer begins.
+
+### Native host installation
+
+The Linux installer copies the helper out of the source checkout into the durable user path:
+
+```text
+~/.local/lib/goreecloud-download-manager/goreecloud_download_manager_native.py
+```
+
+Firefox native-host registration is written to:
+
+```text
+~/.mozilla/native-messaging-hosts/goreecloud_download_manager.json
+```
+
+The installer replaces the manifest atomically and runs Python compilation plus a Native Messaging hello/ping protocol self-test before reporting success. The installed manifest authorizes only `download-manager@goreecloud.com`.
+
+When Firefox is distributed as a Flatpak, native-host startup can traverse `org.freedesktop.portal.WebExtensions`. The installer reports whether that portal interface is visible and gives explicit Firefox portal-preference guidance rather than granting the confined browser arbitrary host command execution.
 
 ### Optional authenticated native downloads
 
