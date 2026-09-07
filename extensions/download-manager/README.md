@@ -1,6 +1,6 @@
 # GoreeCloud Download Manager Extension
 
-**Status:** 0.2.7 source candidate — unsigned, not Release Candidate or Stable
+**Status:** 0.2.8 source candidate — unsigned, not Release Candidate or Stable
 
 GoreeCloud Download Manager Extension is GoreeCloud's first-party Firefox Manifest V3 download manager. It provides managed queueing, pause/resume, retries, batch input, download telemetry, and an optional separately installed Linux Native Messaging helper for segmented HTTP range transfers and durable same-job partial-file recovery.
 
@@ -17,6 +17,7 @@ GoreeCloud Download Manager Extension is GoreeCloud's first-party Firefox Manife
 - Source-identity validation using URL, ETag, Last-Modified, and known source length before staged partial reuse.
 - Strict native HTTP 206 / `Content-Range` validation before resumed or segmented bytes are appended.
 - Collision-safe native destination reservation and no-overwrite final publication from staging.
+- Versioned extension/native protocol negotiation with required capability validation.
 - Optional target-site cookie forwarding, disabled by default and guarded by explicit Firefox optional permission.
 - Completion/failure notifications.
 - Deterministic managed queue ordering, including migration-safe queue-sequence reconciliation.
@@ -28,21 +29,31 @@ GoreeCloud Download Manager Extension is GoreeCloud's first-party Firefox Manife
 Firefox add-on ID: `download-manager@goreecloud.com`  
 Native Messaging host: `goreecloud_download_manager`
 
+## 0.2.8 native protocol compatibility hardening
+
+0.2.8 adds an explicit compatibility contract between the Firefox extension and the separately installed native helper so a newly updated extension cannot silently treat an older helper as equivalent to the code it was validated against.
+
+The extension loads `native_protocol.js` before the primary background controller and validates every native `hello` handshake before marking the host ready. Protocol **2** requires helper version **0.2.8 or newer** plus the capabilities `segmented-range-integrity`, `same-job-recovery`, `no-overwrite-publish`, and `ephemeral-request-headers`. Legacy helpers without a protocol version, helpers on another protocol, helpers older than the 0.2.8 compatibility line, and protocol-2 helpers missing required capabilities are rejected with an actionable reinstall message.
+
+The 0.2.8 helper advertises its version, protocol version, and capability set on both startup and ping responses. The Linux installer independently validates those fields after copying the helper, and Settings reports the connected helper version and protocol when the compatibility gate succeeds. A rejected helper is disconnected so a repaired/reinstalled helper can be discovered on the next connection attempt.
+
+Fresh native jobs retain the normal Firefox compatibility fallback if the helper cannot be used. Identity-preserving recovery of a native job that already started remains governed by the stricter recovery no-fallback rule introduced in 0.2.7, so recovery does not silently become a new Firefox transfer.
+
+Deterministic protocol tests cover accepted protocol-2 handshakes, future compatible helpers, legacy/mismatched protocols, minimum helper version enforcement, required-capability enforcement, capability normalization, manifest script ordering, background integration, installer validation, Settings status presentation, helper handshake metadata, and inventory/version consistency.
+
 ## 0.2.7 native recovery and integrity hardening
 
-0.2.7 strengthens the separately installed native helper and the extension/native recovery boundary.
+0.2.7 strengthened the separately installed native helper and the extension/native recovery boundary.
 
-The native helper now performs its own HTTP/HTTPS transport validation, in addition to extension-side validation. Persisted staging metadata belonging to a different URL is treated as stale source identity rather than reusable partial state. Allowlisted forwarded `Cookie` and `Referer` values continue to reject CR/LF injection and are now individually bounded to 64 KiB.
+The native helper performs its own HTTP/HTTPS transport validation in addition to extension-side validation. Persisted staging metadata belonging to a different URL is treated as stale source identity rather than reusable partial state. Allowlisted forwarded `Cookie` and `Referer` values reject CR/LF injection and are individually bounded to 64 KiB.
 
 Resumed single-file requests and segmented workers validate the server's partial response before writing response bytes. HTTP 206 alone is insufficient: `Content-Range` must be syntactically valid, begin at the exact requested byte, end at the planned segment boundary when one exists, and report the expected total source size when that size is known.
 
-Same-helper recovery is also hardened. A `resume` for an active native job reuses the existing worker instead of spawning a duplicate. A same-ID resume for a worker that ended in a recoverable error may reconstruct a replacement in-memory job while retaining the existing job-scoped staging identity. Completed and explicitly cancelled native jobs are not restarted by a later same-ID resume.
+Same-helper recovery is hardened. A `resume` for an active native job reuses the existing worker instead of spawning a duplicate. A same-ID resume for a worker that ended in a recoverable error may reconstruct a replacement in-memory job while retaining the existing job-scoped staging identity. Completed and explicitly cancelled native jobs are not restarted by a later same-ID resume.
 
 The extension recovery controller protects a separate race between native-helper preflight and actual scheduler launch. Already-started native recovery jobs are not eligible for the normal new-job Firefox compatibility fallback. If the helper disappears after preflight, native launch fails as a recoverable native problem rather than silently converting the same recovery attempt into a fresh Firefox download. Fresh native jobs that have never started retain the normal Firefox fallback when the helper is unavailable.
 
-Native destination publication is now two-phase. Jobs reserve their intended destination before worker execution; segmented downloads assemble to `assembled.part` under the job-scoped staging directory; and final publication uses a no-overwrite same-filesystem commit. If another process creates the chosen destination after reservation, GoreeCloud selects another collision-safe filename rather than truncating or replacing the external file.
-
-Deterministic native-core and recovery-controller regressions cover transport validation, stale-source staging invalidation, exact partial-response semantics, same-ID live/dead/terminal recovery behavior, duplicate-start handling, destination reservation, no-overwrite finalization, and the recovery/no-fallback boundary.
+Native destination publication is two-phase. Jobs reserve their intended destination before worker execution; segmented downloads assemble to `assembled.part` under the job-scoped staging directory; and final publication uses a no-overwrite same-filesystem commit. If another process creates the chosen destination after reservation, GoreeCloud selects another collision-safe filename rather than truncating or replacing the external file.
 
 ## Recovery model
 
@@ -86,7 +97,7 @@ Remove it with:
 ./extensions/download-manager/scripts/install-native-host-linux.sh --uninstall
 ```
 
-The installer compiles the installed Python helper, runs a Native Messaging hello/ping framing check, and reports Firefox Flatpak/WebExtensions portal diagnostics when applicable.
+The installer compiles the installed Python helper and runs a Native Messaging startup/ping self-test that requires helper version 0.2.8, protocol 2, and the capabilities used by the current integrity/recovery boundary. It also reports Firefox Flatpak/WebExtensions portal diagnostics when applicable.
 
 For Firefox distributed as a Flatpak, if the helper remains undiscoverable, open `about:config`, set `widget.use-xdg-desktop-portal.native-messaging` to `1`, restart Firefox, reload a temporary unsigned candidate if necessary, and approve the WebExtensions portal authorization prompt.
 
@@ -104,13 +115,13 @@ Mozilla Firefox 155.0.1 from Flathub Flatpak has accepted the earlier tested run
 - native five-job batch concurrency at configured `maxConcurrent = 3`, with five-file integrity acceptance; and
 - initial Firefox-engine 3-active / 2-queued ceiling with completion-driven slot promotion.
 
-0.2.4–0.2.7 scheduler, lifecycle, retry-snapshot, native-range-integrity, no-overwrite-publication, and additional recovery-fault behavior is accepted through deterministic source-level testing unless separately identified as target-runtime evidence. Full-browser restart recovery remains gated on persistent signed installation.
+0.2.4–0.2.8 scheduler, lifecycle, retry-snapshot, native-range-integrity, no-overwrite-publication, additional recovery-fault, and native-protocol behavior is accepted through deterministic source-level testing only when the corresponding exact source candidate passes repository CI. Full-browser restart recovery remains gated on persistent signed installation.
 
 ## Development installation
 
 Load the unsigned XPI or `extensions/download-manager/manifest.json` from `about:debugging` → **This Firefox** → **Load Temporary Add-on**.
 
-To exercise native behavior, install/reinstall the native helper from the same 0.2.7 source checkout, select **Native segmented helper** in Settings, save, and use **Test native helper** before starting a native transfer.
+To exercise native behavior, install/reinstall the native helper from the same 0.2.8 source checkout, select **Native segmented helper** in Settings, save, and use **Test native helper** before starting a native transfer. A successful test reports the helper version and protocol.
 
 ## Packaging
 
@@ -120,11 +131,12 @@ From the canonical `GoreeCloud/goreecloud-firefox-extensions` repository root:
 python shared/scripts/package_extension.py download-manager
 ```
 
-The resulting `dist/goreecloud-download-manager-0.2.7.xpi` is deterministic and unsigned. Packaging excludes the separately installed native helper and source-only scripts/tests/documentation. Packaging success is not Mozilla signing and does not make the version Stable.
+The resulting `dist/goreecloud-download-manager-0.2.8.xpi` is deterministic and unsigned. Packaging excludes the separately installed native helper and source-only scripts/tests/documentation. Packaging success is not Mozilla signing and does not make the version Stable.
 
 ## Validation
 
 ```bash
+node --check extensions/download-manager/native_protocol.js
 node --check extensions/download-manager/background.js
 node --check extensions/download-manager/recovery.js
 node --check extensions/download-manager/scheduler_hardening.js
@@ -143,8 +155,8 @@ python shared/scripts/package_extension.py download-manager
 
 ## Current boundaries
 
-0.2.7 does not establish Windows or macOS native-host support, arbitrary POST/body downloads, complete browser authorization-state reproduction, mirror failover, bandwidth limiting, time-based scheduling, automatic browser-wide interception, origin/user-supplied cryptographic checksum enforcement, or formal completion of GoreeCloud Manager, Privacy Shield, Wardveil Security, Everkeep, GoreeCloud Mesh, GoreeCloud Identity, or governed Glaze UI integration.
+0.2.8 does not establish Windows or macOS native-host support, arbitrary POST/body downloads, complete browser authorization-state reproduction, mirror failover, bandwidth limiting, time-based scheduling, automatic browser-wide interception, origin/user-supplied cryptographic checksum enforcement, or formal completion of GoreeCloud Manager, Privacy Shield, Wardveil Security, Everkeep, GoreeCloud Mesh, GoreeCloud Identity, or governed Glaze UI integration.
 
 ## Release state
 
-0.2.7 remains an **unsigned Active Development source candidate**. Mozilla signing, persistent signed installation, full Firefox restart/native-host acceptance against the signed add-on, applicable governed Platform-System reviews, Release Candidate qualification, and explicit Stable promotion remain required.
+0.2.8 remains an **unsigned Active Development source candidate**. Deterministic protocol/source tests and unsigned packaging do not independently establish target-device protocol acceptance, Mozilla signing, persistent signed installation, full Firefox restart/native-host acceptance against the signed add-on, applicable governed Platform-System reviews, Release Candidate qualification, or explicit Stable promotion.
