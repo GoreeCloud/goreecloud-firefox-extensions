@@ -2,7 +2,7 @@
 
 ## Status
 
-Version 0.2.2 source candidate.
+Version 0.2.3 source candidate.
 
 ## Components
 
@@ -75,7 +75,15 @@ When Firefox is distributed as a Flatpak, native-host startup can traverse `org.
 
 ### Optional authenticated native downloads
 
-When the user explicitly enables cookie forwarding and grants Firefox's optional Cookies + All Sites permission, the extension constructs a `Cookie` header from cookies matching the target URL and sends it to the native host only for the active request. The helper filters accepted forwarded headers and never writes them to staging metadata.
+Cookie forwarding is disabled by default. Firefox's `cookies` permission and `<all_urls>` host permission remain optional.
+
+In 0.2.3, permission acquisition occurs directly from the Settings page's **Grant optional cookie permission** click handler so `browser.permissions.request()` executes in Firefox's required user-action context. Save does not attempt to request this permission indirectly or after unrelated asynchronous work.
+
+After explicit permission has been granted and cookie forwarding is enabled, the extension reads cookies matching only the target download URL at launch or resume time. It constructs a `Cookie` header in memory and sends that header through Native Messaging for the active request. The helper accepts only allowlisted forwarded headers and does not persist request credentials in `metadata.json`.
+
+Target Firefox 155.0.1 / Flathub Flatpak testing has accepted this path using a controlled cookie-protected range server. Before permission-backed forwarding, the server returned HTTP 401. After the explicit grant, it accepted one authenticated HEAD probe and eight authenticated HTTP 206 requests spanning the complete 256 MiB source. The final output matched source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484` exactly. Native staging and extension `browser.storage.local` scans both passed the controlled test-credential non-persistence checks.
+
+Detailed evidence is maintained in `docs/AUTHENTICATED_COOKIE_ACCEPTANCE.md`.
 
 ## Current boundaries
 

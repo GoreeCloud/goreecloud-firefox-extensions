@@ -8,7 +8,9 @@
 - Added permission-change listeners so the Settings status refreshes when Firefox grants or removes the optional permission.
 - Added source-contract tests that keep `cookies` and `<all_urls>` optional and verify the request stays directly bound to the user click handler.
 - This change was triggered by Firefox 155.0.1 / Flathub Flatpak runtime testing in which the 0.2.2 Settings button produced no permission prompt because the request was delegated through the background message handler.
-- Authenticated-cookie transfer acceptance remains pending target-runtime retest with the corrected 0.2.3 candidate.
+- Accepted the corrected 0.2.3 authenticated-cookie path on Firefox 155.0.1 / Flathub Flatpak. A protected controlled endpoint first rejected unauthenticated access with HTTP 401; after the explicit optional permission grant, the native helper completed an authenticated HEAD probe and eight authenticated HTTP 206 byte-range requests covering the entire 256 MiB source.
+- Accepted authenticated output integrity: `goreecloud-auth-range-test.bin` matched source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484` exactly and byte-for-byte comparison reported `AUTHENTICATED FILE INTEGRITY: PASS`.
+- Accepted credential non-persistence for the controlled test credential: native staging scan reported `NATIVE COOKIE PERSISTENCE: PASS`, extension `browser.storage.local` scan reported `BROWSER COOKIE PERSISTENCE: PASS`, and native staging was empty after successful completion.
 
 ## 0.2.2 — Source candidate
 

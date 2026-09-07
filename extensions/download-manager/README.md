@@ -21,13 +21,15 @@ GoreeCloud Download Manager Extension is a Firefox Manifest V3 download-manageme
 - Firefox add-on ID: `download-manager@goreecloud.com`.
 - Native messaging host: `goreecloud_download_manager`.
 
-## 0.2.3 cookie-permission correction
+## 0.2.3 cookie-permission correction and acceptance
 
 Firefox requires `browser.permissions.request()` to execute directly inside a user-action handler. The 0.2.2 Settings implementation delegated that request through `browser.runtime.sendMessage()` to the background script, so Firefox 155.0.1 / Flathub Flatpak did not present the optional Cookies + All Sites permission prompt during authenticated-download acceptance testing.
 
 0.2.3 moves the request directly into the **Grant optional cookie permission** button's click handler. The Save action no longer attempts to request permission after an asynchronous permission check; when cookie forwarding is selected without permission, Save stops and instructs the user to run the explicit Grant flow first. Source-contract tests verify that `cookies` and `<all_urls>` remain optional and that the request stays bound directly to the Settings-page user gesture.
 
-Authenticated-cookie transfer acceptance remains pending target-runtime retest with 0.2.3.
+The corrected path is now accepted on Firefox 155.0.1 / Flathub Flatpak. A controlled protected endpoint rejected unauthenticated access with HTTP 401, then accepted an authenticated HEAD probe and eight authenticated HTTP 206 range requests after the optional permission was explicitly granted. The eight ranges covered the full 256 MiB source. The resulting `goreecloud-auth-range-test.bin` matched source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484` exactly and byte-for-byte comparison reported `AUTHENTICATED FILE INTEGRITY: PASS`. Native staging was empty afterward. Searches of native staging and extension `browser.storage.local` for the controlled test credential reported `NATIVE COOKIE PERSISTENCE: PASS` and `BROWSER COOKIE PERSISTENCE: PASS` respectively.
+
+Detailed evidence is recorded in `docs/AUTHENTICATED_COOKIE_ACCEPTANCE.md`.
 
 ## Recovery hardening carried forward from 0.2.2
 
@@ -80,7 +82,9 @@ The recovery path was exercised by deliberately terminating the installed native
 
 Non-persistent Firefox background-context recovery was then exercised during another eight-segment transfer. Job ID `4e877c53-cf58-40ff-a9d1-f632f1f72165` retained `metadata.json` plus eight segment files after background termination. Reopening the extension recreated the background context and the transfer completed to `goreecloud-range-test (2).bin`; byte-for-byte integrity passed and staging was empty afterward.
 
-This evidence accepts the tested native segmented transfer, live pause/resume, helper-interruption recovery, non-persistent background-context recovery, existing-segment reuse, collision-safe naming, assembly, integrity, and staging-cleanup paths for the tested Firefox 155.0.1 Flatpak environment. It does not yet establish full-browser restart recovery, authenticated-cookie transfer acceptance, Mozilla signing, or persistent signed-install/restart acceptance.
+The 0.2.3 authenticated-cookie path was then exercised against a controlled cookie-protected range server. Before cookie forwarding, the endpoint returned HTTP 401. After explicit optional permission acquisition, the server logged one authenticated HEAD request followed by eight authenticated HTTP 206 range requests spanning the full 256 MiB source. The final authenticated output reproduced the source SHA-256 exactly. Extension storage and native staging scans both passed the controlled credential non-persistence checks.
+
+This evidence accepts the tested native segmented transfer, live pause/resume, helper-interruption recovery, non-persistent background-context recovery, existing-segment reuse, collision-safe naming, authenticated cookie forwarding, assembly, integrity, credential non-persistence for the controlled test, and staging-cleanup paths for the tested Firefox 155.0.1 Flatpak environment. It does not yet establish full-browser restart recovery, Mozilla signing, or persistent signed-install/restart acceptance.
 
 ## Cookie forwarding
 
