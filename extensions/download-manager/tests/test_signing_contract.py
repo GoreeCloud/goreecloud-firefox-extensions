@@ -7,6 +7,7 @@ REPOSITORY_ROOT = ROOT.parents[1]
 WORKFLOW = REPOSITORY_ROOT / ".github" / "workflows" / "download-manager-mozilla-signing.yml"
 SMOKE = ROOT / "tests" / "signed_restart_smoke.py"
 AMO_RECOVERY = ROOT / "tests" / "amo_signed_version_recovery.py"
+SIGNED_XPI_VERIFY = ROOT / "tests" / "verify_signed_xpi.py"
 SIGNING = ROOT / "SIGNING.md"
 PLATFORM_REVIEW = ROOT / "PLATFORM_SYSTEM_RELEASE_REVIEW.md"
 
@@ -20,7 +21,7 @@ class SigningContractTests(unittest.TestCase):
         self.assertIn("web-ext@10.5.0 sign", text)
         self.assertIn("--channel=unlisted", text)
         self.assertIn("download-manager@goreecloud.com", text)
-        self.assertIn("META-INF/", text)
+        self.assertIn("verify_signed_xpi.py", text)
         self.assertIn("signed_restart_smoke.py", text)
         self.assertIn("download-manager-signing-evidence.json", text)
         self.assertIn("stablePromoted", text)
@@ -30,22 +31,37 @@ class SigningContractTests(unittest.TestCase):
         self.assertIn("git rev-parse origin/main", text)
         self.assertIn('if [[ "$GITHUB_SHA" != "$main_sha" ]]', text)
 
-    def test_existing_signed_version_can_be_recovered_only_with_exact_payload_verification(self):
+    def test_existing_signed_version_can_be_recovered_only_with_governed_payload_verification(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         recovery = AMO_RECOVERY.read_text(encoding="utf-8")
+        verifier = SIGNED_XPI_VERIFY.read_text(encoding="utf-8")
         self.assertIn("already exists", workflow)
         self.assertIn("amo_signed_version_recovery.py", workflow)
         self.assertIn("/api/v5/addons/addon/", recovery)
         self.assertIn("AMO existing file is not approved/public", recovery)
         self.assertIn("AMO existing file is missing a SHA-256 hash", recovery)
-        self.assertIn("signed XPI does not contain Mozilla signature metadata", workflow)
-        self.assertIn("Mozilla-signed XPI payload inventory differs", workflow)
-        self.assertIn("Mozilla-signed XPI changed runtime payload bytes", workflow)
-        self.assertIn("signedPayloadMatchesCandidate", workflow)
+        self.assertIn("signed XPI does not contain Mozilla signature metadata", verifier)
+        self.assertIn("payload inventory differs", verifier)
+        self.assertIn("changed runtime payload bytes", verifier)
+        self.assertIn("signedNonManifestPayloadMatchesCandidateByteForByte", workflow)
+        self.assertIn("signedManifestGovernedParityAccepted", workflow)
+        self.assertIn("signed-xpi-parity.json", workflow)
         self.assertIn("mozillaSigningSource", workflow)
         self.assertIn("mozilla-signing-source.txt", workflow)
         self.assertIn("amo-existing-version-metadata.json", workflow)
         self.assertIn("amoExistingVersion", workflow)
+
+    def test_signed_manifest_normalization_is_narrowly_governed(self):
+        verifier = SIGNED_XPI_VERIFY.read_text(encoding="utf-8")
+        self.assertIn("data_collection_permissions", verifier)
+        self.assertIn('required == ["none"]', verifier)
+        self.assertIn('optional == []', verifier)
+        self.assertIn("previous is False", verifier)
+        self.assertIn("changed semantics outside the governed", verifier)
+        self.assertIn("changed source-declared data_collection_permissions", verifier)
+        self.assertIn("added an unapproved data_collection_permissions", verifier)
+        self.assertIn("nonManifestPayloadByteExact", verifier)
+        self.assertIn("payloadInventoryExact", verifier)
 
     def test_existing_version_download_uses_authenticated_file_api_without_redirect_credential_forwarding(self):
         recovery = AMO_RECOVERY.read_text(encoding="utf-8")
