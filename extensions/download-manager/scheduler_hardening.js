@@ -3,6 +3,7 @@
   const PROBLEM_TERMINAL_STATES = new Set(["error", "interrupted"]);
   const QUEUE_SEQUENCE_KEY = "download-manager:queue-sequence";
   let queueOrderLock = Promise.resolve();
+  let queueSequenceReconciled = false;
 
   function isBrowserResumeWaiting(job) {
     return Boolean(
@@ -136,14 +137,17 @@
       let baseline = Number.isFinite(prior) && prior >= 0 ? Math.trunc(prior) : 0;
 
       // A profile upgraded from an older source candidate can contain jobs with
-      // queueOrder values while the sequence key itself is absent/stale. Never
-      // allocate an order behind persisted history; reconcile to the highest
-      // managed order before assigning the next queue-tail position.
-      const all = await browser.storage.local.get(null);
-      for (const [key, value] of Object.entries(all)) {
-        if (!key.startsWith("job:")) continue;
-        const order = Number(value?.queueOrder);
-        if (Number.isFinite(order) && order >= 0) baseline = Math.max(baseline, Math.trunc(order));
+      // queueOrder values while the sequence key itself is absent/stale. Reconcile
+      // once per background context to the highest persisted managed order, then
+      // continue with the lightweight sequence key for subsequent allocations.
+      if (!queueSequenceReconciled) {
+        const all = await browser.storage.local.get(null);
+        for (const [key, value] of Object.entries(all)) {
+          if (!key.startsWith("job:")) continue;
+          const order = Number(value?.queueOrder);
+          if (Number.isFinite(order) && order >= 0) baseline = Math.max(baseline, Math.trunc(order));
+        }
+        queueSequenceReconciled = true;
       }
 
       const next = baseline + 1;
