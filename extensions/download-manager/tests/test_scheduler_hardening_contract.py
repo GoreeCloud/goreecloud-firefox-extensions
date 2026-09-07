@@ -7,10 +7,13 @@ REPO = ROOT.parents[1]
 
 
 class SchedulerHardeningContractTests(unittest.TestCase):
-    def test_manifest_loads_scheduler_hardening_after_background_and_recovery(self):
+    def test_manifest_loads_scheduler_hardening_after_protocol_background_and_recovery(self):
         manifest = json.loads((ROOT / "manifest.json").read_text())
         scripts = manifest["background"]["scripts"]
-        self.assertEqual(scripts[:2], ["background.js", "recovery.js"])
+        self.assertEqual(
+            scripts[:3],
+            ["native_protocol.js", "background.js", "recovery.js"],
+        )
         self.assertEqual(scripts[-1], "scheduler_hardening.js")
 
     def test_scheduler_hardening_source_and_node_regression_exist(self):
