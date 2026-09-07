@@ -21,6 +21,11 @@ function basename(job) {
   if (job.filename) return String(job.filename).split(/[\\/]/).pop();
   try { return new URL(job.url).pathname.split("/").pop() || job.url; } catch (_) { return job.url; }
 }
+function engineLabel(job) {
+  if (!job.native) return "Firefox";
+  const count = Number(job.effectiveSegments || job.segments || 1);
+  return count > 1 ? `native · ${count} segments` : "native · single stream";
+}
 function button(label, type, id) {
   const element = document.createElement("button");
   element.textContent = label;
@@ -73,7 +78,19 @@ async function render() {
 
     const meta = document.createElement("div");
     meta.className = "meta muted";
-    meta.textContent = `${fmtBytes(job.bytesReceived || 0)} / ${fmtBytes(job.totalBytes)} · ${fmtSpeed(job.speedBps)} · ETA ${fmtEta(job.etaSeconds)}`;
+    const eta = job.state === "paused" ? "—" : fmtEta(job.etaSeconds);
+    meta.textContent = `${engineLabel(job)} · ${fmtBytes(job.bytesReceived || 0)} / ${fmtBytes(job.totalBytes)} · ${fmtSpeed(job.speedBps)} · ETA ${eta}`;
+
+    if (job.fallbackReason) {
+      const fallback = document.createElement("div");
+      fallback.className = "meta muted";
+      fallback.style.color = "var(--danger)";
+      fallback.textContent = "Native helper fallback: this job is using Firefox.";
+      fallback.title = job.fallbackReason;
+      wrap.append(top, progress, meta, fallback);
+    } else {
+      wrap.append(top, progress, meta);
+    }
 
     const actions = document.createElement("div");
     actions.className = "actions";
@@ -82,7 +99,7 @@ async function render() {
     if (!["complete", "cancelled", "error", "interrupted"].includes(job.state)) actions.appendChild(button("Cancel", "cancel-job", job.id));
     if (["error", "interrupted", "cancelled"].includes(job.state)) actions.appendChild(button("Retry", "retry-job", job.id));
 
-    wrap.append(top, progress, meta, actions);
+    wrap.appendChild(actions);
     root.appendChild(wrap);
   }
 }
