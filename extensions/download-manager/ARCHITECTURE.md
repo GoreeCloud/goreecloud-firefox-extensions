@@ -51,7 +51,9 @@ When a non-persistent Firefox background context is recreated, native jobs persi
 
 Target Firefox 155.0.1 / Flathub Flatpak testing has accepted the deliberate native-helper interruption path. During a controlled 256 MiB eight-segment transfer, terminating the native helper left the original job-scoped staging directory intact with `metadata.json` and all eight partial segment files. Resume completed successfully; the original staging directory was removed after assembly; the recovered file reproduced source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484` exactly; and the collision-safe destination policy produced `goreecloud-range-test (1).bin` because the original filename already existed.
 
-This accepts helper-process interruption recovery for the tested target environment. Non-persistent background-context recreation and full-browser restart recovery remain separate acceptance gates.
+The same target environment has also accepted non-persistent background-context recreation recovery. During another controlled eight-segment transfer, job ID `4e877c53-cf58-40ff-a9d1-f632f1f72165` retained `metadata.json` and all eight segment files at 6,815,744 bytes each before background termination. Terminating the Firefox extension background script did not remove the job-scoped staging directory or partial segments; the native helper process remained present. Reopening the extension recreated the background context and the transfer subsequently completed to `goreecloud-range-test (2).bin`. The output reproduced the source SHA-256 exactly, byte-for-byte comparison passed, and staging was empty after successful completion.
+
+These tests accept helper-process interruption recovery and non-persistent background-context recovery for the tested target environment. Full-browser restart recovery remains a separate acceptance gate.
 
 ### Native host installation
 
