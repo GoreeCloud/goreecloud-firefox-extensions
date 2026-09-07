@@ -50,6 +50,8 @@ jobs:
         run: python -m py_compile extensions/download-manager/scripts/native-host/goreecloud_download_manager_native.py
       - name: Test Download Manager native core
         run: python -m unittest discover -s extensions/download-manager/tests -p 'test_*.py'
+      - name: Test Download Manager Firefox scheduler
+        run: node extensions/download-manager/tests/test_browser_scheduler.js
       - name: Check maintained JavaScript syntax
         shell: bash
         run: |

@@ -1,6 +1,6 @@
 # GoreeCloud Download Manager Extension
 
-**Status:** 0.2.3 source candidate — unsigned, not Stable
+**Status:** 0.2.4 source candidate — unsigned, not Stable
 
 GoreeCloud Download Manager Extension is a Firefox Manifest V3 download-management extension with queueing, pause/resume, retries, batch URL input, download telemetry, and an optional Linux native helper for segmented HTTP range downloads and durable partial-file resume.
 
@@ -21,13 +21,23 @@ GoreeCloud Download Manager Extension is a Firefox Manifest V3 download-manageme
 - Firefox add-on ID: `download-manager@goreecloud.com`.
 - Native messaging host: `goreecloud_download_manager`.
 
+## 0.2.4 Firefox scheduler hardening
+
+Runtime Firefox-engine concurrency testing exposed a managed-state race during resume-while-full behavior. GoreeCloud correctly requeued a paused Firefox download when all managed slots were occupied, but Firefox necessarily kept the underlying browser download paused until `browser.downloads.resume()` was called. The normal browser snapshot refresh then treated Firefox's paused flag as the managed source of truth and could rewrite the GoreeCloud job from `queued` back to `paused`. Firefox also surfaced `USER_CANCELED` during intentional pause behavior, producing misleading failure text.
+
+0.2.4 adds a post-background scheduler state adapter that keeps these two layers distinct. An existing Firefox download may now remain **queued in GoreeCloud while still paused in Firefox** until the scheduler grants a slot. Firefox paused snapshots and paused/error deltas cannot overwrite that managed queue state, and `USER_CANCELED` noise is suppressed while the job is intentionally paused or waiting for a resume slot. When a slot opens, GoreeCloud resumes the existing Firefox download ID instead of creating a replacement download.
+
+A deterministic Node regression harness evaluates the real background scripts against a mocked Firefox WebExtensions API. It verifies the 3-active / 2-queued ceiling, pause-driven promotion, resume-while-full queue retention, paused snapshot/delta reconciliation, same-download-ID resume when a slot opens, and completion notification emission. The regression runs in repository CI.
+
+Detailed source-level evidence is recorded in `docs/FIREFOX_SCHEDULER_HARDENING.md`.
+
 ## 0.2.3 cookie-permission correction and acceptance
 
 Firefox requires `browser.permissions.request()` to execute directly inside a user-action handler. The 0.2.2 Settings implementation delegated that request through `browser.runtime.sendMessage()` to the background script, so Firefox 155.0.1 / Flathub Flatpak did not present the optional Cookies + All Sites permission prompt during authenticated-download acceptance testing.
 
-0.2.3 moves the request directly into the **Grant optional cookie permission** button's click handler. The Save action no longer attempts to request permission after an asynchronous permission check; when cookie forwarding is selected without permission, Save stops and instructs the user to run the explicit Grant flow first. Source-contract tests verify that `cookies` and `<all_urls>` remain optional and that the request stays bound directly to the Settings-page user gesture.
+0.2.3 moved the request directly into the **Grant optional cookie permission** button's click handler. The Save action no longer attempts to request permission after an asynchronous permission check; when cookie forwarding is selected without permission, Save stops and instructs the user to run the explicit Grant flow first. Source-contract tests verify that `cookies` and `<all_urls>` remain optional and that the request stays bound directly to the Settings-page user gesture.
 
-The corrected path is now accepted on Firefox 155.0.1 / Flathub Flatpak. A controlled protected endpoint rejected unauthenticated access with HTTP 401, then accepted an authenticated HEAD probe and eight authenticated HTTP 206 range requests after the optional permission was explicitly granted. The eight ranges covered the full 256 MiB source. The resulting `goreecloud-auth-range-test.bin` matched source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484` exactly and byte-for-byte comparison reported `AUTHENTICATED FILE INTEGRITY: PASS`. Native staging was empty afterward. Searches of native staging and extension `browser.storage.local` for the controlled test credential reported `NATIVE COOKIE PERSISTENCE: PASS` and `BROWSER COOKIE PERSISTENCE: PASS` respectively.
+The corrected path is accepted on Firefox 155.0.1 / Flathub Flatpak. A controlled protected endpoint rejected unauthenticated access with HTTP 401, then accepted an authenticated HEAD probe and eight authenticated HTTP 206 range requests after the optional permission was explicitly granted. The eight ranges covered the full 256 MiB source. The resulting `goreecloud-auth-range-test.bin` matched source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484` exactly and byte-for-byte comparison reported `AUTHENTICATED FILE INTEGRITY: PASS`. Native staging was empty afterward. Searches of native staging and extension `browser.storage.local` for the controlled test credential reported `NATIVE COOKIE PERSISTENCE: PASS` and `BROWSER COOKIE PERSISTENCE: PASS` respectively.
 
 Detailed evidence is recorded in `docs/AUTHENTICATED_COOKIE_ACCEPTANCE.md`.
 
@@ -82,13 +92,15 @@ The recovery path was exercised by deliberately terminating the installed native
 
 Non-persistent Firefox background-context recovery was then exercised during another eight-segment transfer. Job ID `4e877c53-cf58-40ff-a9d1-f632f1f72165` retained `metadata.json` plus eight segment files after background termination. Reopening the extension recreated the background context and the transfer completed to `goreecloud-range-test (2).bin`; byte-for-byte integrity passed and staging was empty afterward.
 
-The 0.2.3 authenticated-cookie path was then exercised against a controlled cookie-protected range server. Before cookie forwarding, the endpoint returned HTTP 401. After explicit optional permission acquisition, the server logged one authenticated HEAD request followed by eight authenticated HTTP 206 range requests spanning the full 256 MiB source. The final authenticated output reproduced the source SHA-256 exactly. Extension storage and native staging scans both passed the controlled credential non-persistence checks.
+The authenticated-cookie path was exercised against a controlled cookie-protected range server. Before cookie forwarding, the endpoint returned HTTP 401. After explicit optional permission acquisition, the server logged one authenticated HEAD request followed by eight authenticated HTTP 206 range requests spanning the full 256 MiB source. The final authenticated output reproduced the source SHA-256 exactly. Extension storage and native staging scans both passed the controlled credential non-persistence checks.
 
-This evidence accepts the tested native segmented transfer, live pause/resume, helper-interruption recovery, non-persistent background-context recovery, existing-segment reuse, collision-safe naming, authenticated cookie forwarding, assembly, integrity, credential non-persistence for the controlled test, and staging-cleanup paths for the tested Firefox 155.0.1 Flatpak environment. It does not yet establish full-browser restart recovery, Mozilla signing, or persistent signed-install/restart acceptance.
+A controlled Firefox-engine five-job batch then accepted the initial scheduler ceiling: the Manager showed 3 Active and 2 Queued with Firefox engine badges while the server independently reported three active requests and a peak of three. Completion-driven promotion moved the remaining queued jobs into the freed slots. Later pause/resume timing attempts exposed the queued-resume state race corrected in 0.2.4; the corrected behavior is now covered by deterministic CI rather than repeated manual timing races.
+
+This evidence accepts the tested native segmented transfer, live pause/resume, helper-interruption recovery, non-persistent background-context recovery, existing-segment reuse, collision-safe naming, authenticated cookie forwarding, assembly, integrity, credential non-persistence for the controlled test, staging cleanup, initial Firefox-engine queue ceiling, and completion-driven queue promotion for the tested Firefox 155.0.1 Flatpak environment. It does not yet establish full-browser restart recovery, Mozilla signing, persistent signed-install/restart acceptance, or final mixed-engine stress acceptance.
 
 ## Cookie forwarding
 
-Cookie forwarding is off by default. In 0.2.3 the Settings page requests Firefox's optional Cookies + All Sites permission directly from the explicit **Grant optional cookie permission** button click. After permission is granted and the setting is saved, the extension reads cookies only for the target download URL at launch/resume time and forwards them to the native helper through Native Messaging. Cookie values are not written to the extension's download-history records or native staging metadata.
+Cookie forwarding is off by default. The Settings page requests Firefox's optional Cookies + All Sites permission directly from the explicit **Grant optional cookie permission** button click. After permission is granted and the setting is saved, the extension reads cookies only for the target download URL at launch/resume time and forwards them to the native helper through Native Messaging. Cookie values are not written to the extension's download-history records or native staging metadata.
 
 This improves compatibility with cookie-authenticated downloads but does not guarantee support for sites that require request bodies, anti-bot challenges, expiring signed headers, DRM, JavaScript-generated tokens, or other browser-only request state.
 
@@ -100,13 +112,15 @@ From the canonical `GoreeCloud/goreecloud-firefox-extensions` repository root:
 python shared/scripts/package_extension.py download-manager
 ```
 
-The resulting `dist/goreecloud-download-manager-0.2.3.xpi` is deterministic and unsigned. Packaging excludes the native helper and source-only scripts. Packaging success is not Mozilla signing and does not make the version Stable.
+The resulting `dist/goreecloud-download-manager-0.2.4.xpi` is deterministic and unsigned. Packaging excludes the native helper and source-only test scripts. Packaging success is not Mozilla signing and does not make the version Stable.
 
 ## Validation
 
 ```bash
 node --check extensions/download-manager/background.js
 node --check extensions/download-manager/recovery.js
+node --check extensions/download-manager/scheduler_hardening.js
+node extensions/download-manager/tests/test_browser_scheduler.js
 node --check extensions/download-manager/ui/popup.js
 node --check extensions/download-manager/ui/manager.js
 node --check extensions/download-manager/ui/options.js
@@ -118,4 +132,4 @@ python shared/scripts/package_extension.py download-manager
 
 ## Release state
 
-0.2.3 remains a source candidate until remaining runtime tests pass, Mozilla signing completes, the signed artifact installs persistently in the target Firefox build, restart behavior is verified, native-host integration is revalidated against the signed add-on ID, and the release is explicitly promoted.
+0.2.4 remains a source candidate until remaining automated and runtime tests pass, Mozilla signing completes, the signed artifact installs persistently in the target Firefox build, restart behavior is verified, native-host integration is revalidated against the signed add-on ID, and the release is explicitly promoted.

@@ -1,5 +1,14 @@
 # Change Log — GoreeCloud Download Manager Extension
 
+## 0.2.4 — Source candidate
+
+- Hardened Firefox-engine resume scheduling so a paused Firefox download that is requeued while all managed slots are occupied remains in GoreeCloud's `queued` state instead of being overwritten back to `paused` by Firefox's underlying paused snapshot.
+- Added suppression of Firefox `USER_CANCELED` noise while a managed Firefox job is intentionally paused or waiting in the queue for a resume slot, preventing misleading failure text during normal pause/resume operation.
+- Added `scheduler_hardening.js` as a post-background state adapter so the scheduler can preserve its managed queue semantics without changing Firefox's underlying paused download until a slot is actually available.
+- Added an automated Node regression harness with a mocked Firefox `downloads` API. It validates the initial 3-active / 2-queued ceiling, single-job pause-driven promotion, resume-while-full queue retention, resistance to paused Firefox snapshots/deltas, existing-download resume when a slot opens, no replacement download creation, and completion notification emission.
+- Added the Firefox scheduler regression harness to repository CI and advanced manifest, inventory, and Settings version presentation to 0.2.4 source-candidate state.
+- 0.2.4 remains unsigned Active Development. Runtime signing, persistent signed installation, full-browser restart acceptance, and remaining mixed-engine stress gates remain separate release requirements.
+
 ## 0.2.3 — Source candidate
 
 - Fixed Firefox optional cookie-permission acquisition so `browser.permissions.request()` is invoked directly from the Settings-page **Grant optional cookie permission** click handler, preserving Firefox's required user-action context.
@@ -58,4 +67,3 @@
 ## 0.1.0 — Prototype
 
 - Initial Firefox/native dual-engine prototype.
-- Added pause/resume/cancel/retry and segmented HTTP range downloading.
