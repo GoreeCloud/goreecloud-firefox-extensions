@@ -1,5 +1,16 @@
 # Change Log — GoreeCloud Download Manager Extension
 
+## 0.2.6 — Source candidate
+
+- Preserved ordinary retry configuration snapshots so a retried job keeps the original effective browser/native engine assignment instead of silently inheriting a later Settings engine change.
+- Preserved the source job's native segment count, retry count, and destination directory across Settings drift.
+- Made Retry prefer the original `requestedFilename` over a later absolute destination reported through Firefox/native telemetry; legacy jobs without `requestedFilename` remain compatible through safe basename fallback.
+- Hardened requested-filename normalization across Unix absolute paths, Windows drive paths, UNC/backslash paths, home-relative paths, traversal inputs, control characters, cross-platform reserved filename characters, trailing spaces/dots, and Windows reserved device names while preserving clean relative subdirectories.
+- Made queue-sequence allocation migration-safe by reconciling the sequence key against the highest persisted `queueOrder` before allocating a new queue-tail position.
+- Added deterministic Node retry-snapshot regression coverage for requested-filename normalization, traversal/absolute/UNC reduction, clean relative-subdirectory preservation, Settings drift, engine/native-configuration snapshot preservation, legacy absolute Firefox destination compatibility, and retry queue-tail sequencing.
+- Added the retry-snapshot regression to Firefox Repository CI and advanced manifest, inventory, Settings presentation, README, and changelog to 0.2.6 source-candidate state.
+- This is deterministic source hardening. It does not independently claim target-device retry-race acceptance, Mozilla signing, persistent signed installation, full-browser restart/native-host acceptance, Release Candidate status, or Stable status.
+
 ## 0.2.5 — Source candidate
 
 - Hardened explicit cancellation so the managed `cancelled` state remains authoritative when Firefox emits synchronous or delayed `USER_CANCELED` / `interrupted` events as part of the underlying browser cancellation.
@@ -78,5 +89,3 @@
 - Expanded native-core tests and deterministic XPI packaging.
 
 ## 0.1.0 — Prototype
-
-- Initial Firefox/native dual-engine prototype.
