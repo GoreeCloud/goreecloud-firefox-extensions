@@ -1,4 +1,3 @@
-import json
 import subprocess
 import textwrap
 import unittest
@@ -18,7 +17,10 @@ const code = fs.readFileSync(process.argv[1], "utf8");
 let jobs = new Map();
 let pumpCount = 0;
 let readyCount = 0;
+let fallbackLaunchCount = 0;
+let nativeLaunchCount = 0;
 let failReady = false;
+let failNativeLaunch = false;
 let messageListener = null;
 let startupListener = null;
 let queuedMicrotask = null;
@@ -50,6 +52,15 @@ const context = {
   pumpQueue: () => {
     pumpCount += 1;
     return Promise.resolve();
+  },
+  launchJob: async () => {
+    fallbackLaunchCount += 1;
+    return "compatibility-fallback";
+  },
+  launchNativeJob: async () => {
+    nativeLaunchCount += 1;
+    if (failNativeLaunch) throw new Error("native launch failed");
+    return "native-launch";
   }
 };
 vm.createContext(context);
@@ -153,6 +164,43 @@ assert.ok(queuedMicrotask, "background-context recovery must register");
             assert.strictEqual(jobs.get("paused-native").state, "paused");
             assert.strictEqual(readyCount, 1);
             assert.strictEqual(pumpCount, 1);
+            '''
+        )
+
+    def test_recovering_native_job_never_silently_falls_back(self):
+        self.run_node(
+            r'''
+            failNativeLaunch = true;
+            const recovering = {
+              id: "native-recovery-race",
+              state: "queued",
+              engine: "native",
+              native: true,
+              nativeStarted: true
+            };
+            await assert.rejects(
+              () => context.launchJob(recovering, {}),
+              /native launch failed/
+            );
+            assert.strictEqual(nativeLaunchCount, 1);
+            assert.strictEqual(fallbackLaunchCount, 0);
+            '''
+        )
+
+    def test_new_native_job_keeps_compatibility_fallback(self):
+        self.run_node(
+            r'''
+            const fresh = {
+              id: "native-new",
+              state: "queued",
+              engine: "native",
+              native: true,
+              nativeStarted: false
+            };
+            const result = await context.launchJob(fresh, {});
+            assert.strictEqual(result, "compatibility-fallback");
+            assert.strictEqual(nativeLaunchCount, 0);
+            assert.strictEqual(fallbackLaunchCount, 1);
             '''
         )
 

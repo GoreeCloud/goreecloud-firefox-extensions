@@ -1,139 +1,116 @@
 # GoreeCloud Download Manager Extension
 
-**Status:** 0.2.6 source candidate — unsigned, not Stable
+**Status:** 0.2.7 source candidate — unsigned, not Release Candidate or Stable
 
-GoreeCloud Download Manager Extension is a Firefox Manifest V3 download-management extension with queueing, pause/resume, retries, batch URL input, download telemetry, and an optional Linux native helper for segmented HTTP range downloads and durable partial-file resume.
+GoreeCloud Download Manager Extension is GoreeCloud's first-party Firefox Manifest V3 download manager. It provides managed queueing, pause/resume, retries, batch input, download telemetry, and an optional separately installed Linux Native Messaging helper for segmented HTTP range transfers and durable same-job partial-file recovery.
 
 ## Implemented
 
-- Firefox download-engine mode.
-- Optional segmented native-engine mode with 1–32 HTTP byte-range workers.
-- Global concurrent-download queue that enforces the configured limit.
+- Firefox `downloads` API engine for maximum browser compatibility.
+- Optional native segmented engine with 1–32 HTTP byte-range workers.
+- Global managed-download concurrency enforcement shared by Firefox and native jobs.
 - Pause, resume, cancel, retry, pause-all, resume-all, and clear-completed actions.
 - Batch URL queueing and link/media context-menu capture.
-- Live progress, rolling speed estimates, ETA, queue position, engine state, and effective segment count.
-- Persistent native staging under `.goreecloud-downloads/<job-id>/` with source-validator checks.
-- Same-job native recovery after helper or non-persistent background-context interruption.
-- Collision-safe final filenames for native downloads.
-- Optional cookie forwarding for authenticated native downloads. This capability is disabled by default and requires an explicit Firefox optional permission grant.
+- Live bytes, progress, rolling speed, ETA, queue position, engine state, and effective native segment count.
+- Persistent native staging under `.goreecloud-downloads/<job-id>/`.
+- Same-job native recovery after helper interruption and non-persistent Firefox background-context recreation.
+- Source-identity validation using URL, ETag, Last-Modified, and known source length before staged partial reuse.
+- Strict native HTTP 206 / `Content-Range` validation before resumed or segmented bytes are appended.
+- Collision-safe native destination reservation and no-overwrite final publication from staging.
+- Optional target-site cookie forwarding, disabled by default and guarded by explicit Firefox optional permission.
 - Completion/failure notifications.
-- Deterministic managed queue ordering, including jobs created in the same millisecond and migration-safe queue-sequence reconciliation.
-- Lifecycle-race protection for cancellation, pending Firefox launches, late browser/native events, removed jobs, and retry filename reuse.
-- Ordinary retry preservation of the source job's effective engine, segment-count, retry-count, native destination, and requested-filename snapshots.
-- GoreeCloud product icon and updated Glaze-aligned Firefox UI.
-- Firefox add-on ID: `download-manager@goreecloud.com`.
-- Native messaging host: `goreecloud_download_manager`.
+- Deterministic managed queue ordering, including migration-safe queue-sequence reconciliation.
+- Lifecycle-race protection for cancellation, pending Firefox launches, late browser/native events, and removed jobs.
+- Ordinary Retry preservation of the source job's effective engine, segment-count, retry-count, native destination, and requested-filename snapshots.
+- Cross-platform requested-filename normalization for browser retries.
+- GoreeCloud product branding and Glaze-aligned popup, Manager, and Settings interfaces.
 
-## 0.2.6 retry snapshot and requested-filename hardening
+Firefox add-on ID: `download-manager@goreecloud.com`  
+Native Messaging host: `goreecloud_download_manager`
 
-0.2.6 makes ordinary Retry a true replay of the managed job configuration rather than a new download implicitly governed by whatever Settings happen to contain later. A retry now carries forward the terminal job's effective browser/native engine assignment, configured native segment count, native retry count, destination directory, and original requested filename. This keeps a settings change made after the original job was queued from silently changing the retry's transport behavior.
+## 0.2.7 native recovery and integrity hardening
 
-The retry path now prefers `requestedFilename` over a later `filename` value reported by Firefox or the native helper. This distinction matters because Firefox may replace the managed display filename with a completed absolute destination path. Older jobs that do not yet contain `requestedFilename` remain compatible: an absolute legacy destination is reduced to a safe basename before the retry is queued.
+0.2.7 strengthens the separately installed native helper and the extension/native recovery boundary.
 
-Requested filenames now use one cross-platform normalization policy. Clean relative subdirectories are preserved, while Unix absolute paths, Windows drive paths, UNC/backslash paths, home-relative paths, and any path containing `..` traversal are reduced to a safe basename. Control characters and cross-platform reserved filename characters are replaced, trailing spaces/dots are removed from path segments, and Windows reserved device names are prefixed rather than replayed literally.
+The native helper now performs its own HTTP/HTTPS transport validation, in addition to extension-side validation. Persisted staging metadata belonging to a different URL is treated as stale source identity rather than reusable partial state. Allowlisted forwarded `Cookie` and `Referer` values continue to reject CR/LF injection and are now individually bounded to 64 KiB.
 
-Queue sequencing is also migration-safe. If persisted jobs already contain `queueOrder` values but the sequence key is absent or stale, the allocator reconciles against the highest persisted managed order before assigning the next retry/download position. New retries therefore remain at the managed FIFO tail even across profile/source-candidate transitions.
+Resumed single-file requests and segmented workers validate the server's partial response before writing response bytes. HTTP 206 alone is insufficient: `Content-Range` must be syntactically valid, begin at the exact requested byte, end at the planned segment boundary when one exists, and report the expected total source size when that size is known.
 
-A deterministic Node regression exercises requested-filename normalization, absolute/traversal/UNC reduction, clean relative-subdirectory preservation, settings drift, engine/configuration snapshot preservation, legacy absolute Firefox destination compatibility, and retry queue-tail sequencing. It runs in Firefox Repository CI alongside the browser scheduler, mixed-engine scheduler, lifecycle-fault, native-core, syntax, packaging, and archive-verification gates.
+Same-helper recovery is also hardened. A `resume` for an active native job reuses the existing worker instead of spawning a duplicate. A same-ID resume for a worker that ended in a recoverable error may reconstruct a replacement in-memory job while retaining the existing job-scoped staging identity. Completed and explicitly cancelled native jobs are not restarted by a later same-ID resume.
 
-## 0.2.5 lifecycle fault hardening
+The extension recovery controller protects a separate race between native-helper preflight and actual scheduler launch. Already-started native recovery jobs are not eligible for the normal new-job Firefox compatibility fallback. If the helper disappears after preflight, native launch fails as a recoverable native problem rather than silently converting the same recovery attempt into a fresh Firefox download. Fresh native jobs that have never started retain the normal Firefox fallback when the helper is unavailable.
 
-0.2.5 extends the scheduler state adapter around lifecycle faults that can occur when Firefox or the native helper reports events in an order different from the managed GoreeCloud action that initiated them.
+Native destination publication is now two-phase. Jobs reserve their intended destination before worker execution; segmented downloads assemble to `assembled.part` under the job-scoped staging directory; and final publication uses a no-overwrite same-filesystem commit. If another process creates the chosen destination after reservation, GoreeCloud selects another collision-safe filename rather than truncating or replacing the external file.
 
-Explicit cancellation is now protected before the underlying Firefox cancellation request runs. If Firefox synchronously or later emits `USER_CANCELED` / `interrupted`, that browser event cannot overwrite the managed `cancelled` state or create a misleading failure notification. Completed and explicitly cancelled jobs are also protected from later progress or terminal-state regression.
+Deterministic native-core and recovery-controller regressions cover transport validation, stale-source staging invalidation, exact partial-response semantics, same-ID live/dead/terminal recovery behavior, duplicate-start handling, destination reservation, no-overwrite finalization, and the recovery/no-fallback boundary.
 
-Removed jobs are no longer recreated by stale asynchronous browser or Native Messaging events. The hardening wrapper refuses updates for missing managed job IDs, and late native messages for removed or immutable-terminal jobs are ignored.
+## Recovery model
 
-Ordinary retries normalize Firefox-reported absolute destination paths before they are reused as requested filenames. A completed path such as `/home/user/Downloads/example.bin` therefore becomes the safe relative basename `example.bin` instead of being passed back to `browser.downloads.download()` as an absolute path.
+Interrupted or errored native jobs that already started are recoverable using the **same GoreeCloud job ID**. Native staging is keyed by that ID, so recovery preserves the job record and staging directory rather than creating a new retry identity.
 
-The queue now has a persistent monotonic `queueOrder` tie breaker. `createdAt` remains the primary ordering signal, while `queueOrder` makes same-millisecond batch creation deterministic. Retried jobs join the tail of that managed FIFO order.
+Recovery preflights the native host, requeues the existing job as native with `nativeStarted` preserved, then sends a native `resume` request when the global scheduler grants a slot. If the helper process no longer has that job in memory, the helper can reconstruct it from the URL/configuration sent by the extension and the existing `.goreecloud-downloads/<job-id>/` state.
 
-Firefox launch-pending behavior is also reconciled: when pause or cancel is requested while Firefox is still allocating a numeric download ID, the request is remembered and applied as soon as that ID becomes available. Problem notifications are de-duplicated across `error` and `interrupted` states belonging to the same unresolved incident.
+Ordinary **Retry** is different: it creates a fresh GoreeCloud job at the queue tail and does not reuse native partial staging, but it preserves the source job's effective engine/configuration snapshot rather than silently inheriting later Settings changes.
 
-A deterministic Node lifecycle-fault harness loads the real background scripts and uses mocked Firefox and Native Messaging APIs. The harness deliberately emits Firefox `USER_CANCELED` synchronously from `downloads.cancel()` before the cancel promise resolves, then checks terminal-state finality, queue promotion, removed-job protection, retry normalization, failure notification behavior, and late native-message handling. This is source-level automated evidence, not a claim of target-device lifecycle-race acceptance.
+## Cookie forwarding
 
-## 0.2.4 Firefox scheduler hardening
+Cookie forwarding is off by default. The Settings page requests Firefox's optional Cookies + All Sites permission directly from the explicit **Grant optional cookie permission** user action. After permission is granted and forwarding is enabled, the extension reads cookies for the target download URL only at launch/resume time and forwards them in memory to the native helper. Cookie values are not intentionally written to managed download history or native `metadata.json`.
 
-Runtime Firefox-engine concurrency testing exposed a managed-state race during resume-while-full behavior. GoreeCloud correctly requeued a paused Firefox download when all managed slots were occupied, but Firefox necessarily kept the underlying browser download paused until `browser.downloads.resume()` was called. The normal browser snapshot refresh then treated Firefox's paused flag as the managed source of truth and could rewrite the GoreeCloud job from `queued` back to `paused`. Firefox also surfaced `USER_CANCELED` during intentional pause behavior, producing misleading failure text.
+The accepted controlled Firefox 155.0.1 / Flathub Flatpak test demonstrated one authenticated HEAD request followed by eight authenticated HTTP 206 ranges covering the complete 256 MiB source. Final integrity matched the source exactly, staging was cleaned after completion, and controlled credential scans of native staging and `browser.storage.local` passed.
 
-0.2.4 added a post-background scheduler state adapter that keeps these two layers distinct. An existing Firefox download may remain **queued in GoreeCloud while still paused in Firefox** until the scheduler grants a slot. Firefox paused snapshots and paused/error deltas cannot overwrite that managed queue state, and `USER_CANCELED` noise is suppressed while the job is intentionally paused or waiting for a resume slot. When a slot opens, GoreeCloud resumes the existing Firefox download ID instead of creating a replacement download.
+Sites requiring request bodies, JavaScript-generated tokens, DRM, anti-bot challenges, short-lived signed headers, service-worker state, or other browser-only request state are not guaranteed to work in the native engine.
 
-Deterministic Node regressions evaluate the real background scripts against mocked Firefox WebExtensions and Native Messaging APIs. They cover browser-only and mixed Firefox/native scheduler behavior, including the 3-active / 2-queued ceiling, pause-driven promotion, resume-while-full queue retention, same-download-ID resume, cross-engine slot promotion, preserved engine assignment, and completion notifications.
+## Linux native helper
 
-Detailed source-level evidence is recorded under `docs/` and in the repository test suite.
+The Linux installer copies the helper to the durable user-owned location:
 
-## 0.2.3 cookie-permission correction and acceptance
-
-Firefox requires `browser.permissions.request()` to execute directly inside a user-action handler. The 0.2.2 Settings implementation delegated that request through `browser.runtime.sendMessage()` to the background script, so Firefox 155.0.1 / Flathub Flatpak did not present the optional Cookies + All Sites permission prompt during authenticated-download acceptance testing.
-
-0.2.3 moved the request directly into the **Grant optional cookie permission** button's click handler. The Save action no longer attempts to request permission after an asynchronous permission check; when cookie forwarding is selected without permission, Save stops and instructs the user to run the explicit Grant flow first. Source-contract tests verify that `cookies` and `<all_urls>` remain optional and that the request stays bound directly to the Settings-page user gesture.
-
-The corrected path is accepted on Firefox 155.0.1 / Flathub Flatpak. A controlled protected endpoint rejected unauthenticated access with HTTP 401, then accepted an authenticated HEAD probe and eight authenticated HTTP 206 range requests after the optional permission was explicitly granted. The eight ranges covered the full 256 MiB source. The resulting `goreecloud-auth-range-test.bin` matched source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484` exactly and byte-for-byte comparison reported `AUTHENTICATED FILE INTEGRITY: PASS`. Native staging was empty afterward. Searches of native staging and extension `browser.storage.local` for the controlled test credential reported `NATIVE COOKIE PERSISTENCE: PASS` and `BROWSER COOKIE PERSISTENCE: PASS` respectively.
-
-Detailed evidence is recorded in `docs/AUTHENTICATED_COOKIE_ACCEPTANCE.md`.
-
-## Recovery hardening carried forward from 0.2.2
-
-Interrupted or errored native jobs that already started are recoverable using the **same GoreeCloud job ID**. The extension verifies that the native helper can be reached, requeues the existing job without discarding its progress metadata, and sends a native `resume` request. The helper can then reconstruct the job from the existing `.goreecloud-downloads/<job-id>/` staging directory and segment files.
-
-If a non-persistent Firefox background context is recreated while a native job is still persisted as active, the recovery controller reconciles that stale state and attempts same-ID native recovery. Explicitly paused jobs remain paused, and already-interrupted jobs remain under user control until **Resume** is selected.
-
-The target Firefox 155.0.1 Flatpak environment has accepted both deliberate native-helper interruption recovery and non-persistent background-context recreation recovery. Full-browser restart recovery remains a separate gate.
-
-## Linux native-host hardening
-
-The Linux installer copies the Python helper to a durable user-owned location at `~/.local/lib/goreecloud-download-manager/goreecloud_download_manager_native.py`, writes the Firefox native-messaging manifest under `~/.mozilla/native-messaging-hosts/`, validates Python compilation, runs a Native Messaging hello/ping protocol self-test, and detects Firefox Flatpak/WebExtensions portal environments.
-
-The installer supports removal with:
-
-```bash
-./extensions/download-manager/scripts/install-native-host-linux.sh --uninstall
+```text
+~/.local/lib/goreecloud-download-manager/goreecloud_download_manager_native.py
 ```
 
-## Architecture
+and registers:
 
-The extension uses two download engines:
+```text
+~/.mozilla/native-messaging-hosts/goreecloud_download_manager.json
+```
 
-1. **Firefox engine** — uses Firefox's `downloads` API for normal downloads and maximum browser compatibility.
-2. **Native segmented engine** — uses Firefox Native Messaging to control a local Python helper. The helper probes HTTP range support, downloads byte ranges concurrently, preserves partial files for resume, validates source changes with ETag/Last-Modified/size information, and assembles the final file.
-
-The native helper is maintained under `scripts/native-host/` so it is source-controlled with the extension but excluded from the XPI payload. It is installed separately on the local Linux system.
-
-## Install for development
-
-Load the unsigned XPI or `extensions/download-manager/manifest.json` from `about:debugging` → **This Firefox** → **Load Temporary Add-on**.
-
-For native acceleration on Linux:
+Install from the repository root with:
 
 ```bash
 ./extensions/download-manager/scripts/install-native-host-linux.sh
 ```
 
-Then open extension settings, select **Native segmented helper**, save settings, and use **Test native helper**.
+Remove it with:
 
-For Firefox distributed as a Flatpak, the installer checks whether the `org.freedesktop.portal.WebExtensions` portal interface is exposed. If Firefox still cannot discover the installed helper, open `about:config`, set `widget.use-xdg-desktop-portal.native-messaging` to `1`, restart Firefox, reload an unsigned temporary XPI if necessary, and approve the WebExtensions portal authorization prompt.
+```bash
+./extensions/download-manager/scripts/install-native-host-linux.sh --uninstall
+```
 
-## Target runtime evidence
+The installer compiles the installed Python helper, runs a Native Messaging hello/ping framing check, and reports Firefox Flatpak/WebExtensions portal diagnostics when applicable.
 
-The extension has been exercised on Mozilla Firefox 155.0.1 from Flathub Flatpak. The unsigned XPI loaded temporarily with the fixed add-on ID, the background script started, popup/Manager/Settings pages rendered, the installed native helper passed direct hello/ping framing, Firefox presented the WebExtensions portal authorization prompt, and the extension reported **Native helper connection opened** after approval.
+For Firefox distributed as a Flatpak, if the helper remains undiscoverable, open `about:config`, set `widget.use-xdg-desktop-portal.native-messaging` to `1`, restart Firefox, reload a temporary unsigned candidate if necessary, and approve the WebExtensions portal authorization prompt.
 
-A controlled 256 MiB HTTP range download ran as **native · 8 segments**. Exactly eight segment files existed while the job was paused at 108 MiB / 42%, resume completed the transfer, the assembled file matched source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484`, byte-for-byte comparison passed, and native staging was empty after successful completion.
+## Target-runtime evidence carried forward
 
-The recovery path was exercised by deliberately terminating the installed native helper during another eight-segment transfer. Job-scoped staging survived under job ID `4273f6a6-5372-4c85-a57f-cfea1953c247` with `metadata.json` plus all eight partial segment files. Selecting **Resume** completed the transfer, the original staging directory was removed after successful assembly, and the recovered output matched the source SHA-256 exactly. Collision-safe naming produced `goreecloud-range-test (1).bin` because the original filename already existed.
+Mozilla Firefox 155.0.1 from Flathub Flatpak has accepted the earlier tested runtime baseline:
 
-Non-persistent Firefox background-context recovery was then exercised during another eight-segment transfer. Job ID `4e877c53-cf58-40ff-a9d1-f632f1f72165` retained `metadata.json` plus eight segment files after background termination. Reopening the extension recreated the background context and the transfer completed to `goreecloud-range-test (2).bin`; byte-for-byte integrity passed and staging was empty afterward.
+- temporary unsigned XPI load with fixed add-on ID and working Manifest V3 background/UI;
+- Firefox Flatpak → XDG WebExtensions portal → GoreeCloud native-host launch and handshake;
+- controlled 256 MiB native transfer at eight segments, live pause/resume, exact SHA-256 and byte-for-byte integrity, and post-completion staging cleanup;
+- deliberate native-helper interruption with same-job staged partial reuse and exact recovered-file integrity;
+- non-persistent Firefox background-context recreation with preserved native staging and exact recovered-file integrity;
+- collision-safe recovered naming;
+- authenticated target-site cookie forwarding with exact final integrity and controlled credential non-persistence;
+- native five-job batch concurrency at configured `maxConcurrent = 3`, with five-file integrity acceptance; and
+- initial Firefox-engine 3-active / 2-queued ceiling with completion-driven slot promotion.
 
-The authenticated-cookie path was exercised against a controlled cookie-protected range server. Before cookie forwarding, the endpoint returned HTTP 401. After explicit optional permission acquisition, the server logged one authenticated HEAD request followed by eight authenticated HTTP 206 range requests spanning the full 256 MiB source. The final authenticated output reproduced the source SHA-256 exactly. Extension storage and native staging scans both passed the controlled credential non-persistence checks.
+0.2.4–0.2.7 scheduler, lifecycle, retry-snapshot, native-range-integrity, no-overwrite-publication, and additional recovery-fault behavior is accepted through deterministic source-level testing unless separately identified as target-runtime evidence. Full-browser restart recovery remains gated on persistent signed installation.
 
-A controlled Firefox-engine five-job batch accepted the initial scheduler ceiling: the Manager showed 3 Active and 2 Queued with Firefox engine badges while the server independently reported three active requests and a peak of three. Completion-driven promotion moved the remaining queued jobs into the freed slots. Later pause/resume timing attempts exposed the queued-resume state race corrected in 0.2.4; corrected browser-only and mixed-engine scheduler behavior is now covered by deterministic CI rather than repeated manual timing races.
+## Development installation
 
-This target evidence accepts the tested native segmented transfer, live pause/resume, helper-interruption recovery, non-persistent background-context recovery, existing-segment reuse, collision-safe naming, authenticated cookie forwarding, assembly, integrity, credential non-persistence for the controlled test, staging cleanup, initial Firefox-engine queue ceiling, and completion-driven queue promotion for the tested Firefox 155.0.1 Flatpak environment. The additional 0.2.4–0.2.6 scheduler, lifecycle-race, retry-snapshot, and filename-hardening behavior is currently accepted at deterministic source-test level, not yet as separate target-device race evidence. Full-browser restart recovery, Mozilla signing, persistent signed-install/restart acceptance, and governed target-runtime release acceptance remain open.
+Load the unsigned XPI or `extensions/download-manager/manifest.json` from `about:debugging` → **This Firefox** → **Load Temporary Add-on**.
 
-## Cookie forwarding
-
-Cookie forwarding is off by default. The Settings page requests Firefox's optional Cookies + All Sites permission directly from the explicit **Grant optional cookie permission** button click. After permission is granted and the setting is saved, the extension reads cookies only for the target download URL at launch/resume time and forwards them to the native helper through Native Messaging. Cookie values are not written to the extension's download-history records or native staging metadata.
-
-This improves compatibility with cookie-authenticated downloads but does not guarantee support for sites that require request bodies, anti-bot challenges, expiring signed headers, DRM, JavaScript-generated tokens, or other browser-only request state.
+To exercise native behavior, install/reinstall the native helper from the same 0.2.7 source checkout, select **Native segmented helper** in Settings, save, and use **Test native helper** before starting a native transfer.
 
 ## Packaging
 
@@ -143,7 +120,7 @@ From the canonical `GoreeCloud/goreecloud-firefox-extensions` repository root:
 python shared/scripts/package_extension.py download-manager
 ```
 
-The resulting `dist/goreecloud-download-manager-0.2.6.xpi` is deterministic and unsigned. Packaging excludes the native helper and source-only test scripts. Packaging success is not Mozilla signing and does not make the version Stable.
+The resulting `dist/goreecloud-download-manager-0.2.7.xpi` is deterministic and unsigned. Packaging excludes the separately installed native helper and source-only scripts/tests/documentation. Packaging success is not Mozilla signing and does not make the version Stable.
 
 ## Validation
 
@@ -164,6 +141,10 @@ python shared/scripts/validate_repository.py
 python shared/scripts/package_extension.py download-manager
 ```
 
+## Current boundaries
+
+0.2.7 does not establish Windows or macOS native-host support, arbitrary POST/body downloads, complete browser authorization-state reproduction, mirror failover, bandwidth limiting, time-based scheduling, automatic browser-wide interception, origin/user-supplied cryptographic checksum enforcement, or formal completion of GoreeCloud Manager, Privacy Shield, Wardveil Security, Everkeep, GoreeCloud Mesh, GoreeCloud Identity, or governed Glaze UI integration.
+
 ## Release state
 
-0.2.6 remains an unsigned Active Development source candidate. It is not a Release Candidate or Stable release. Mozilla signing, persistent signed installation, full Firefox restart/native-host acceptance against the signed add-on, and explicit governed promotion remain required before those lifecycle states can be claimed.
+0.2.7 remains an **unsigned Active Development source candidate**. Mozilla signing, persistent signed installation, full Firefox restart/native-host acceptance against the signed add-on, applicable governed Platform-System reviews, Release Candidate qualification, and explicit Stable promotion remain required.

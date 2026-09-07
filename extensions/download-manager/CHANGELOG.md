@@ -1,5 +1,21 @@
 # Change Log — GoreeCloud Download Manager Extension
 
+## 0.2.7 — Source candidate
+
+- Hardened the native helper so its own transport boundary accepts only HTTP and HTTPS URLs with a network host, independently of the extension-side URL validator.
+- Treats persisted native staging metadata for a different URL as stale source identity and discards old partial files before starting the replacement source.
+- Added strict `Content-Range` validation for resumed single transfers and segmented HTTP 206 workers: requested start, requested end, and known total source size must agree before response bytes are appended.
+- Added same-helper same-ID recovery for native jobs whose earlier worker thread ended in `error`, while keeping duplicate active `start` requests idempotent and refusing to restart completed or explicitly cancelled native jobs.
+- Hardened the extension recovery boundary so an already-started native recovery cannot silently fall back to a new Firefox download if the helper becomes unavailable between recovery preflight and queue launch. Fresh native jobs retain the existing compatibility fallback behavior.
+- Serialized access to the native in-memory job registry and added destination reservations so parallel native jobs cannot choose the same not-yet-created destination path.
+- Changed final native publication to a no-overwrite commit from a staging file. If another process creates the selected destination after reservation, GoreeCloud selects a collision-safe alternate instead of truncating or replacing the external file.
+- Segmented assembly now completes under the job-scoped staging directory before the final no-overwrite destination commit.
+- Added a 64 KiB bound for each allowlisted forwarded native request-header value in addition to the existing Cookie/Referer allowlist and CR/LF rejection.
+- Advanced the separately installed native helper protocol/version presentation to 0.2.7.
+- Expanded deterministic native-core tests for transport validation, stale-source staging invalidation, exact partial-response semantics, destination reservation, no-overwrite finalization, live/dead/terminal same-ID recovery behavior, and duplicate-start handling.
+- Expanded deterministic recovery-controller tests to prove that recovery launch failure propagates without compatibility fallback while fresh native jobs retain compatibility fallback.
+- This is deterministic source-level hardening. It does not independently establish target-device 0.2.7 native-helper acceptance, full-browser restart recovery, Mozilla signing, persistent signed installation, Release Candidate status, or Stable status.
+
 ## 0.2.6 — Source candidate
 
 - Preserved ordinary retry configuration snapshots so a retried job keeps the original effective browser/native engine assignment instead of silently inheriting a later Settings engine change.
@@ -51,7 +67,7 @@
 ## 0.2.2 — Source candidate
 
 - Added same-job recovery for interrupted or errored native downloads so the existing GoreeCloud job ID and `.goreecloud-downloads/<job-id>/` staging data are preserved.
-- Added a recovery controller that verifies the native helper is reachable before requeueing a recoverable native job, preventing an unavailable helper from silently converting a recovery attempt into a Firefox fallback.
+- Added a recovery controller that verifies the native helper is reachable before requeueing a recoverable native job, preventing an unavailable-helper recovery attempt from being silently converted into a Firefox fallback.
 - Added background-context/startup reconciliation for native jobs persisted in stale active states. Paused and already-interrupted jobs remain user-controlled.
 - Added explicit **Resume** treatment for recoverable native jobs in the popup and Manager while keeping ordinary Retry behavior for non-recoverable jobs.
 - Added recovery-state UI messaging and suppressed misleading ETA output for paused/interrupted/error/cancelled/completed jobs in the Manager.

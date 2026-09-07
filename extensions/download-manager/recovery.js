@@ -77,6 +77,21 @@ async function recoverPersistedNativeJobs() {
   return true;
 }
 
+// A same-ID native recovery must never silently turn into a fresh Firefox
+// download if the helper becomes unavailable between the recovery preflight
+// and the queue launch. New native jobs may still use the normal compatibility
+// fallback; already-started native jobs preserve their engine/staging identity
+// so the ordinary queue error path leaves them recoverable.
+if (typeof launchJob === "function" && typeof launchNativeJob === "function") {
+  const launchJobWithCompatibilityFallback = launchJob;
+  launchJob = async function recoveryAwareLaunchJob(job, settings) {
+    if (job?.engine === "native" && job.nativeStarted) {
+      return launchNativeJob(job, settings);
+    }
+    return launchJobWithCompatibilityFallback(job, settings);
+  };
+}
+
 browser.runtime.onMessage.addListener((message) => {
   if (message?.type !== "recover-job") return undefined;
   return recoverNativeJob(message.id);
