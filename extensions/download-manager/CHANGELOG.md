@@ -8,6 +8,8 @@
 - Added Firefox Flatpak detection and WebExtensions XDG portal diagnostics, including guidance for `widget.use-xdg-desktop-portal.native-messaging` when a confined Firefox build cannot discover the helper.
 - Added installer contract tests to repository CI.
 - Recorded successful target Firefox 155.0.1 temporary-load, UI-render, native-host protocol, Flatpak portal authorization, and extension-to-native-host handshake evidence for the accepted 0.2.0 baseline.
+- Added explicit popup engine/segment visibility and native-to-Firefox fallback diagnostics so live acceptance testing can distinguish Firefox downloads from true segmented native jobs.
+- Suppressed misleading paused-state ETA presentation in the popup.
 
 ## 0.2.0 — Source candidate
 
