@@ -95,6 +95,13 @@ class SigningContractTests(unittest.TestCase):
         self.assertIn("post-restart SHA-256 integrity", text)
         self.assertIn("post-restart native helper reconnect", text)
 
+    def test_signed_restart_smoke_uses_geckodriver_system_access_service(self):
+        text = SMOKE.read_text(encoding="utf-8")
+        self.assertIn("from selenium.webdriver.firefox.service import Service", text)
+        self.assertIn('Service(service_args=["--allow-system-access"])', text)
+        self.assertGreaterEqual(text.count("service=firefox_service()"), 2)
+        self.assertNotIn('options.add_argument("--remote-allow-system-access")', text)
+
     def test_signing_and_platform_review_docs_preserve_release_boundary(self):
         signing = SIGNING.read_text(encoding="utf-8")
         review = PLATFORM_REVIEW.read_text(encoding="utf-8")
