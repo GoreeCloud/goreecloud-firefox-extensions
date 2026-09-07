@@ -92,7 +92,7 @@ function createHarness() {
       connectNative() {
         setTimeout(() => nativeOnMessage.emit({
           type: "hello",
-          version: "0.2.8",
+          version: "0.2.9",
           protocolVersion: 2,
           capabilities: [...NATIVE_CAPABILITIES]
         }), 0);
