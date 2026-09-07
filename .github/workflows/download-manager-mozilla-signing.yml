@@ -66,7 +66,8 @@ jobs:
           python -m py_compile \
             extensions/download-manager/scripts/native-host/goreecloud_download_manager_native.py \
             extensions/download-manager/tests/signed_restart_smoke.py \
-            extensions/download-manager/tests/amo_signed_version_recovery.py
+            extensions/download-manager/tests/amo_signed_version_recovery.py \
+            extensions/download-manager/tests/verify_signed_xpi.py
           python -m unittest discover -s extensions/download-manager/tests -p 'test_*.py'
           node extensions/download-manager/tests/test_browser_scheduler.js
           node extensions/download-manager/tests/test_mixed_scheduler.js
@@ -167,69 +168,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python - "$DOWNLOAD_MANAGER_VERSION" <<'PY'
-          import hashlib
-          import json
-          import shutil
-          import sys
-          import zipfile
-          from pathlib import Path
-
-          version = sys.argv[1]
-          files = sorted(Path('dist/mozilla').glob('*.xpi'))
-          if len(files) != 1:
-              raise SystemExit(f'expected exactly one Mozilla-signed XPI, found: {files}')
-          source = files[0]
-          target = Path(f'dist/goreecloud-download-manager-{version}-signed.xpi')
-          shutil.copy2(source, target)
-
-          candidate_files = sorted(Path('dist/candidate').glob('goreecloud-download-manager-*.xpi'))
-          if len(candidate_files) != 1:
-              raise SystemExit(f'expected exactly one deterministic unsigned candidate, found: {candidate_files}')
-          candidate = candidate_files[0]
-
-          with zipfile.ZipFile(candidate) as unsigned_archive, zipfile.ZipFile(target) as signed_archive:
-              bad = signed_archive.testzip()
-              if bad:
-                  raise SystemExit(f'signed XPI integrity failure: {bad}')
-              signed_names = signed_archive.namelist()
-              if 'manifest.json' not in signed_names:
-                  raise SystemExit('signed XPI is missing manifest.json')
-              signature_files = {
-                  name for name in signed_names
-                  if name.startswith('META-INF/') and not name.endswith('/')
-              }
-              if not signature_files:
-                  raise SystemExit('signed XPI does not contain Mozilla signature metadata')
-
-              unsigned_payload_names = sorted(
-                  name for name in unsigned_archive.namelist() if not name.endswith('/')
-              )
-              signed_payload_names = sorted(
-                  name for name in signed_names if not name.startswith('META-INF/') and not name.endswith('/')
-              )
-              if signed_payload_names != unsigned_payload_names:
-                  raise SystemExit(
-                      'Mozilla-signed XPI payload inventory differs from the deterministic unsigned candidate: '
-                      f'unsigned={unsigned_payload_names!r} signed={signed_payload_names!r}'
-                  )
-              for name in unsigned_payload_names:
-                  if signed_archive.read(name) != unsigned_archive.read(name):
-                      raise SystemExit(f'Mozilla-signed XPI changed runtime payload bytes for {name}')
-
-              manifest = json.loads(signed_archive.read('manifest.json').decode('utf-8'))
-              addon_id = manifest.get('browser_specific_settings', {}).get('gecko', {}).get('id')
-              if addon_id != 'download-manager@goreecloud.com':
-                  raise SystemExit(f'signed XPI changed Firefox add-on ID: {addon_id!r}')
-              if manifest.get('version') != version:
-                  raise SystemExit(f"signed XPI changed version: {manifest.get('version')!r}")
-
-          digest = hashlib.sha256(target.read_bytes()).hexdigest()
-          Path('dist/signed-sha256.txt').write_text(f'{digest}  {target.name}\n', encoding='utf-8')
-          print(f'Mozilla signature metadata files: {sorted(signature_files)!r}')
-          print('Mozilla-signed runtime payload matches deterministic unsigned candidate byte-for-byte.')
-          print(f'Signed SHA-256: {digest}')
-          PY
+          candidate="$(find dist/candidate -maxdepth 1 -type f -name 'goreecloud-download-manager-*.xpi' -print -quit)"
+          signed="$(find dist/mozilla -maxdepth 1 -type f -name '*.xpi' -print -quit)"
+          test -n "$candidate"
+          test -n "$signed"
+          python extensions/download-manager/tests/verify_signed_xpi.py \
+            "$DOWNLOAD_MANAGER_VERSION" "$candidate" "$signed"
           unzip -t "dist/goreecloud-download-manager-${DOWNLOAD_MANAGER_VERSION}-signed.xpi"
 
       - name: Install matching 0.2.10 native helper
@@ -259,6 +203,7 @@ jobs:
           candidate_line = Path('dist/candidate-sha256.txt').read_text(encoding='utf-8').strip()
           signed_line = Path('dist/signed-sha256.txt').read_text(encoding='utf-8').strip()
           signing_source = Path('dist/mozilla-signing-source.txt').read_text(encoding='utf-8').strip()
+          parity = json.loads(Path('dist/signed-xpi-parity.json').read_text(encoding='utf-8'))
           record = {
               'schemaVersion': 1,
               'product': 'GoreeCloud Download Manager Extension',
@@ -271,7 +216,9 @@ jobs:
               'nativeHost': 'goreecloud_download_manager',
               'mozillaSigned': True,
               'mozillaSigningSource': signing_source,
-              'signedPayloadMatchesCandidate': True,
+              'signedNonManifestPayloadMatchesCandidateByteForByte': True,
+              'signedManifestGovernedParityAccepted': True,
+              'signedXpiParity': parity,
               'persistentInstallRestartAccepted': True,
               'fullBrowserNativeRecoveryAccepted': True,
               'stablePromoted': False,
@@ -298,5 +245,6 @@ jobs:
             dist/source-revision.txt
             dist/mozilla-signing-source.txt
             dist/amo-existing-version-metadata.json
+            dist/signed-xpi-parity.json
             dist/signed-restart-acceptance.txt
             dist/download-manager-signing-evidence.json
