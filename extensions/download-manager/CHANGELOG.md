@@ -11,7 +11,8 @@
 - Carried forward the accepted Firefox 155.0.1 8-segment transfer evidence from 0.2.1.
 - Accepted deliberate native-helper interruption recovery on Firefox 155.0.1 / Flathub Flatpak: the helper was terminated during an active eight-segment transfer, the original job-scoped staging directory retained `metadata.json` plus eight partial segments, **Resume** completed successfully, the original staging directory was cleaned after assembly, and the recovered output matched source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484` byte-for-byte.
 - Accepted collision-safe native naming in the same recovery run: because `goreecloud-range-test.bin` already existed, completion produced `goreecloud-range-test (1).bin` without overwriting the earlier file.
-- Non-persistent background-context recovery and full-browser restart recovery remain separate runtime acceptance gates.
+- Accepted non-persistent Firefox background-context recovery on Firefox 155.0.1 / Flathub Flatpak. Before background termination, job ID `4e877c53-cf58-40ff-a9d1-f632f1f72165` retained `metadata.json` plus eight segment files, each at 6,815,744 bytes. After terminating the extension background script, the native helper process remained present and the same staging directory and segment files remained intact. Reopening the extension recreated the background context and the transfer completed to collision-safe output `goreecloud-range-test (2).bin`; its SHA-256 matched the source exactly, byte-for-byte comparison reported `BACKGROUND RECOVERY INTEGRITY: PASS`, and native staging was empty after completion.
+- Full-browser restart recovery remains a separate runtime acceptance gate.
 
 ## 0.2.1 — Source candidate
 
