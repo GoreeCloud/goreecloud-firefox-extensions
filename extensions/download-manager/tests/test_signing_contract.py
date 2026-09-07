@@ -65,7 +65,7 @@ class SigningContractTests(unittest.TestCase):
     def test_internal_certificate_flag_is_informational_not_ordinary_signing_gate(self):
         recovery = AMO_RECOVERY.read_text(encoding="utf-8")
         self.assertIn("internal-certificate flag (informational)", recovery)
-        self.assertIn("not ordinary AMO signing", recovery)
+        self.assertIn("is_mozilla_signed_extension", recovery)
         self.assertNotIn("AMO existing file is not marked Mozilla-signed", recovery)
 
     def test_signed_restart_smoke_requires_persistent_install_and_no_reinstall(self):
