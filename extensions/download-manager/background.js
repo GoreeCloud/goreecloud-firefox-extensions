@@ -19,6 +19,8 @@ let nativeReady = false;
 let nativeReadyPromise = null;
 let nativeReadyResolve = null;
 let nativeReadyReject = null;
+let nativeHandshake = null;
+let nativeLastHandshakeError = null;
 let pumping = false;
 let pumpAgain = false;
 
@@ -189,6 +191,8 @@ async function markNativeDisconnected() {
 function ensureNativePort() {
   if (nativePort) return nativePort;
   nativeReady = false;
+  nativeHandshake = null;
+  nativeLastHandshakeError = null;
   nativeReadyPromise = new Promise((resolve, reject) => {
     nativeReadyResolve = resolve;
     nativeReadyReject = reject;
@@ -197,9 +201,11 @@ function ensureNativePort() {
   nativePort.onMessage.addListener(onNativeMessage);
   nativePort.onDisconnect.addListener(() => {
     const error = browser.runtime.lastError?.message || "Native helper disconnected";
-    if (nativeReadyReject) nativeReadyReject(new Error(error));
+    if (!nativeLastHandshakeError) nativeLastHandshakeError = error;
+    if (nativeReadyReject) nativeReadyReject(new Error(nativeLastHandshakeError));
     nativePort = null;
     nativeReady = false;
+    nativeHandshake = null;
     nativeReadyPromise = null;
     nativeReadyResolve = null;
     nativeReadyReject = null;
@@ -219,6 +225,27 @@ async function readyNativePort(timeoutMs = 1800) {
 async function onNativeMessage(msg) {
   if (!msg || !msg.type) return;
   if (msg.type === "hello") {
+    const validator = globalThis.GoreeCloudNativeProtocol?.validateNativeHello;
+    const result = typeof validator === "function"
+      ? validator(msg)
+      : { compatible: false, error: "Native protocol validator unavailable. Reload the current GoreeCloud Download Manager Extension source candidate." };
+
+    if (!result.compatible) {
+      nativeReady = false;
+      nativeHandshake = null;
+      nativeLastHandshakeError = result.error || "Native helper protocol is incompatible.";
+      if (nativeReadyReject) nativeReadyReject(new Error(nativeLastHandshakeError));
+      const rejectedPort = nativePort;
+      try { rejectedPort?.disconnect(); } catch (_) {}
+      return;
+    }
+
+    nativeHandshake = {
+      helperVersion: result.helperVersion,
+      protocolVersion: result.protocolVersion,
+      capabilities: [...(result.capabilities || [])]
+    };
+    nativeLastHandshakeError = null;
     nativeReady = true;
     if (nativeReadyResolve) nativeReadyResolve(true);
     return;
@@ -560,9 +587,21 @@ browser.runtime.onMessage.addListener(async (message) => {
       try {
         const port = await readyNativePort();
         port.postMessage({ type: "ping" });
-        return { available: true, ready: true };
+        return {
+          available: true,
+          ready: true,
+          compatible: true,
+          helperVersion: nativeHandshake?.helperVersion || null,
+          protocolVersion: nativeHandshake?.protocolVersion ?? null,
+          capabilities: [...(nativeHandshake?.capabilities || [])]
+        };
       } catch (error) {
-        return { available: false, ready: false, error: String(error) };
+        return {
+          available: false,
+          ready: false,
+          compatible: false,
+          error: nativeLastHandshakeError || String(error)
+        };
       }
     default:
       return undefined;

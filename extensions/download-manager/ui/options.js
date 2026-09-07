@@ -80,7 +80,13 @@ $("#test").addEventListener("click", async () => {
   $("#test").disabled = true;
   try {
     const result = await browser.runtime.sendMessage({ type: "native-status" });
-    $("#status").textContent = result.available ? "Native helper connection opened." : "Native helper unavailable. Install or repair the native host first.";
+    if (result.available && result.compatible !== false) {
+      const version = result.helperVersion || "unknown";
+      const protocol = result.protocolVersion ?? "unknown";
+      $("#status").textContent = `Native helper ${version} · protocol ${protocol} ready.`;
+    } else {
+      $("#status").textContent = result.error || "Native helper unavailable. Install or repair the current native host first.";
+    }
   } finally {
     $("#test").disabled = false;
   }

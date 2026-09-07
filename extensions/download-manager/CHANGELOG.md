@@ -1,5 +1,20 @@
 # Change Log — GoreeCloud Download Manager Extension
 
+## 0.2.8 — Source candidate
+
+- Added an explicit versioned Native Messaging compatibility contract. The Firefox extension now requires protocol `2`, helper version `0.2.8` or newer on that compatible protocol line, and the capabilities `segmented-range-integrity`, `same-job-recovery`, `no-overwrite-publish`, and `ephemeral-request-headers` before the native helper can be marked ready.
+- Added `native_protocol.js` as a pre-background protocol contract rather than a post-start monkeypatch. The manifest loads it before `background.js`, and the primary background native-message handler calls the validator directly for every `hello` handshake.
+- Rejects legacy helpers without a protocol version, explicitly mismatched protocols, helpers older than the 0.2.8 compatibility line, and protocol-2 helpers missing required capabilities with actionable reinstall guidance.
+- Disconnects an incompatible Native Messaging port after rejecting its handshake so a repaired/reinstalled helper can be discovered on the next connection attempt.
+- Records validated helper version, protocol version, and advertised capabilities in the background state and returns that information through the existing native-status path.
+- Updated Settings so **Test native helper** reports the validated helper version/protocol on success and surfaces detailed compatibility errors when the installed helper is stale or incomplete.
+- Advanced the native helper to version 0.2.8 and protocol 2. Startup and ping `hello` frames now advertise the same version, protocol, and capability set.
+- Hardened the Linux installer self-test so both startup and ping frames must report helper version 0.2.8, protocol 2, and all required capabilities. The installer now fails closed on stale/mismatched helper metadata rather than validating only `type: hello` framing.
+- Added deterministic native protocol tests covering compatible/current and future helpers, legacy/mismatched protocols, minimum-version enforcement, missing required capabilities, capability normalization/de-duplication, invalid handshakes, manifest script ordering, background protocol enforcement/status integration, helper metadata, Settings presentation, installer contract, and inventory-version consistency.
+- Advanced the canonical extension inventory, Settings presentation, README, installation guide, architecture documentation, and source changelog to 0.2.8 source-candidate state.
+- Fresh native jobs retain the normal Firefox compatibility fallback if the helper cannot be used. Already-started native recovery retains the 0.2.7 identity-preserving no-fallback rule, so a recovery attempt is not silently converted into a new Firefox transfer.
+- This is deterministic source-level hardening until exact-head repository CI and any later target-runtime checks are accepted. It does not establish target-device 0.2.8 helper compatibility acceptance, Mozilla signing, persistent signed installation, full-browser restart/native-host acceptance, Release Candidate status, or Stable status.
+
 ## 0.2.7 — Source candidate
 
 - Hardened the native helper so its own transport boundary accepts only HTTP and HTTPS URLs with a network host, independently of the extension-side URL validator.

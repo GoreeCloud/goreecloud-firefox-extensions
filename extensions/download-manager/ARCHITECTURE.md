@@ -2,13 +2,13 @@
 
 ## Status
 
-Version 0.2.7 source candidate. Unsigned; not Release Candidate or Stable.
+Version 0.2.8 source candidate. Unsigned; not Release Candidate or Stable.
 
 ## Components
 
 ### Firefox extension
 
-The Manifest V3 extension owns user interaction, queue state, Firefox-download integration, settings, optional permission acquisition, notification behavior, Native Messaging coordination, scheduler-state hardening, and recovery orchestration.
+The Manifest V3 extension owns user interaction, queue state, Firefox-download integration, settings, optional permission acquisition, notification behavior, Native Messaging coordination, scheduler-state hardening, native protocol compatibility validation, and recovery orchestration.
 
 The queue is stored in `browser.storage.local`. Download jobs have a stable GoreeCloud job ID independent of Firefox's numeric `downloadId`, allowing queued and native jobs to share one managed state model. Jobs also receive a persistent monotonic `queueOrder` tie breaker. `createdAt` remains the primary ordering signal, while `queueOrder` preserves FIFO order for jobs whose timestamps are equal. Queue-sequence allocation reconciles against the highest persisted `queueOrder` before issuing a new position so an absent or stale sequence key cannot place a new/retried job behind already-persisted queue history.
 
@@ -42,9 +42,27 @@ Ordinary Retry and native same-job recovery remain distinct lifecycle operations
 
 Deterministic Node regressions load the real background scripts into a VM with mocked Firefox and Native Messaging APIs. Browser-only, mixed-engine, lifecycle-fault, and retry-snapshot harnesses verify scheduler ceilings, cross-engine slot promotion, same-download-ID resume, hostile cancellation event ordering, late-event finality, removed-job protection, queue ordering, settings-drift resistance, retry filename normalization, legacy absolute-destination compatibility, and notification behavior. These tests are source-level evidence and are distinct from target-device runtime acceptance.
 
+### Native protocol compatibility contract
+
+`native_protocol.js` is loaded **before** `background.js`. It defines the compatibility contract used before any Native Messaging `hello` frame can mark the native host ready. The protocol validator is therefore part of the initial background state machine rather than a post-start monkeypatch.
+
+The 0.2.8 extension requires:
+
+- native protocol version `2`;
+- helper version `0.2.8` or newer while protocol 2 remains compatible; and
+- the capabilities `segmented-range-integrity`, `same-job-recovery`, `no-overwrite-publish`, and `ephemeral-request-headers`.
+
+A legacy helper without `protocolVersion`, an explicitly mismatched protocol, a helper below the minimum compatible version, or a protocol-2 helper missing any required capability is not marked ready. The handshake promise is rejected with an actionable reinstall message and the incompatible Native Messaging port is disconnected so the next connection attempt can discover a repaired helper.
+
+For a valid handshake, the primary background controller records the helper version, protocol version, and advertised capabilities for status reporting. Settings exposes the validated helper version/protocol through **Test native helper**. The version/protocol gate applies to both initial startup `hello` and later reconnects because every newly created native port registers the same validated message handler.
+
+Fresh native jobs retain the existing compatibility fallback to Firefox when the native helper cannot be used. Already-started native recovery remains different: the recovery controller protects the original native identity/staging boundary and does not silently convert a recovery attempt into a new Firefox download.
+
 ### Native segmented helper
 
-The Python native host communicates over Firefox Native Messaging framing. The native helper independently validates that requested download transports are HTTP or HTTPS. For range-capable sources it divides a file into up to 32 bounded ranges and runs concurrent workers. Each worker persists its partial range under a job-scoped staging directory.
+The Python native host communicates over Firefox Native Messaging framing. The 0.2.8 helper emits a versioned `hello` record at startup and in response to `ping`, advertising protocol 2 and the capability set required by the extension.
+
+The native helper independently validates that requested download transports are HTTP or HTTPS. For range-capable sources it divides a file into up to 32 bounded ranges and runs concurrent workers. Each worker persists its partial range under a job-scoped staging directory.
 
 Native staging layout:
 
@@ -78,13 +96,15 @@ The extension loads `recovery.js` after the primary background controller. Nativ
 
 For an interrupted or errored native job that previously started, the recovery controller:
 
-1. verifies that the Native Messaging helper can complete its handshake;
+1. verifies that the Native Messaging helper can complete its protocol-compatible handshake;
 2. keeps the existing GoreeCloud job record and job ID;
 3. requeues that same job as native without resetting transferred-byte metadata or segment configuration;
 4. lets the primary queue controller issue a native `resume` message because `nativeStarted` remains true; and
 5. allows the helper to reconstruct missing/dead in-memory state from the existing job-scoped staging directory.
 
-0.2.7 closes a second recovery availability race. The initial helper preflight remains necessary, but the helper can still disappear between that preflight and the scheduler's actual launch. For an already-started native job, recovery therefore bypasses the normal new-job Firefox compatibility fallback: native launch failure propagates as a recoverable error and leaves the job's native identity/staging semantics intact. Fresh native jobs that have never started continue to use the existing compatibility fallback when the helper is unavailable.
+0.2.7 closed a second recovery availability race. The initial helper preflight remains necessary, but the helper can still disappear between that preflight and the scheduler's actual launch. For an already-started native job, recovery therefore bypasses the normal new-job Firefox compatibility fallback: native launch failure propagates as a recoverable error and leaves the job's native identity/staging semantics intact. Fresh native jobs that have never started continue to use the existing compatibility fallback when the helper is unavailable.
+
+0.2.8 makes that preflight compatibility-aware. An old or capability-incomplete helper is treated as unavailable for native recovery instead of being allowed to resume staged data under a protocol contract it does not satisfy.
 
 When a non-persistent Firefox background context is recreated, native jobs persisted in stale active states (`starting`, `in_progress`, or `downloading`) are reconciled through the same same-ID recovery path. Explicitly paused jobs are not automatically resumed. Jobs already marked `interrupted` or `error` remain user-controlled until **Resume** is selected.
 
@@ -92,7 +112,7 @@ Target Firefox 155.0.1 / Flathub Flatpak testing has accepted the deliberate nat
 
 The same target environment has also accepted non-persistent background-context recreation recovery. During another controlled eight-segment transfer, job ID `4e877c53-cf58-40ff-a9d1-f632f1f72165` retained `metadata.json` and all eight segment files at 6,815,744 bytes each before background termination. Terminating the Firefox extension background script did not remove the job-scoped staging directory or partial segments; the native helper process remained present. Reopening the extension recreated the background context and the transfer subsequently completed to `goreecloud-range-test (2).bin`. The output reproduced the source SHA-256 exactly, byte-for-byte comparison passed, and staging was empty after successful completion.
 
-These runtime tests accept helper-process interruption recovery and non-persistent background-context recovery for the earlier tested target baseline. The additional 0.2.7 same-helper/error-thread and recovery-launch fault behavior is currently deterministic source-level evidence. Full-browser restart recovery remains a separate acceptance gate.
+These runtime tests accept helper-process interruption recovery and non-persistent background-context recovery for the earlier tested target baseline. The additional 0.2.7 same-helper/error-thread and recovery-launch fault behavior and the new 0.2.8 compatibility contract are deterministic source-level evidence until separately reproduced on the target runtime. Full-browser restart recovery remains a separate acceptance gate.
 
 ### Native host installation
 
@@ -108,7 +128,7 @@ Firefox native-host registration is written to:
 ~/.mozilla/native-messaging-hosts/goreecloud_download_manager.json
 ```
 
-The installer replaces the manifest atomically and runs Python compilation plus a Native Messaging hello/ping protocol self-test before reporting success. The installed manifest authorizes only `download-manager@goreecloud.com`.
+The installer replaces the manifest atomically, compiles the installed helper, and performs startup/ping Native Messaging frame validation. For the 0.2.8 source candidate, installation succeeds only if both hello records report helper version `0.2.8`, protocol `2`, and all required compatibility capabilities. The installed manifest authorizes only `download-manager@goreecloud.com`.
 
 When Firefox is distributed as a Flatpak, native-host startup can traverse `org.freedesktop.portal.WebExtensions`. The installer reports whether that portal interface is visible and gives explicit Firefox portal-preference guidance rather than granting the confined browser arbitrary host command execution.
 
@@ -130,6 +150,6 @@ The native helper currently supports HTTP/HTTPS GET-style downloads. It does not
 
 Ordinary retry preserves the source managed job's effective engine and relevant configuration snapshot but creates a fresh GoreeCloud job ID and does not reuse partial segment staging. Native same-job recovery is the separate identity-preserving path for interrupted/errored native transfers with reusable staged partial data.
 
-The 0.2.4–0.2.7 browser, mixed-engine, lifecycle-race, retry-snapshot, native-range-integrity, no-overwrite-publication, and recovery-fault regressions are deterministic source-level validation. They do not replace a real target-device gate when a behavior materially depends on Firefox/Flatpak/native-host runtime state.
+The 0.2.4–0.2.8 browser, mixed-engine, lifecycle-race, retry-snapshot, native-range-integrity, no-overwrite-publication, recovery-fault, and protocol-compatibility regressions are deterministic source-level validation. They do not replace a real target-device gate when a behavior materially depends on Firefox/Flatpak/native-host runtime state.
 
 Mozilla signing is outside the download engine. An unsigned candidate may be loaded temporarily for development but is not a persistent Stable Firefox release.

@@ -55,6 +55,49 @@ import struct
 import subprocess
 import sys
 
+EXPECTED_VERSION = "0.2.8"
+EXPECTED_PROTOCOL = 2
+REQUIRED_CAPABILITIES = {
+    "segmented-range-integrity",
+    "same-job-recovery",
+    "no-overwrite-publish",
+    "ephemeral-request-headers",
+}
+
+
+def read_message(stream, label):
+    header = stream.read(4)
+    if len(header) != 4:
+        raise SystemExit(f"{label} did not provide a complete Native Messaging frame header")
+    length = struct.unpack("=I", header)[0]
+    if length <= 0 or length > 16 * 1024 * 1024:
+        raise SystemExit(f"{label} returned an invalid Native Messaging payload length: {length}")
+    payload = stream.read(length)
+    if len(payload) != length:
+        raise SystemExit(f"{label} returned a truncated Native Messaging payload")
+    try:
+        return json.loads(payload.decode("utf-8"))
+    except Exception as exc:
+        raise SystemExit(f"{label} returned invalid JSON: {exc}") from exc
+
+
+def validate_hello(value, label):
+    if not isinstance(value, dict) or value.get("type") != "hello":
+        raise SystemExit(f"Unexpected {label}: {value!r}")
+    if value.get("version") != EXPECTED_VERSION:
+        raise SystemExit(
+            f"{label} version mismatch: expected {EXPECTED_VERSION}, got {value.get('version')!r}"
+        )
+    if value.get("protocolVersion") != EXPECTED_PROTOCOL:
+        raise SystemExit(
+            f"{label} protocol mismatch: expected {EXPECTED_PROTOCOL}, got {value.get('protocolVersion')!r}"
+        )
+    capabilities = {str(item) for item in value.get("capabilities", []) if item}
+    missing = sorted(REQUIRED_CAPABILITIES - capabilities)
+    if missing:
+        raise SystemExit(f"{label} is missing required native capabilities: {', '.join(missing)}")
+
+
 host = sys.argv[1]
 process = subprocess.Popen(
     [host],
@@ -63,27 +106,22 @@ process = subprocess.Popen(
     stderr=subprocess.PIPE,
 )
 try:
-    header = process.stdout.read(4)
-    if len(header) != 4:
+    try:
+        hello = read_message(process.stdout, "Native host startup handshake")
+    except SystemExit as exc:
         stderr = process.stderr.read().decode(errors="replace")
-        raise SystemExit(f"Native host handshake failed: {stderr}")
-    length = struct.unpack("<I", header)[0]
-    hello = json.loads(process.stdout.read(length))
-    if hello.get("type") != "hello":
-        raise SystemExit(f"Unexpected native host handshake: {hello!r}")
+        if stderr:
+            raise SystemExit(f"{exc}; helper stderr: {stderr}") from exc
+        raise
+    validate_hello(hello, "Native host startup handshake")
 
     payload = json.dumps({"type": "ping"}).encode()
-    process.stdin.write(struct.pack("<I", len(payload)))
+    process.stdin.write(struct.pack("=I", len(payload)))
     process.stdin.write(payload)
     process.stdin.flush()
 
-    header = process.stdout.read(4)
-    if len(header) != 4:
-        raise SystemExit("Native host did not answer ping")
-    length = struct.unpack("<I", header)[0]
-    reply = json.loads(process.stdout.read(length))
-    if reply.get("type") != "hello":
-        raise SystemExit(f"Unexpected native host ping reply: {reply!r}")
+    reply = read_message(process.stdout, "Native host ping reply")
+    validate_hello(reply, "Native host ping reply")
 finally:
     process.terminate()
     try:
@@ -95,7 +133,7 @@ PY
 printf 'Installed native messaging manifest: %s\n' "$TARGET"
 printf 'Native host: %s\n' "$HOST"
 printf 'Firefox add-on ID: download-manager@goreecloud.com\n'
-printf 'Native host protocol self-test: PASS\n'
+printf 'Native host version/protocol self-test: PASS (0.2.8 / protocol 2)\n'
 
 if command -v flatpak >/dev/null 2>&1 && flatpak info org.mozilla.firefox >/dev/null 2>&1; then
   printf '\nFirefox Flatpak detected: org.mozilla.firefox\n'

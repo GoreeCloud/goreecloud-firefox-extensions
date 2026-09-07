@@ -24,7 +24,7 @@ and writes the Firefox native-messaging manifest to:
 ~/.mozilla/native-messaging-hosts/goreecloud_download_manager.json
 ```
 
-The installer compiles the installed helper and performs a Native Messaging hello/ping self-test before reporting success.
+The 0.2.8 installer compiles the installed helper and performs a Native Messaging startup/ping self-test before reporting success. The self-test requires helper version `0.2.8`, protocol `2`, and the capabilities `segmented-range-integrity`, `same-job-recovery`, `no-overwrite-publish`, and `ephemeral-request-headers`. A stale or mismatched helper therefore fails installation validation instead of being silently treated as compatible.
 
 To remove the user-scoped native helper:
 
@@ -42,10 +42,10 @@ Do not grant the Firefox sandbox arbitrary host command execution merely to work
 
 ## Verification
 
-In the extension Settings page, click **Test native helper**. A successful target connection reports:
+In the extension Settings page, click **Test native helper**. A successful 0.2.8 connection reports the validated helper version and protocol, for example:
 
 ```text
-Native helper connection opened.
+Native helper 0.2.8 · protocol 2 ready.
 ```
 
-That handshake is necessary but not sufficient for release acceptance. Real segmented transfer, pause/resume, recovery, integrity, Mozilla signing, and persistent-install/restart behavior remain independent gates.
+A legacy helper, protocol mismatch, minimum-version failure, or missing required capability is rejected with an actionable reinstall message. The handshake remains necessary but not sufficient for release acceptance. Real segmented transfer, pause/resume, recovery, integrity, Mozilla signing, and persistent-install/restart behavior remain independent gates.
