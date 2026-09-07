@@ -384,6 +384,36 @@ def main() -> int:
                        15, "persisted extension UI available after restart")
             require(True, "signed extension survived full Firefox restart")
 
+            # 0.2.10 deliberately leaves jobs that were persisted as already-interrupted
+            # user-controlled. A full browser exit can persist the native-port disconnect in
+            # that state. Exercise the real Manager Resume action when it is presented; if the
+            # job instead survived as a stale active state, background startup recovery may have
+            # already requeued it and there will be no Resume button to click.
+            wait_until(
+                lambda: "signed-restart.bin" in second.page_source,
+                15,
+                "persisted native job rendered after restart",
+            )
+            resume_buttons = [
+                button
+                for button in second.find_elements(
+                    "xpath", "//div[@id='jobs']//button[normalize-space()='Resume']"
+                )
+                if button.is_displayed() and button.is_enabled()
+            ]
+            if resume_buttons:
+                resume_buttons[0].click()
+                require(True, "recoverable native job resumed through Manager after restart")
+            else:
+                wait_until(
+                    lambda: final_path.is_file()
+                    or int(second.find_element("id", "activeCount").text or "0") >= 1
+                    or int(second.find_element("id", "queuedCount").text or "0") >= 1,
+                    10,
+                    "persisted native job recovery already active after restart",
+                )
+                require(True, "persisted native job recovery already active after restart")
+
             wait_until(
                 lambda: final_path.is_file()
                 and int(second.find_element("id", "completeCount").text or "0") >= 1,
