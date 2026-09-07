@@ -1,5 +1,19 @@
 # Change Log — GoreeCloud Download Manager Extension
 
+## 0.2.9 — Source candidate
+
+- Hardened persisted native staging so partial files are reusable only when `metadata.json` passes the supported trust contract rather than merely because `.part` files exist.
+- Native metadata must now be a JSON object using schema version `1`, belong to the exact current GoreeCloud job ID, contain a canonical valid HTTP/HTTPS URL, use a non-boolean integer source size no smaller than `-1`, and keep filename/destination/ETag/Last-Modified fields as strings or absent.
+- Bounded each accepted persisted metadata string field to 64 KiB before it can participate in recovery decisions.
+- Missing metadata, malformed JSON, non-object JSON, unsupported metadata version, foreign job identity, invalid persisted URL, invalid source-size type, or invalid bounded-string fields now invalidate staged partial files before a fresh transfer proceeds.
+- Valid same-job metadata continues through the existing URL, ETag, Last-Modified, and source-size identity checks; valid unchanged staging can therefore still preserve reusable partial bytes.
+- Added deterministic native-core regression coverage for missing metadata/orphan parts, malformed and structurally invalid metadata variants, foreign-job metadata, invalid URL/size/destination values, and valid same-job partial preservation.
+- Advanced the native helper to version `0.2.9` while retaining Native Messaging protocol `2` and the existing integrity/recovery capability set.
+- Raised the extension-side minimum compatible helper version to `0.2.9` so an updated extension fails closed on a stale 0.2.8 helper until the matching helper is reinstalled.
+- Advanced the Linux installer self-test, native protocol tests, protocol source contract, mixed-engine scheduler harness, lifecycle-fault harness, manifest, canonical extension inventory, Settings presentation, README, installation guide, architecture documentation, and source changelog to 0.2.9 source-candidate state.
+- This change does not yet establish symlink/no-follow staging hardening; staging path/link substitution remains a separate filesystem hardening boundary.
+- 0.2.9 remains deterministic source work until the exact PR head passes repository CI. It does not establish target-device 0.2.9 helper acceptance, Mozilla signing, persistent signed installation, full-browser restart/native-host acceptance, Release Candidate status, or Stable status.
+
 ## 0.2.8 — Source candidate
 
 - Added an explicit versioned Native Messaging compatibility contract. The Firefox extension now requires protocol `2`, helper version `0.2.8` or newer on that compatible protocol line, and the capabilities `segmented-range-integrity`, `same-job-recovery`, `no-overwrite-publish`, and `ephemeral-request-headers` before the native helper can be marked ready.
