@@ -7,6 +7,12 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const extensionRoot = path.resolve(__dirname, "..");
+const NATIVE_CAPABILITIES = [
+  "segmented-range-integrity",
+  "same-job-recovery",
+  "no-overwrite-publish",
+  "ephemeral-request-headers"
+];
 
 function event() {
   const listeners = [];
@@ -54,6 +60,7 @@ function createHarness() {
   const nativePort = {
     onMessage: nativeOnMessage,
     onDisconnect: nativeOnDisconnect,
+    disconnect() {},
     postMessage(message) {
       nativeMessages.push(message);
       if (message.type === "start" || message.type === "resume") {
@@ -83,7 +90,12 @@ function createHarness() {
       async sendMessage() { return undefined; },
       getURL(value) { return `moz-extension://test/${value}`; },
       connectNative() {
-        setTimeout(() => nativeOnMessage.emit({ type: "hello", version: "0.2.4" }), 0);
+        setTimeout(() => nativeOnMessage.emit({
+          type: "hello",
+          version: "0.2.8",
+          protocolVersion: 2,
+          capabilities: [...NATIVE_CAPABILITIES]
+        }), 0);
         return nativePort;
       }
     },
@@ -155,7 +167,7 @@ function createHarness() {
   });
   context.globalThis = context;
 
-  for (const filename of ["background.js", "scheduler_hardening.js"]) {
+  for (const filename of ["native_protocol.js", "background.js", "scheduler_hardening.js"]) {
     vm.runInContext(fs.readFileSync(path.join(extensionRoot, filename), "utf8"), context, { filename });
   }
 
@@ -323,6 +335,7 @@ async function main() {
 
   console.log("MIXED FIREFOX/NATIVE SCHEDULER: PASS");
   console.log("- shared maxConcurrent=3 ceiling: PASS");
+  console.log("- protocol-compatible native helper handshake: PASS");
   console.log("- browser pause promotes native queued job: PASS");
   console.log("- browser resume while mixed scheduler full remains queued: PASS");
   console.log("- native completion frees slot for same Firefox download ID: PASS");
