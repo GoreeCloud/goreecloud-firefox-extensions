@@ -189,6 +189,25 @@ def wait_text(driver: webdriver.Firefox, selector: str, expected: str, timeout: 
         raise AssertionError(f"FAIL text {selector}: expected {expected!r}, got {actual!r}") from exc
 
 
+def extension_job_snapshot(driver: webdriver.Firefox, job_id: str) -> dict | None:
+    """Read the exact persisted managed job from the signed extension itself."""
+
+    result = driver.execute_async_script(
+        """
+        const jobId = arguments[0];
+        const done = arguments[arguments.length - 1];
+        browser.runtime.sendMessage({type: 'list-jobs'}).then(
+          jobs => done((jobs || []).find(job => job.id === jobId) || null),
+          error => done({__error: String(error)})
+        );
+        """,
+        job_id,
+    )
+    if isinstance(result, dict) and result.get("__error"):
+        raise AssertionError(f"FAIL signed extension job snapshot: {result['__error']}")
+    return result if isinstance(result, dict) else None
+
+
 def extension_url(path: str) -> str:
     return f"moz-extension://{FIXED_EXTENSION_UUID}/{path.lstrip('/')}"
 
@@ -384,42 +403,81 @@ def main() -> int:
                        15, "persisted extension UI available after restart")
             require(True, "signed extension survived full Firefox restart")
 
-            # 0.2.10 deliberately leaves jobs that were persisted as already-interrupted
-            # user-controlled. A full browser exit can persist the native-port disconnect in
-            # that state. Exercise the real Manager Resume action when it is presented; if the
-            # job instead survived as a stale active state, background startup recovery may have
-            # already requeued it and there will be no Resume button to click.
             wait_until(
-                lambda: "signed-restart.bin" in second.page_source,
+                lambda: extension_job_snapshot(second, original_job_id) is not None,
                 15,
                 "persisted native job rendered after restart",
             )
-            resume_buttons = [
-                button
-                for button in second.find_elements(
-                    "xpath", "//div[@id='jobs']//button[normalize-space()='Resume']"
-                )
-                if button.is_displayed() and button.is_enabled()
-            ]
-            if resume_buttons:
-                resume_buttons[0].click()
-                require(True, "recoverable native job resumed through Manager after restart")
-            else:
-                wait_until(
-                    lambda: final_path.is_file()
-                    or int(second.find_element("id", "activeCount").text or "0") >= 1
-                    or int(second.find_element("id", "queuedCount").text or "0") >= 1,
-                    10,
-                    "persisted native job recovery already active after restart",
-                )
-                require(True, "persisted native job recovery already active after restart")
 
-            wait_until(
-                lambda: final_path.is_file()
-                and int(second.find_element("id", "completeCount").text or "0") >= 1,
-                60,
-                "same-job native transfer completed after restart",
+            # Observe the exact managed job rather than treating a stale summary counter as proof
+            # that startup recovery actually launched. Automatic stale-active recovery records
+            # recoveryRequestedAt. If that attempt ends in the documented recoverable error or
+            # interrupted state, exercise one real Manager Resume action and require the same job
+            # to finish. A second failure remains a release-gate failure rather than being hidden.
+            recovery_deadline = time.monotonic() + 90
+            manual_resume_count = 0
+            saw_recovery_marker = False
+            last_signature = None
+            last_snapshot = None
+            while time.monotonic() < recovery_deadline:
+                snapshot = extension_job_snapshot(second, original_job_id)
+                if snapshot is None:
+                    time.sleep(0.1)
+                    continue
+                last_snapshot = snapshot
+                signature = (
+                    snapshot.get("state"),
+                    snapshot.get("recoveryRequestedAt"),
+                    snapshot.get("error"),
+                    snapshot.get("bytesReceived"),
+                )
+                if signature != last_signature:
+                    print(
+                        "POST-RESTART JOB "
+                        f"state={snapshot.get('state')!r} "
+                        f"recoveryRequestedAt={snapshot.get('recoveryRequestedAt')!r} "
+                        f"bytesReceived={snapshot.get('bytesReceived')!r} "
+                        f"error={snapshot.get('error')!r}"
+                    )
+                    last_signature = signature
+
+                if snapshot.get("recoveryRequestedAt") is not None:
+                    saw_recovery_marker = True
+
+                if final_path.is_file() and snapshot.get("state") == "complete":
+                    break
+
+                if snapshot.get("state") in {"interrupted", "error"} and manual_resume_count == 0:
+                    resume_buttons = [
+                        button
+                        for button in second.find_elements(
+                            "xpath", "//div[@id='jobs']//button[normalize-space()='Resume']"
+                        )
+                        if button.is_displayed() and button.is_enabled()
+                    ]
+                    if resume_buttons:
+                        resume_buttons[0].click()
+                        manual_resume_count += 1
+                        require(True, "recoverable native job resumed through Manager after restart")
+
+                time.sleep(0.25)
+            else:
+                raise AssertionError(
+                    "FAIL same-job native transfer completed after restart: "
+                    f"job={last_snapshot!r} ranges={FixtureHandler.ranges()!r}"
+                )
+
+            require(
+                saw_recovery_marker,
+                "post-restart same-job recovery request observed",
+                repr(last_snapshot),
             )
+            require(
+                manual_resume_count <= 1,
+                "restart recovery required at most one user Resume action",
+                str(manual_resume_count),
+            )
+            require(True, "same-job native transfer completed after restart")
 
             require(final_path.stat().st_size == PAYLOAD_SIZE,
                     "post-restart output size", str(final_path.stat().st_size))
@@ -446,6 +504,7 @@ def main() -> int:
             print(f"Recovered output SHA-256: {output_digest}")
             print(f"Recovered GoreeCloud job ID: {original_job_id}")
             print(f"Observed HTTP range starts: {observed_starts}")
+            print(f"Manual Resume actions after restart: {manual_resume_count}")
             print("Signed Download Manager persistent-install/full-browser-restart native recovery acceptance passed.")
         finally:
             if first is not None:
