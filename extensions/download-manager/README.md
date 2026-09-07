@@ -1,10 +1,10 @@
 # GoreeCloud Download Manager Extension
 
-**Status:** 0.2.0 source candidate — unsigned, not Stable
+**Status:** 0.2.1 source candidate — unsigned, not Stable
 
 GoreeCloud Download Manager Extension is a Firefox Manifest V3 download-management extension with queueing, pause/resume, retries, batch URL input, download telemetry, and an optional Linux native helper for segmented HTTP range downloads and durable partial-file resume.
 
-## Implemented in 0.2.0
+## Implemented
 
 - Firefox download-engine mode.
 - Optional segmented native-engine mode with 1–32 HTTP byte-range workers.
@@ -19,6 +19,16 @@ GoreeCloud Download Manager Extension is a Firefox Manifest V3 download-manageme
 - GoreeCloud product icon and updated Glaze-aligned Firefox UI.
 - Firefox add-on ID: `download-manager@goreecloud.com`.
 - Native messaging host: `goreecloud_download_manager`.
+
+## 0.2.1 hardening
+
+The Linux installer now copies the Python helper to a durable user-owned location at `~/.local/lib/goreecloud-download-manager/goreecloud_download_manager_native.py`, writes the Firefox native-messaging manifest under `~/.mozilla/native-messaging-hosts/`, validates Python compilation, runs a Native Messaging hello/ping protocol self-test, and detects Firefox Flatpak/WebExtensions portal environments.
+
+The installer supports removal with:
+
+```bash
+./extensions/download-manager/scripts/install-native-host-linux.sh --uninstall
+```
 
 ## Architecture
 
@@ -39,7 +49,15 @@ For native acceleration on Linux:
 ./extensions/download-manager/scripts/install-native-host-linux.sh
 ```
 
-Then open extension settings, select **Native segmented helper**, and use **Test native helper**.
+Then open extension settings, select **Native segmented helper**, save settings, and use **Test native helper**.
+
+For Firefox distributed as a Flatpak, the installer checks whether the `org.freedesktop.portal.WebExtensions` portal interface is exposed. If Firefox still cannot discover the installed helper, open `about:config`, set `widget.use-xdg-desktop-portal.native-messaging` to `1`, restart Firefox, reload an unsigned temporary XPI if necessary, and approve the WebExtensions portal authorization prompt.
+
+## Target runtime evidence
+
+The accepted 0.2.0 baseline has been exercised on Mozilla Firefox 155.0.1 from Flathub Flatpak. The unsigned XPI loaded temporarily with the fixed add-on ID, the background script started, popup/Manager/Settings pages rendered, the installed native helper passed direct hello/ping framing, Firefox presented the WebExtensions portal authorization prompt, and the extension reported **Native helper connection opened** after approval.
+
+This evidence validates the extension-to-native-host launch/handshake path for that target environment. Real segmented transfer, live pause/resume, collision/restart recovery, authenticated native transfer, Mozilla signing, and persistent signed-install/restart acceptance remain separate gates.
 
 ## Cookie forwarding
 
@@ -55,7 +73,7 @@ From the canonical `GoreeCloud/goreecloud-firefox-extensions` repository root:
 python shared/scripts/package_extension.py download-manager
 ```
 
-The resulting `dist/goreecloud-download-manager-0.2.0.xpi` is deterministic and unsigned. Packaging excludes the native helper and source-only scripts. Packaging success is not Mozilla signing and does not make the version Stable.
+The resulting `dist/goreecloud-download-manager-0.2.1.xpi` is deterministic and unsigned. Packaging excludes the native helper and source-only scripts. Packaging success is not Mozilla signing and does not make the version Stable.
 
 ## Validation
 
@@ -72,4 +90,4 @@ python shared/scripts/package_extension.py download-manager
 
 ## Release state
 
-0.2.0 remains a source candidate until the canonical Firefox repository accepts the source, target-environment runtime tests pass, Mozilla signing completes, the signed artifact installs persistently in the target Firefox build, restart behavior is verified, native-host integration is revalidated against the signed add-on ID, and the release is explicitly promoted.
+0.2.1 remains a source candidate until target live-transfer tests pass, Mozilla signing completes, the signed artifact installs persistently in the target Firefox build, restart behavior is verified, native-host integration is revalidated against the signed add-on ID, and the release is explicitly promoted.
