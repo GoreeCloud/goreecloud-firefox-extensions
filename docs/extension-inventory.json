@@ -13,6 +13,16 @@
       "legacy_repository": "GoreeCloud/goreecloud-bookmark-browser-extension"
     },
     {
+      "slug": "download-manager",
+      "name": "GoreeCloud Download Manager Extension",
+      "directory": "extensions/download-manager",
+      "gecko_id": "download-manager@goreecloud.com",
+      "source_version": "0.2.0",
+      "source_state": "source-candidate",
+      "accepted_stable_version": null,
+      "legacy_repository": null
+    },
+    {
       "slug": "redirector",
       "name": "GoreeCloud Redirector",
       "directory": "extensions/redirector",

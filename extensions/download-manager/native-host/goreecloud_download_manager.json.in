@@ -1,0 +1,7 @@
+{
+  "name": "goreecloud_download_manager",
+  "description": "Native segmented download helper for GoreeCloud Download Manager Extension",
+  "path": "__HOST_PATH__",
+  "type": "stdio",
+  "allowed_extensions": ["download-manager@goreecloud.com"]
+}

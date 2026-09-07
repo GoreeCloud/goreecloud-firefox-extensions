@@ -1,0 +1,54 @@
+{
+  "manifest_version": 3,
+  "name": "GoreeCloud Download Manager Extension",
+  "version": "0.2.0",
+  "description": "Queue, pause, resume, retry, and accelerate Firefox downloads with an optional segmented native helper.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "download-manager@goreecloud.com",
+      "strict_min_version": "128.0"
+    }
+  },
+  "permissions": [
+    "downloads",
+    "storage",
+    "contextMenus",
+    "notifications",
+    "nativeMessaging"
+  ],
+  "optional_permissions": [
+    "cookies"
+  ],
+  "optional_host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "icons": {
+    "16": "icons/app-icon.svg",
+    "32": "icons/app-icon.svg",
+    "48": "icons/app-icon.svg",
+    "96": "icons/app-icon.svg",
+    "128": "icons/app-icon.svg"
+  },
+  "action": {
+    "default_title": "GoreeCloud Download Manager Extension",
+    "default_popup": "ui/popup.html",
+    "default_icon": "icons/app-icon.svg"
+  },
+  "options_ui": {
+    "page": "ui/options.html",
+    "open_in_tab": true
+  },
+  "commands": {
+    "open-manager": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+D"
+      },
+      "description": "Open GoreeCloud Download Manager Extension"
+    }
+  }
+}

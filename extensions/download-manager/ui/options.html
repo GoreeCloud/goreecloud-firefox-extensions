@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="common.css">
+  <style>
+    body { max-width:800px; margin:auto; padding:28px; }
+    h1 { margin:0; font-size:26px; }
+    .heading { display:flex; gap:12px; align-items:center; margin-bottom:18px; }
+    .panel { padding:18px; }
+    .field { display:grid; gap:6px; }
+    .field label { font-size:13px; font-weight:650; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .check { display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:start; }
+    .check input { width:auto; margin-top:3px; }
+    .check strong { display:block; font-size:13px; }
+    .check .muted { font-size:12px; margin-top:2px; }
+    .permission { padding:12px; border:1px solid var(--border); border-radius:14px; background:var(--surface-strong); }
+    .footer { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    #status { font-size:12px; }
+    @media(max-width:650px){body{padding:16px}.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="heading"><img class="icon" src="../icons/app-icon.svg" alt=""><div><h1>Download Manager settings</h1><div class="muted">GoreeCloud Download Manager Extension 0.2.0 source candidate</div></div></div>
+<div class="panel stack">
+  <div class="field"><label for="mode">Download engine</label><select id="mode"><option value="browser">Firefox downloads — maximum compatibility</option><option value="native">Native segmented helper — acceleration + durable resume</option></select></div>
+  <div class="grid"><div class="field"><label for="segments">Segments per native download</label><input id="segments" type="number" min="1" max="32"></div><div class="field"><label for="maxConcurrent">Concurrent downloads</label><input id="maxConcurrent" type="number" min="1" max="12"></div></div>
+  <div class="grid"><div class="field"><label for="retryCount">Native retry attempts</label><input id="retryCount" type="number" min="0" max="10"></div><div class="field"><label for="nativeDirectory">Native destination directory</label><input id="nativeDirectory" placeholder="Leave blank for ~/Downloads"></div></div>
+  <div class="permission stack">
+    <div class="check"><input id="forwardCookies" type="checkbox"><div><strong>Forward target-site cookies to the native helper</strong><div class="muted">Off by default. When enabled, the extension requests Firefox's optional Cookies + All Sites permission and passes only cookies for the target download URL to the native process in memory. Cookies are not stored in download history.</div></div></div>
+    <div class="flex-wrap"><button id="grantCookies">Grant optional cookie permission</button><span id="cookieStatus" class="muted"></span></div>
+  </div>
+  <div class="check"><input id="completionNotifications" type="checkbox"><div><strong>Completion and failure notifications</strong><div class="muted">Show a Firefox notification when a managed download completes, fails, or is interrupted.</div></div></div>
+  <div class="footer"><button class="primary" id="save">Save settings</button><button id="test">Test native helper</button><span id="status" class="muted"></span></div>
+</div>
+<script src="options.js"></script>
+</body>
+</html>

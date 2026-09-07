@@ -46,6 +46,10 @@ jobs:
         run: node extensions/privacy-shield/scripts/test_logger_privacy.js
       - name: Test Privacy Shield unified background activity
         run: node extensions/privacy-shield/scripts/test_background_activity.js
+      - name: Compile Download Manager native host
+        run: python -m py_compile extensions/download-manager/native-host/goreecloud_download_manager_native.py
+      - name: Test Download Manager native core
+        run: python -m unittest discover -s extensions/download-manager/tests -p 'test_*.py'
       - name: Check maintained JavaScript syntax
         shell: bash
         run: |
@@ -56,6 +60,7 @@ jobs:
       - name: Build deterministic unsigned packages
         run: |
           python shared/scripts/package_extension.py bookmarks
+          python shared/scripts/package_extension.py download-manager
           python shared/scripts/package_extension.py redirector
           python shared/scripts/package_extension.py source-resync
           python shared/scripts/package_extension.py privacy-shield
