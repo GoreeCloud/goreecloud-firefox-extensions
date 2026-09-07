@@ -12,7 +12,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-VERSION = "0.2.8"
+VERSION = "0.2.9"
 PROTOCOL_VERSION = 2
 PROTOCOL_CAPABILITIES = [
     "segmented-range-integrity",
@@ -275,10 +275,43 @@ class DownloadJob:
             time.sleep(0.15)
 
     def load_metadata(self):
+        if not self.metadata_path.exists():
+            return None
         try:
-            return json.loads(self.metadata_path.read_text(encoding="utf-8"))
+            data = json.loads(self.metadata_path.read_text(encoding="utf-8"))
         except Exception:
             return None
+        if not isinstance(data, dict):
+            return None
+        if data.get("version") != 1:
+            return None
+        if data.get("job_id") != self.id:
+            return None
+        stored_url = data.get("url")
+        if not isinstance(stored_url, str):
+            return None
+        try:
+            if validate_download_url(stored_url) != stored_url:
+                return None
+        except Exception:
+            return None
+        size = data.get("size", -1)
+        if isinstance(size, bool) or not isinstance(size, int) or size < -1:
+            return None
+        for key in ("filename", "destination", "etag", "last_modified"):
+            value = data.get(key)
+            if value is not None and not isinstance(value, str):
+                return None
+            if isinstance(value, str) and len(value.encode("utf-8")) > 64 * 1024:
+                return None
+        return data
+
+    def validated_resume_metadata(self, info):
+        metadata = self.load_metadata()
+        if metadata is None or self.source_changed(metadata, info):
+            self.clear_staging_parts()
+            return None
+        return metadata
 
     def write_metadata(self, info):
         self.staging.mkdir(parents=True, exist_ok=True)
@@ -369,12 +402,9 @@ class DownloadJob:
         try:
             self.directory.mkdir(parents=True, exist_ok=True)
             self.staging.mkdir(parents=True, exist_ok=True)
-            metadata = self.load_metadata()
             info = probe(self.url, self.request_headers)
+            metadata = self.validated_resume_metadata(info)
             self.total_size = info["size"]
-            if self.source_changed(metadata, info):
-                self.clear_staging_parts()
-                metadata = None
             self.choose_destination(info, metadata)
             self.write_metadata(info)
 
