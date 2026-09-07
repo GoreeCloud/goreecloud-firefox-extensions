@@ -7,6 +7,7 @@ on:
       - 'shared/**'
       - 'docs/extension-inventory.json'
       - '.github/workflows/firefox-repository.yml'
+      - '.github/workflows/download-manager-mozilla-signing.yml'
   push:
     branches: [main]
     paths:
@@ -14,6 +15,7 @@ on:
       - 'shared/**'
       - 'docs/extension-inventory.json'
       - '.github/workflows/firefox-repository.yml'
+      - '.github/workflows/download-manager-mozilla-signing.yml'
 
 permissions:
   contents: read
@@ -46,9 +48,12 @@ jobs:
         run: node extensions/privacy-shield/scripts/test_logger_privacy.js
       - name: Test Privacy Shield unified background activity
         run: node extensions/privacy-shield/scripts/test_background_activity.js
-      - name: Compile Download Manager native host
-        run: python -m py_compile extensions/download-manager/scripts/native-host/goreecloud_download_manager_native.py
-      - name: Test Download Manager native core
+      - name: Compile Download Manager native and signing acceptance sources
+        run: |
+          python -m py_compile \
+            extensions/download-manager/scripts/native-host/goreecloud_download_manager_native.py \
+            extensions/download-manager/tests/signed_restart_smoke.py
+      - name: Test Download Manager native core and source contracts
         run: python -m unittest discover -s extensions/download-manager/tests -p 'test_*.py'
       - name: Test Download Manager Firefox scheduler
         run: node extensions/download-manager/tests/test_browser_scheduler.js
