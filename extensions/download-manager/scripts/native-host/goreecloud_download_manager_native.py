@@ -12,11 +12,16 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-VERSION = "0.2.0"
+VERSION = "0.2.7"
 USER_AGENT = f"GoreeCloudDownloadManager/{VERSION}"
 WRITE_LOCK = threading.Lock()
 DESTINATION_LOCK = threading.Lock()
+JOBS_LOCK = threading.Lock()
 JOBS = {}
+DESTINATION_RESERVATIONS = {}
+TERMINAL_NATIVE_STATES = {"complete", "cancelled", "error"}
+IMMUTABLE_NATIVE_STATES = {"complete", "cancelled"}
+CONTENT_RANGE_RE = re.compile(r"^bytes\s+(\d+)-(\d+)/(\d+|\*)$", re.I)
 
 
 def send(obj):
@@ -38,6 +43,14 @@ def recv():
     if len(payload) != length:
         return None
     return json.loads(payload.decode("utf-8"))
+
+
+def validate_download_url(value):
+    url = str(value or "").strip()
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("Only HTTP and HTTPS download URLs are supported")
+    return url
 
 
 def safe_filename(name):
@@ -77,11 +90,42 @@ def filtered_request_headers(value):
         text = str(raw)
         if "\r" in text or "\n" in text:
             continue
+        if len(text.encode("utf-8")) > 64 * 1024:
+            continue
         out[canonical] = text
     return out
 
 
+def parse_content_range(value):
+    match = CONTENT_RANGE_RE.match(str(value or "").strip())
+    if not match:
+        return None
+    start = int(match.group(1))
+    end = int(match.group(2))
+    total = None if match.group(3) == "*" else int(match.group(3))
+    if end < start:
+        return None
+    return start, end, total
+
+
+def validate_partial_response(response, expected_start, expected_end=None, total_size=-1):
+    if getattr(response, "status", None) != 206:
+        raise RuntimeError(f"Server stopped honoring byte ranges (HTTP {getattr(response, 'status', 'unknown')})")
+    content_range = parse_content_range(response.headers.get("Content-Range"))
+    if content_range is None:
+        raise RuntimeError("Partial response is missing a valid Content-Range header")
+    start, end, total = content_range
+    if start != expected_start:
+        raise RuntimeError(f"Partial response started at byte {start}; expected {expected_start}")
+    if expected_end is not None and end != expected_end:
+        raise RuntimeError(f"Partial response ended at byte {end}; expected {expected_end}")
+    if total_size > 0 and total != total_size:
+        raise RuntimeError(f"Partial response reports source size {total}; expected {total_size}")
+    return content_range
+
+
 def probe(url, request_headers=None):
+    url = validate_download_url(url)
     headers = {"User-Agent": USER_AGENT, "Accept-Encoding": "identity", **(request_headers or {})}
     req = urllib.request.Request(url, method="HEAD", headers=headers)
     try:
@@ -99,38 +143,67 @@ def probe(url, request_headers=None):
         req = urllib.request.Request(url, headers={**headers, "Range": "bytes=0-0"})
         with urllib.request.urlopen(req, timeout=30) as response:
             content_range = response.headers.get("Content-Range", "")
-            match = re.search(r"/(\d+)$", content_range)
-            size = int(match.group(1)) if match else int(response.headers.get("Content-Length", "-1"))
+            parsed = parse_content_range(content_range)
+            size = parsed[2] if parsed and parsed[2] is not None else int(response.headers.get("Content-Length", "-1"))
             return {
                 "size": size,
-                "ranges": response.status == 206,
+                "ranges": response.status == 206 and parsed is not None and parsed[0] == 0,
                 "etag": response.headers.get("ETag"),
                 "last_modified": response.headers.get("Last-Modified"),
                 "content_disposition": response.headers.get("Content-Disposition"),
             }
 
 
-def uniquify_path(path):
+def _candidate_available_locked(path, job_id):
+    owner = DESTINATION_RESERVATIONS.get(str(path))
+    return not path.exists() and (owner is None or owner == job_id)
+
+
+def reserve_unique_path(path, job_id):
+    path = Path(path)
     with DESTINATION_LOCK:
-        reserved = {
-            str(job.destination)
-            for job in JOBS.values()
-            if getattr(job, "destination", None) is not None
-        }
-        if not path.exists() and str(path) not in reserved:
+        if _candidate_available_locked(path, job_id):
+            DESTINATION_RESERVATIONS[str(path)] = job_id
             return path
         stem, suffix = path.stem, path.suffix
         for index in range(1, 10000):
             candidate = path.with_name(f"{stem} ({index}){suffix}")
-            if not candidate.exists() and str(candidate) not in reserved:
+            if _candidate_available_locked(candidate, job_id):
+                DESTINATION_RESERVATIONS[str(candidate)] = job_id
                 return candidate
     raise RuntimeError("Unable to choose a unique destination filename")
+
+
+def reserve_existing_path(path, job_id):
+    path = Path(path)
+    with DESTINATION_LOCK:
+        if not _candidate_available_locked(path, job_id):
+            return False
+        DESTINATION_RESERVATIONS[str(path)] = job_id
+        return True
+
+
+def release_destination(job_id, path):
+    if path is None:
+        return
+    with DESTINATION_LOCK:
+        if DESTINATION_RESERVATIONS.get(str(path)) == job_id:
+            DESTINATION_RESERVATIONS.pop(str(path), None)
+
+
+def thread_is_alive(job):
+    return BooleanThread(job)
+
+
+def BooleanThread(job):
+    thread = getattr(job, "thread", None)
+    return bool(thread and thread.is_alive())
 
 
 class DownloadJob:
     def __init__(self, msg):
         self.id = str(msg["jobId"])
-        self.url = str(msg["url"])
+        self.url = validate_download_url(msg["url"])
         self.requested_name = msg.get("filename")
         self.directory = Path(msg.get("directory") or (Path.home() / "Downloads")).expanduser()
         self.segments = max(1, min(32, int(msg.get("segments") or 8)))
@@ -139,6 +212,7 @@ class DownloadJob:
         self.pause_event = threading.Event()
         self.cancel_event = threading.Event()
         self.bytes_lock = threading.Lock()
+        self.state_lock = threading.Lock()
         self.bytes_received = 0
         self.total_size = -1
         self.started_at = time.monotonic()
@@ -149,10 +223,18 @@ class DownloadJob:
         self.filename = None
         self.destination = None
         self.effective_segments = 1
+        self.last_state = "starting"
+        self.last_error = None
         self.staging = self.directory / ".goreecloud-downloads" / safe_job_id(self.id)
         self.metadata_path = self.staging / "metadata.json"
 
     def emit(self, state, **extra):
+        with self.state_lock:
+            self.last_state = state
+            if "error" in extra:
+                self.last_error = extra.get("error")
+            elif state not in {"error"}:
+                self.last_error = None
         now = time.monotonic()
         with self.bytes_lock:
             current_bytes = self.bytes_received
@@ -204,8 +286,10 @@ class DownloadJob:
         os.replace(temp, self.metadata_path)
 
     def source_changed(self, metadata, info):
-        if not metadata or metadata.get("url") != self.url:
+        if not metadata:
             return False
+        if metadata.get("url") != self.url:
+            return True
         old_size = int(metadata.get("size", -1))
         if old_size > 0 and info.get("size", -1) > 0 and old_size != info["size"]:
             return True
@@ -242,12 +326,32 @@ class DownloadJob:
         )
         if metadata and metadata.get("url") == self.url and metadata.get("destination"):
             previous = Path(metadata["destination"])
-            if previous.parent == self.directory:
+            if previous.parent == self.directory and reserve_existing_path(previous, self.id):
                 self.destination = previous
                 self.filename = previous.name
                 return
-        self.destination = uniquify_path(self.directory / self.filename)
+        self.destination = reserve_unique_path(self.directory / self.filename, self.id)
         self.filename = self.destination.name
+
+    def commit_staged_file(self, source):
+        source = Path(source)
+        if not source.is_file():
+            raise RuntimeError("Completed staging file is missing")
+
+        while True:
+            destination = self.destination
+            try:
+                os.link(source, destination)
+            except FileExistsError:
+                release_destination(self.id, destination)
+                self.destination = reserve_unique_path(self.directory / self.filename, self.id)
+                self.filename = self.destination.name
+                continue
+            except OSError as exc:
+                raise RuntimeError(f"Unable to commit download without overwriting an existing file: {exc}") from exc
+            source.unlink()
+            release_destination(self.id, destination)
+            return destination
 
     def run(self):
         try:
@@ -279,6 +383,9 @@ class DownloadJob:
                 self.emit("cancelled")
             else:
                 self.emit("error", error=f"{type(exc).__name__}: {exc}")
+        finally:
+            if self.last_state in TERMINAL_NATIVE_STATES:
+                release_destination(self.id, self.destination)
 
     def request_base_headers(self, info):
         headers = {
@@ -297,6 +404,9 @@ class DownloadJob:
 
     def segment_part_path(self, index):
         return self.staging / f"segment-{index:03d}.part"
+
+    def assembled_part_path(self):
+        return self.staging / "assembled.part"
 
     def _run_single(self, info):
         self.effective_segments = 1
@@ -317,34 +427,32 @@ class DownloadJob:
         self.last_speed_bytes = self.bytes_received
         self.emit("downloading")
 
-        with urllib.request.urlopen(request, timeout=60) as response, open(part, mode) as output:
-            if mode == "ab" and response.status != 206:
-                output.seek(0)
-                output.truncate()
-                with self.bytes_lock:
-                    self.bytes_received = 0
-                self.last_speed_bytes = 0
-            last_emit = 0.0
-            while True:
-                if self.cancel_event.is_set():
-                    return
-                self.wait_if_paused()
-                if self.cancel_event.is_set():
-                    return
-                chunk = response.read(256 * 1024)
-                if not chunk:
-                    break
-                output.write(chunk)
-                with self.bytes_lock:
-                    self.bytes_received += len(chunk)
-                now = time.monotonic()
-                if now - last_emit >= 0.35:
-                    self.emit("paused" if self.pause_event.is_set() else "downloading")
-                    last_emit = now
+        with urllib.request.urlopen(request, timeout=60) as response:
+            if resumable:
+                expected_end = self.total_size - 1 if self.total_size > 0 else None
+                validate_partial_response(response, existing, expected_end, self.total_size)
+            with open(part, mode) as output:
+                last_emit = 0.0
+                while True:
+                    if self.cancel_event.is_set():
+                        return
+                    self.wait_if_paused()
+                    if self.cancel_event.is_set():
+                        return
+                    chunk = response.read(256 * 1024)
+                    if not chunk:
+                        break
+                    output.write(chunk)
+                    with self.bytes_lock:
+                        self.bytes_received += len(chunk)
+                    now = time.monotonic()
+                    if now - last_emit >= 0.35:
+                        self.emit("paused" if self.pause_event.is_set() else "downloading")
+                        last_emit = now
 
         if self.total_size > 0 and part.stat().st_size != self.total_size:
             raise RuntimeError(f"Download ended at {part.stat().st_size} bytes; expected {self.total_size}")
-        os.replace(part, self.destination)
+        self.commit_staged_file(part)
 
     def _run_segmented(self, info):
         size = self.total_size
@@ -386,12 +494,12 @@ class DownloadJob:
                     if self.cancel_event.is_set():
                         return
                     have = part.stat().st_size if part.exists() else 0
+                    request_start = start + have
                     headers = self.request_base_headers(info)
-                    headers["Range"] = f"bytes={start + have}-{end}"
+                    headers["Range"] = f"bytes={request_start}-{end}"
                     request = urllib.request.Request(self.url, headers=headers)
                     with urllib.request.urlopen(request, timeout=60) as response:
-                        if response.status != 206:
-                            raise RuntimeError(f"Server stopped honoring byte ranges (HTTP {response.status})")
+                        validate_partial_response(response, request_start, end, size)
                         with open(part, "ab") as output:
                             while have < expected:
                                 if self.cancel_event.is_set():
@@ -431,7 +539,9 @@ class DownloadJob:
             if self.cancel_event.is_set():
                 return
 
-            with open(self.destination, "wb") as output:
+            assembled = self.assembled_part_path()
+            assembled.unlink(missing_ok=True)
+            with open(assembled, "wb") as output:
                 for index, start, end in ranges:
                     part = self.segment_part_path(index)
                     expected = end - start + 1
@@ -443,16 +553,22 @@ class DownloadJob:
                             if not chunk:
                                 break
                             output.write(chunk)
-            if self.destination.stat().st_size != size:
+            if assembled.stat().st_size != size:
                 raise RuntimeError("Assembled file size does not match the source size")
+            self.commit_staged_file(assembled)
         finally:
             stop_reporter.set()
 
     def pause(self):
+        if self.last_state in TERMINAL_NATIVE_STATES:
+            return
         self.pause_event.set()
         self.emit("paused")
 
     def resume(self):
+        if self.last_state in IMMUTABLE_NATIVE_STATES:
+            self.emit(self.last_state)
+            return
         self.pause_event.clear()
         self.last_speed_time = time.monotonic()
         self.last_speed_bytes = self.bytes_received
@@ -460,17 +576,77 @@ class DownloadJob:
         self.emit("downloading")
 
     def cancel(self):
+        if self.last_state in IMMUTABLE_NATIVE_STATES:
+            self.emit(self.last_state)
+            return
         self.cancel_event.set()
         self.pause_event.clear()
         self.emit("cancelled")
 
 
-def start_job(msg):
-    job = DownloadJob(msg)
-    JOBS[job.id] = job
-    thread = threading.Thread(target=job.run, name=f"goreecloud-download-{safe_job_id(job.id)}", daemon=True)
-    job.thread = thread
+def start_job(msg, replace_existing=False):
+    job_id = str(msg["jobId"])
+    with JOBS_LOCK:
+        existing = JOBS.get(job_id)
+        if existing is not None:
+            if thread_is_alive(existing) or not replace_existing:
+                return existing, False
+            if existing.last_state in IMMUTABLE_NATIVE_STATES:
+                return existing, False
+        job = DownloadJob(msg)
+        thread = threading.Thread(target=job.run, name=f"goreecloud-download-{safe_job_id(job.id)}", daemon=True)
+        job.thread = thread
+        JOBS[job.id] = job
     thread.start()
+    return job, True
+
+
+def pause_job(job_id):
+    with JOBS_LOCK:
+        job = JOBS.get(job_id)
+    if job is not None and thread_is_alive(job):
+        job.pause()
+        return True
+    return False
+
+
+def resume_job(msg):
+    job_id = str(msg["jobId"])
+    with JOBS_LOCK:
+        existing = JOBS.get(job_id)
+    if existing is not None and thread_is_alive(existing):
+        existing.resume()
+        return existing, False
+    if existing is not None and existing.last_state in IMMUTABLE_NATIVE_STATES:
+        existing.emit(existing.last_state)
+        return existing, False
+    if not msg.get("url"):
+        return existing, False
+    return start_job(msg, replace_existing=True)
+
+
+def cancel_job(job_id):
+    with JOBS_LOCK:
+        job = JOBS.get(job_id)
+    if job is not None:
+        job.cancel()
+        return True
+    return False
+
+
+def handle_message(msg):
+    typ = msg.get("type")
+    job_id = str(msg.get("jobId")) if msg.get("jobId") is not None else None
+    if typ == "ping":
+        send({"type": "hello", "version": VERSION})
+    elif typ == "start" and job_id is not None:
+        start_job(msg)
+    elif typ == "pause" and job_id is not None:
+        pause_job(job_id)
+    elif typ == "resume" and job_id is not None:
+        resume_job(msg)
+    elif typ == "cancel" and job_id is not None:
+        cancel_job(job_id)
 
 
 def main():
@@ -479,20 +655,20 @@ def main():
         msg = recv()
         if msg is None:
             return
-        typ = msg.get("type")
-        job_id = str(msg.get("jobId")) if msg.get("jobId") is not None else None
-        if typ == "ping":
-            send({"type": "hello", "version": VERSION})
-        elif typ == "start":
-            start_job(msg)
-        elif typ == "pause" and job_id in JOBS:
-            JOBS[job_id].pause()
-        elif typ == "resume" and job_id in JOBS:
-            JOBS[job_id].resume()
-        elif typ == "resume" and job_id not in JOBS and msg.get("url"):
-            start_job(msg)
-        elif typ == "cancel" and job_id in JOBS:
-            JOBS[job_id].cancel()
+        if not isinstance(msg, dict):
+            continue
+        try:
+            handle_message(msg)
+        except Exception as exc:
+            job_id = str(msg.get("jobId")) if msg.get("jobId") is not None else None
+            if job_id:
+                send({
+                    "type": "progress",
+                    "jobId": job_id,
+                    "state": "error",
+                    "speedBps": 0,
+                    "error": f"{type(exc).__name__}: {exc}",
+                })
 
 
 if __name__ == "__main__":
