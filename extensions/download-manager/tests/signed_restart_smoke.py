@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import re
 import socket
 import sys
@@ -136,6 +135,12 @@ def free_port() -> int:
 def firefox_options(profile: Path) -> Options:
     options = Options()
     options.add_argument("-headless")
+    # Firefox 153+ blocks privileged/extension navigation from WebDriver content
+    # scope. The signed acceptance needs chrome scope only to navigate to the
+    # installed extension's own documents; normal DOM interaction immediately
+    # returns to content scope. Firefox 138+ requires this explicit opt-in before
+    # Marionette can switch to chrome scope.
+    options.add_argument("--remote-allow-system-access")
     options.add_argument("--profile")
     options.add_argument(str(profile))
     options.add_argument("--marionette-port")
@@ -181,8 +186,24 @@ def extension_url(path: str) -> str:
     return f"moz-extension://{FIXED_EXTENSION_UUID}/{path.lstrip('/')}"
 
 
+def navigate_extension(driver: webdriver.Firefox, path: str) -> None:
+    """Navigate to an installed extension document under Firefox's privileged scope.
+
+    Firefox 153+ intentionally rejects moz-extension navigation from ordinary
+    WebDriver content scope. Switch only for the navigation command, then return
+    immediately to content scope so the test interacts with the extension page as
+    a normal rendered document rather than executing privileged browser JS.
+    """
+
+    driver.set_context(driver.CONTEXT_CHROME)
+    try:
+        driver.get(extension_url(path))
+    finally:
+        driver.set_context(driver.CONTEXT_CONTENT)
+
+
 def configure_native(driver: webdriver.Firefox, download_dir: Path) -> None:
-    driver.get(extension_url("ui/options.html"))
+    navigate_extension(driver, "ui/options.html")
     wait_until(lambda: driver.find_element("id", "mode").get_attribute("value") != "", 10, "Settings page loaded")
 
     mode = driver.find_element("id", "mode")
@@ -206,7 +227,7 @@ def configure_native(driver: webdriver.Firefox, download_dir: Path) -> None:
 
 
 def start_native_download(driver: webdriver.Firefox, url: str) -> None:
-    driver.get(extension_url("ui/manager.html"))
+    navigate_extension(driver, "ui/manager.html")
     wait_until(lambda: driver.find_element("id", "start").is_enabled(), 10, "Manager page loaded")
     field = driver.find_element("id", "url")
     field.clear()
@@ -314,7 +335,7 @@ def main() -> int:
             # A distinct Firefox process uses the same profile. install_addon() is intentionally
             # not called here; any extension behavior must come from the signed persistent install.
             second = webdriver.Firefox(options=firefox_options(profile))
-            second.get(extension_url("ui/manager.html"))
+            navigate_extension(second, "ui/manager.html")
             wait_until(lambda: "GoreeCloud Download Manager Extension" in second.page_source,
                        15, "persisted extension UI available after restart")
             require(True, "signed extension survived full Firefox restart")
@@ -341,7 +362,7 @@ def main() -> int:
                     "post-restart HTTP Range requests resumed inside preserved segments",
                     repr(observed_starts))
 
-            second.get(extension_url("ui/options.html"))
+            navigate_extension(second, "ui/options.html")
             wait_until(lambda: second.find_element("id", "test").is_enabled(), 10, "post-restart Settings loaded")
             second.find_element("id", "test").click()
             wait_text(second, "#status", EXPECTED_HELPER_STATUS)
