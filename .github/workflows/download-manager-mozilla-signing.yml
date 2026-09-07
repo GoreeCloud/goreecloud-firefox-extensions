@@ -1,0 +1,242 @@
+name: Download Manager Mozilla Signing
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'release/download-manager-signing'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: download-manager-mozilla-signing
+  cancel-in-progress: false
+
+jobs:
+  sign-and-restart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: browser-actions/setup-firefox@v1
+        with:
+          firefox-version: latest
+
+      - uses: browser-actions/setup-geckodriver@latest
+
+      - name: Bind automated signing branch to authoritative main
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          main_sha="$(git rev-parse origin/main)"
+          if [[ "$GITHUB_SHA" != "$main_sha" ]]; then
+            echo '::error::The automated Download Manager signing branch must point exactly at authoritative main.'
+            echo "Signing branch: $GITHUB_SHA"
+            echo "Authoritative main: $main_sha"
+            exit 1
+          fi
+
+      - name: Resolve Download Manager version
+        id: version
+        shell: bash
+        run: |
+          VERSION="$(python -c 'import json; print(json.load(open("extensions/download-manager/manifest.json", encoding="utf-8"))["version"])')"
+          test -n "$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "DOWNLOAD_MANAGER_VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Validate exact source candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python shared/scripts/validate_repository.py
+          python -m py_compile \
+            extensions/download-manager/scripts/native-host/goreecloud_download_manager_native.py \
+            extensions/download-manager/tests/signed_restart_smoke.py
+          python -m unittest discover -s extensions/download-manager/tests -p 'test_*.py'
+          node extensions/download-manager/tests/test_browser_scheduler.js
+          node extensions/download-manager/tests/test_mixed_scheduler.js
+          node extensions/download-manager/tests/test_lifecycle_faults.js
+          node extensions/download-manager/tests/test_retry_snapshots.js
+          find extensions/download-manager -type f -name '*.js' -print0 | while IFS= read -r -d '' file; do
+            node --check "$file"
+          done
+
+      - name: Build deterministic unsigned candidate
+        run: python shared/scripts/package_extension.py download-manager --output-dir dist/candidate
+
+      - name: Stage exact candidate for Mozilla signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate="$(find dist/candidate -maxdepth 1 -type f -name 'goreecloud-download-manager-*.xpi' -print -quit)"
+          test -n "$candidate"
+          mkdir -p signing-source dist/mozilla
+          python - "$candidate" "$DOWNLOAD_MANAGER_VERSION" "$GITHUB_SHA" <<'PY'
+          import hashlib
+          import json
+          import sys
+          import zipfile
+          from pathlib import Path
+
+          candidate = Path(sys.argv[1])
+          expected_version = sys.argv[2]
+          source_revision = sys.argv[3]
+          stage = Path('signing-source')
+          with zipfile.ZipFile(candidate) as archive:
+              bad = archive.testzip()
+              if bad:
+                  raise SystemExit(f'candidate archive integrity failure: {bad}')
+              archive.extractall(stage)
+          manifest = json.loads((stage / 'manifest.json').read_text(encoding='utf-8'))
+          addon_id = manifest.get('browser_specific_settings', {}).get('gecko', {}).get('id')
+          if addon_id != 'download-manager@goreecloud.com':
+              raise SystemExit(f'unexpected Firefox add-on ID: {addon_id!r}')
+          if manifest.get('version') != expected_version:
+              raise SystemExit(f"unexpected candidate version: {manifest.get('version')} (expected {expected_version})")
+          digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
+          Path('dist/candidate-sha256.txt').write_text(f'{digest}  {candidate.name}\n', encoding='utf-8')
+          Path('dist/source-revision.txt').write_text(f'{source_revision}\n', encoding='utf-8')
+          print(f'Candidate SHA-256: {digest}')
+          print(f'Exact source revision: {source_revision}')
+          PY
+          unzip -t "$candidate"
+
+      - name: Require Mozilla Add-ons signing credentials
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${AMO_JWT_ISSUER}" || -z "${AMO_JWT_SECRET}" ]]; then
+            echo '::error::Missing AMO_JWT_ISSUER and/or AMO_JWT_SECRET repository secrets.'
+            echo 'Create Mozilla Add-ons API credentials and store them as repository secrets before rerunning this workflow.'
+            exit 1
+          fi
+
+      - name: Submit exact candidate to Mozilla for unlisted signing
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: >-
+          npx --yes web-ext@10.5.0 sign
+          --source-dir signing-source
+          --artifacts-dir dist/mozilla
+          --channel=unlisted
+          --approval-timeout=900000
+          --timeout=900000
+
+      - name: Normalize and inspect Mozilla-signed XPI
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - "$DOWNLOAD_MANAGER_VERSION" <<'PY'
+          import hashlib
+          import json
+          import shutil
+          import sys
+          import zipfile
+          from pathlib import Path
+
+          version = sys.argv[1]
+          files = sorted(Path('dist/mozilla').glob('*.xpi'))
+          if len(files) != 1:
+              raise SystemExit(f'expected exactly one Mozilla-signed XPI, found: {files}')
+          source = files[0]
+          target = Path(f'dist/goreecloud-download-manager-{version}-signed.xpi')
+          shutil.copy2(source, target)
+          with zipfile.ZipFile(target) as archive:
+              bad = archive.testzip()
+              if bad:
+                  raise SystemExit(f'signed XPI integrity failure: {bad}')
+              names = archive.namelist()
+              if 'manifest.json' not in names:
+                  raise SystemExit('signed XPI is missing manifest.json')
+              if not any(name.startswith('META-INF/') for name in names):
+                  raise SystemExit('signed XPI does not contain Mozilla signature metadata')
+              manifest = json.loads(archive.read('manifest.json').decode('utf-8'))
+              addon_id = manifest.get('browser_specific_settings', {}).get('gecko', {}).get('id')
+              if addon_id != 'download-manager@goreecloud.com':
+                  raise SystemExit(f'signed XPI changed Firefox add-on ID: {addon_id!r}')
+              if manifest.get('version') != version:
+                  raise SystemExit(f"signed XPI changed version: {manifest.get('version')!r}")
+          digest = hashlib.sha256(target.read_bytes()).hexdigest()
+          Path('dist/signed-sha256.txt').write_text(f'{digest}  {target.name}\n', encoding='utf-8')
+          print(f'Signed SHA-256: {digest}')
+          PY
+          unzip -t "dist/goreecloud-download-manager-${DOWNLOAD_MANAGER_VERSION}-signed.xpi"
+
+      - name: Install matching 0.2.10 native helper
+        run: ./extensions/download-manager/scripts/install-native-host-linux.sh
+
+      - name: Install Selenium
+        run: python -m pip install --disable-pip-version-check selenium
+
+      - name: Persistent signed install and full-browser native recovery acceptance
+        shell: bash
+        run: |
+          set -o pipefail
+          python extensions/download-manager/tests/signed_restart_smoke.py \
+            "dist/goreecloud-download-manager-${DOWNLOAD_MANAGER_VERSION}-signed.xpi" \
+            | tee dist/signed-restart-acceptance.txt
+
+      - name: Build signing evidence record
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - "$GITHUB_SHA" "$GITHUB_RUN_ID" "$DOWNLOAD_MANAGER_VERSION" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          source_revision, run_id, version = sys.argv[1:]
+          candidate_line = Path('dist/candidate-sha256.txt').read_text(encoding='utf-8').strip()
+          signed_line = Path('dist/signed-sha256.txt').read_text(encoding='utf-8').strip()
+          record = {
+              'schemaVersion': 1,
+              'product': 'GoreeCloud Download Manager Extension',
+              'version': version,
+              'sourceRevision': source_revision,
+              'githubWorkflowRunId': int(run_id),
+              'candidateSha256': candidate_line.split()[0],
+              'signedSha256': signed_line.split()[0],
+              'firefoxAddonId': 'download-manager@goreecloud.com',
+              'nativeHost': 'goreecloud_download_manager',
+              'mozillaSigned': True,
+              'persistentInstallRestartAccepted': True,
+              'fullBrowserNativeRecoveryAccepted': True,
+              'stablePromoted': False,
+          }
+          Path('dist/download-manager-signing-evidence.json').write_text(
+              json.dumps(record, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          print(json.dumps(record, indent=2, sort_keys=True))
+          PY
+
+      - name: Retain signed release evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: goreecloud-download-manager-${{ steps.version.outputs.version }}-mozilla-signed
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            dist/goreecloud-download-manager-*-signed.xpi
+            dist/candidate-sha256.txt
+            dist/signed-sha256.txt
+            dist/source-revision.txt
+            dist/signed-restart-acceptance.txt
+            dist/download-manager-signing-evidence.json
