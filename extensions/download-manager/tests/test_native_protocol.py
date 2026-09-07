@@ -15,37 +15,23 @@ const fs = require("fs");
 const vm = require("vm");
 const assert = require("assert");
 const code = fs.readFileSync(process.argv[1], "utf8");
-let forwarded = [];
-let rejected = null;
 const context = {
   console,
   Number,
   String,
   Error,
   module: { exports: {} },
-  exports: {},
-  nativeReady: false,
-  nativeReadyReject: (error) => { rejected = error; },
-  onNativeMessage: async (message) => {
-    forwarded.push(message);
-    if (message?.type === "hello") context.nativeReady = true;
-  }
+  exports: {}
 };
 context.globalThis = context;
 vm.createContext(context);
 vm.runInContext(code, context, { filename: "native_protocol.js" });
 const api = context.GoreeCloudNativeProtocol;
 assert.ok(api, "protocol API must be exported");
-(async () => {
-'''
-        trailer = r'''
-})().catch((error) => {
-  console.error(error && error.stack ? error.stack : error);
-  process.exit(1);
-});
+const capabilities = [...api.REQUIRED_CAPABILITIES];
 '''
         result = subprocess.run(
-            ["node", "-e", script + textwrap.dedent(body) + trailer, str(PROTOCOL)],
+            ["node", "-e", script + textwrap.dedent(body), str(PROTOCOL)],
             cwd=ROOT,
             text=True,
             capture_output=True,
@@ -57,14 +43,30 @@ assert.ok(api, "protocol API must be exported");
     def test_compatible_protocol_two_hello_passes(self):
         self.run_node(
             r'''
-            const result = api.validateNativeHello({ type: "hello", version: "0.2.8", protocolVersion: 2 });
+            const result = api.validateNativeHello({
+              type: "hello",
+              version: "0.2.8",
+              protocolVersion: 2,
+              capabilities
+            });
             assert.strictEqual(result.compatible, true);
             assert.strictEqual(result.helperVersion, "0.2.8");
             assert.strictEqual(result.protocolVersion, 2);
-            await context.onNativeMessage({ type: "hello", version: "0.2.8", protocolVersion: 2 });
-            assert.strictEqual(context.nativeReady, true);
-            assert.strictEqual(forwarded.length, 1);
-            assert.strictEqual(rejected, null);
+            assert.deepStrictEqual(Array.from(result.missingCapabilities), []);
+            '''
+        )
+
+    def test_future_helper_on_same_protocol_is_accepted(self):
+        self.run_node(
+            r'''
+            const result = api.validateNativeHello({
+              type: "hello",
+              version: "0.3.0",
+              protocolVersion: 2,
+              capabilities: [...capabilities, "future-capability"]
+            });
+            assert.strictEqual(result.compatible, true);
+            assert.ok(result.capabilities.includes("future-capability"));
             '''
         )
 
@@ -76,11 +78,20 @@ assert.ok(api, "protocol API must be exported");
             assert.strictEqual(result.protocolVersion, null);
             assert.match(result.error, /legacy\/unknown/);
             assert.match(result.error, /required 2/);
-            await context.onNativeMessage({ type: "hello", version: "0.2.7" });
-            assert.strictEqual(context.nativeReady, false);
-            assert.strictEqual(forwarded.length, 0);
-            assert.ok(rejected instanceof Error);
-            assert.match(rejected.message, /incompatible/);
+            '''
+        )
+
+    def test_old_helper_on_protocol_two_is_rejected(self):
+        self.run_node(
+            r'''
+            const result = api.validateNativeHello({
+              type: "hello",
+              version: "0.2.7",
+              protocolVersion: 2,
+              capabilities
+            });
+            assert.strictEqual(result.compatible, false);
+            assert.match(result.error, /older than the supported 0\.2\.8/);
             '''
         )
 
@@ -88,17 +99,59 @@ assert.ok(api, "protocol API must be exported");
         self.run_node(
             r'''
             for (const protocolVersion of [1, 3, "3", -1, 2.5]) {
-              const result = api.validateNativeHello({ type: "hello", version: "9.9.9", protocolVersion });
+              const result = api.validateNativeHello({
+                type: "hello",
+                version: "9.9.9",
+                protocolVersion,
+                capabilities
+              });
               assert.strictEqual(result.compatible, false);
               assert.strictEqual(result.requiredProtocolVersion, 2);
             }
             '''
         )
 
+    def test_missing_required_capability_is_rejected(self):
+        self.run_node(
+            r'''
+            const missing = capabilities.filter((item) => item !== "no-overwrite-publish");
+            const result = api.validateNativeHello({
+              type: "hello",
+              version: "0.2.8",
+              protocolVersion: 2,
+              capabilities: missing
+            });
+            assert.strictEqual(result.compatible, false);
+            assert.deepStrictEqual(Array.from(result.missingCapabilities), ["no-overwrite-publish"]);
+            assert.match(result.error, /missing required capabilities/);
+            '''
+        )
+
+    def test_capabilities_are_normalized_and_deduplicated(self):
+        self.run_node(
+            r'''
+            const duplicated = [...capabilities, capabilities[0], "  future-capability  ", ""];
+            const result = api.validateNativeHello({
+              type: "hello",
+              version: "0.2.8+test",
+              protocolVersion: "2",
+              capabilities: duplicated
+            });
+            assert.strictEqual(result.compatible, true);
+            assert.strictEqual(result.capabilities.filter((item) => item === capabilities[0]).length, 1);
+            assert.ok(result.capabilities.includes("future-capability"));
+            '''
+        )
+
     def test_invalid_handshake_is_rejected(self):
         self.run_node(
             r'''
-            const result = api.validateNativeHello({ type: "progress", version: "0.2.8", protocolVersion: 2 });
+            const result = api.validateNativeHello({
+              type: "progress",
+              version: "0.2.8",
+              protocolVersion: 2,
+              capabilities
+            });
             assert.strictEqual(result.compatible, false);
             assert.match(result.error, /invalid handshake/);
             '''
