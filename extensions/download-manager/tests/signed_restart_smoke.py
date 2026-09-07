@@ -25,6 +25,7 @@ from pathlib import Path
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 
 EXPECTED_ADDON_ID = "download-manager@goreecloud.com"
@@ -135,12 +136,6 @@ def free_port() -> int:
 def firefox_options(profile: Path) -> Options:
     options = Options()
     options.add_argument("-headless")
-    # Firefox 153+ blocks privileged/extension navigation from WebDriver content
-    # scope. The signed acceptance needs chrome scope only to navigate to the
-    # installed extension's own documents; normal DOM interaction immediately
-    # returns to content scope. Firefox 138+ requires this explicit opt-in before
-    # Marionette can switch to chrome scope.
-    options.add_argument("--remote-allow-system-access")
     options.add_argument("--profile")
     options.add_argument(str(profile))
     options.add_argument("--marionette-port")
@@ -155,6 +150,18 @@ def firefox_options(profile: Path) -> Options:
         json.dumps({EXPECTED_ADDON_ID: FIXED_EXTENSION_UUID}, separators=(",", ":")),
     )
     return options
+
+
+def firefox_service() -> Service:
+    """Start geckodriver with the Firefox 138+ system-access opt-in.
+
+    geckodriver 0.37.1 rejects Firefox's --remote-allow-system-access flag when it
+    arrives through moz:firefoxOptions capabilities. Selenium's supported path for
+    privileged Firefox context is the geckodriver service flag --allow-system-access.
+    A fresh Service is required for each distinct Firefox process in this restart test.
+    """
+
+    return Service(service_args=["--allow-system-access"])
 
 
 def wait_until(predicate, timeout: float, message: str) -> None:
@@ -302,7 +309,10 @@ def main() -> int:
         second: webdriver.Firefox | None = None
         original_job_id = ""
         try:
-            first = webdriver.Firefox(options=firefox_options(profile))
+            first = webdriver.Firefox(
+                options=firefox_options(profile),
+                service=firefox_service(),
+            )
             addon_id = first.install_addon(str(xpi), temporary=False)
             require(addon_id == EXPECTED_ADDON_ID, "persistent Mozilla-signed installation", str(addon_id))
 
@@ -334,7 +344,10 @@ def main() -> int:
 
             # A distinct Firefox process uses the same profile. install_addon() is intentionally
             # not called here; any extension behavior must come from the signed persistent install.
-            second = webdriver.Firefox(options=firefox_options(profile))
+            second = webdriver.Firefox(
+                options=firefox_options(profile),
+                service=firefox_service(),
+            )
             navigate_extension(second, "ui/manager.html")
             wait_until(lambda: "GoreeCloud Download Manager Extension" in second.page_source,
                        15, "persisted extension UI available after restart")
