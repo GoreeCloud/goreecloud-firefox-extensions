@@ -1,6 +1,6 @@
 # Download Manager test scope
 
-Automated tests under this directory cover native helper core behavior, recovery/controller contracts, optional-permission contracts, source-level installer behavior, controlled HTTP fixtures, Firefox downloads-engine scheduling, mixed Firefox/native scheduling, and lifecycle-fault ordering. Target-environment acceptance remains manual only where a real Firefox build, Flatpak/XDG portal authorization, persistent signed installation, or other inaccessible local runtime state is required.
+Automated tests under this directory cover native helper core behavior, recovery/controller contracts, optional-permission contracts, source-level installer behavior, controlled HTTP fixtures, Firefox downloads-engine scheduling, mixed Firefox/native scheduling, lifecycle-fault ordering, native protocol compatibility, and persisted staging metadata trust. Target-environment acceptance remains manual only where a real Firefox build, Flatpak/XDG portal authorization, persistent signed installation, or other inaccessible local runtime state is required.
 
 ## Accepted Firefox 155.0.1 / Flathub Flatpak evidence
 
@@ -20,9 +20,25 @@ The tested target environment has already accepted:
 
 Detailed target-runtime evidence is recorded under `../docs/`.
 
-The 0.2.4 and 0.2.5 scheduler/lifecycle race fixes additionally have deterministic source-level automated coverage. That source evidence is intentionally distinct from target-device acceptance.
+The later scheduler, lifecycle, retry, native integrity/recovery, protocol-compatibility, and 0.2.9 staging-metadata corrections have deterministic source-level automated coverage. That source evidence is intentionally distinct from target-device acceptance.
 
 Full-browser restart recovery remains gated on a persistent signed installation.
+
+## 0.2.9 persisted staging metadata regressions
+
+`test_native_core.py` now verifies that staged partial bytes are not reusable without a trusted metadata record. The regression set covers:
+
+- missing `metadata.json` with orphaned partial files;
+- malformed JSON;
+- non-object JSON;
+- unsupported metadata schema version;
+- metadata for a different GoreeCloud job ID;
+- invalid persisted transport URL;
+- invalid source-size type;
+- invalid destination-field type; and
+- valid same-job metadata preserving reusable partial bytes when current source identity still matches.
+
+These tests validate the structural trust boundary before the existing URL, known source length, ETag, and Last-Modified source-identity comparisons. They do not claim symlink/no-follow staging protection; filesystem-link edge cases remain separate work.
 
 ## Automated Firefox scheduler regression
 
@@ -51,7 +67,7 @@ Run:
 node extensions/download-manager/tests/test_mixed_scheduler.js
 ```
 
-This deterministic harness exercises Firefox and native jobs under the same managed `maxConcurrent` ceiling. It verifies cross-engine slot promotion, resume-while-full queue retention, same-Firefox-download-ID resume, native promotion when a browser slot is released, engine assignment preservation, and notification behavior. Native segment workers remain internal to their managed native job rather than consuming the global job slots individually.
+This deterministic harness exercises Firefox and native jobs under the same managed `maxConcurrent` ceiling. It verifies cross-engine slot promotion, resume-while-full queue retention, same-Firefox-download-ID resume, native promotion when a browser slot is released, engine assignment preservation, protocol-compatible native-helper handshake, and notification behavior. Native segment workers remain internal to their managed native job rather than consuming the global job slots individually.
 
 This is source-level scheduler evidence. It does not by itself claim a mixed-engine target-runtime stress pass.
 
@@ -71,6 +87,7 @@ The harness uses the real background scripts with mocked Firefox and Native Mess
 - removed Firefox jobs cannot be recreated by stale download events;
 - ordinary retry converts an absolute Firefox destination into a safe relative requested filename and joins the queue tail;
 - retry launch never passes the absolute completed destination path back to Firefox;
+- the current protocol-compatible native status path;
 - one unresolved native problem incident does not emit both `error` and `interrupted` notifications; and
 - a removed native terminal job cannot be recreated by a stale Native Messaging progress event.
 
@@ -110,6 +127,6 @@ All five resulting 64 MiB native outputs matched the deterministic source SHA-25
 
 Runtime evidence established the initial Firefox-engine 3-active / 2-queued ceiling and completion-driven slot promotion. Subsequent manual timing attempts exposed a managed-state defect: a resumed Firefox job waiting for a full scheduler could be rewritten from GoreeCloud `queued` back to Firefox `paused` by snapshot refresh.
 
-0.2.4 hardened that state boundary and moved timing-sensitive pause/resume scheduler behavior into deterministic mocked-Firefox regression coverage. 0.2.5 extends the same approach to cancellation, late-event, removed-job, retry, notification, and same-timestamp queue-order faults.
+0.2.4 hardened that state boundary and moved timing-sensitive pause/resume scheduler behavior into deterministic mocked-Firefox regression coverage. Later candidates extend the same approach across cancellation, late-event, removed-job, retry, notification, same-timestamp ordering, native recovery/integrity, protocol compatibility, and staging metadata faults.
 
 Passing source CI does not replace Mozilla signing, persistent signed installation, full-browser restart/native-host acceptance, or any target-device gate that genuinely requires inaccessible local runtime state.
