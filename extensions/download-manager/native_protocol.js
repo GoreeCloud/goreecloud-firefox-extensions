@@ -1,6 +1,6 @@
 (function () {
   const REQUIRED_PROTOCOL_VERSION = 2;
-  const MINIMUM_HELPER_VERSION = "0.2.8";
+  const MINIMUM_HELPER_VERSION = "0.2.9";
   const REQUIRED_CAPABILITIES = Object.freeze([
     "segmented-range-integrity",
     "same-job-recovery",
