@@ -25,12 +25,15 @@ function createHarness() {
   const notifications = [];
   const downloadCalls = [];
   const cancelCalls = [];
+  const pauseCalls = [];
+  const resumeCalls = [];
   const nativePosts = [];
   const onDownloadChanged = event();
   const onMessage = event();
   let nativePort = null;
   let nextDownloadId = 1;
   let uuid = 1;
+  let pendingDownloadGate = null;
 
   const browser = {
     storage: {
@@ -71,6 +74,10 @@ function createHarness() {
     downloads: {
       onChanged: onDownloadChanged,
       async download(options) {
+        const gate = pendingDownloadGate;
+        pendingDownloadGate = null;
+        if (gate) await gate.promise;
+
         const id = nextDownloadId++;
         downloadCalls.push({ id, options });
         downloads.set(id, {
@@ -89,13 +96,17 @@ function createHarness() {
         return item ? [{ ...item }] : [];
       },
       async pause(id) {
+        pauseCalls.push(id);
         const item = downloads.get(id);
+        assert(item, `missing Firefox download ${id}`);
         item.paused = true;
         item.error = "USER_CANCELED";
         await onDownloadChanged.emit({ id, paused: { current: true }, error: { current: "USER_CANCELED" } });
       },
       async resume(id) {
+        resumeCalls.push(id);
         const item = downloads.get(id);
+        assert(item, `missing Firefox download ${id}`);
         item.paused = false;
         item.state = "in_progress";
         item.error = null;
@@ -104,6 +115,7 @@ function createHarness() {
       async cancel(id) {
         cancelCalls.push(id);
         const item = downloads.get(id);
+        assert(item, `missing Firefox download ${id}`);
         item.state = "interrupted";
         item.paused = false;
         item.error = "USER_CANCELED";
@@ -141,6 +153,12 @@ function createHarness() {
   async function message(value) { return messageListener(value, {}); }
   async function settle() { for (let i = 0; i < 16; i += 1) await new Promise((r) => setTimeout(r, 0)); }
   async function jobs() { await settle(); return message({ type: "list-jobs" }); }
+  function holdNextDownload() {
+    let release;
+    const promise = new Promise((resolve) => { release = resolve; });
+    pendingDownloadGate = { promise, release };
+    return release;
+  }
 
   return {
     browser,
@@ -149,11 +167,14 @@ function createHarness() {
     notifications,
     downloadCalls,
     cancelCalls,
+    pauseCalls,
+    resumeCalls,
     nativePosts,
     get nativePort() { return nativePort; },
     message,
     settle,
-    jobs
+    jobs,
+    holdNextDownload
   };
 }
 
@@ -161,20 +182,97 @@ function findBySuffix(jobs, suffix) {
   return jobs.find((job) => job.url?.endsWith(suffix));
 }
 
-async function main() {
-  const h = createHarness();
+async function configureBrowser(h, maxConcurrent = 3) {
   await h.message({
     type: "save-settings",
     settings: {
       mode: "browser",
       segments: 8,
-      maxConcurrent: 3,
+      maxConcurrent,
       retryCount: 3,
       nativeDirectory: "",
       forwardCookies: false,
       completionNotifications: true
     }
   });
+}
+
+async function testLaunchPendingCancel() {
+  const h = createHarness();
+  await configureBrowser(h, 1);
+  const releaseDownload = h.holdNextDownload();
+
+  const queued = await h.message({
+    type: "start-download",
+    url: "http://127.0.0.1:8767/pending-cancel.bin"
+  });
+  await h.settle();
+
+  let job = (await h.jobs()).find((candidate) => candidate.id === queued.id);
+  assert.equal(job.state, "starting", "job must expose launch-pending state before Firefox returns an ID");
+  assert.equal(job.downloadId, undefined);
+  assert.equal(job.launchPending, true);
+
+  await h.message({ type: "cancel-job", id: job.id });
+  job = (await h.jobs()).find((candidate) => candidate.id === queued.id);
+  assert.equal(job.state, "cancelled", "cancel during Firefox ID allocation must become terminal immediately");
+  assert.equal(h.cancelCalls.length, 0, "there is no Firefox ID to cancel until allocation completes");
+
+  releaseDownload();
+  await h.settle();
+  job = (await h.jobs()).find((candidate) => candidate.id === queued.id);
+  assert.equal(job.state, "cancelled");
+  assert.equal(h.downloadCalls.length, 1, "Firefox may still finish allocating the already-started request");
+  assert.equal(h.cancelCalls.length, 1, "the newly allocated Firefox download must be cancelled immediately");
+  assert.equal(h.cancelCalls[0], h.downloadCalls[0].id);
+  assert.equal(h.notifications.length, 0, "pending-launch cancellation must not look like a failure");
+}
+
+async function testLaunchPendingPause() {
+  const h = createHarness();
+  await configureBrowser(h, 1);
+  const releaseDownload = h.holdNextDownload();
+
+  const queued = await h.message({
+    type: "start-download",
+    url: "http://127.0.0.1:8767/pending-pause.bin"
+  });
+  await h.settle();
+
+  let job = (await h.jobs()).find((candidate) => candidate.id === queued.id);
+  assert.equal(job.state, "starting");
+  assert.equal(job.downloadId, undefined);
+
+  await h.message({ type: "pause-job", id: job.id });
+  job = (await h.jobs()).find((candidate) => candidate.id === queued.id);
+  assert.equal(job.state, "paused", "pause during Firefox ID allocation must be remembered");
+  assert.equal(job.pauseRequested, true);
+  assert.equal(h.pauseCalls.length, 0, "no Firefox pause can occur before the ID exists");
+
+  releaseDownload();
+  await h.settle();
+  job = (await h.jobs()).find((candidate) => candidate.id === queued.id);
+  assert.equal(job.state, "paused");
+  assert.equal(job.pauseRequested, false);
+  assert.equal(job.error, null);
+  assert.equal(h.downloadCalls.length, 1);
+  assert.equal(h.pauseCalls.length, 1, "the allocated Firefox download must be paused immediately");
+  assert.equal(h.pauseCalls[0], job.downloadId);
+
+  await h.message({ type: "resume-job", id: job.id });
+  await h.settle();
+  job = (await h.jobs()).find((candidate) => candidate.id === queued.id);
+  assert.equal(job.state, "in_progress");
+  assert.equal(h.resumeCalls.length, 1, "resume must reuse the same allocated Firefox download ID");
+  assert.equal(h.resumeCalls[0], job.downloadId);
+}
+
+async function main() {
+  await testLaunchPendingCancel();
+  await testLaunchPendingPause();
+
+  const h = createHarness();
+  await configureBrowser(h, 3);
 
   const urls = Array.from({ length: 5 }, (_, i) =>
     `http://127.0.0.1:8767/goreecloud-concurrency-${String(i + 1).padStart(2, "0")}.bin`
@@ -322,6 +420,8 @@ async function main() {
   assert.equal(h.storage.has("job:native-fault"), false, "late native messages must not resurrect removed jobs");
 
   console.log("DOWNLOAD LIFECYCLE FAULT HARDENING: PASS");
+  console.log("- Firefox launch-pending cancel reconciliation: PASS");
+  console.log("- Firefox launch-pending pause/resume reconciliation: PASS");
   console.log("- equal-timestamp FIFO queue ordering: PASS");
   console.log("- synchronous USER_CANCELED race: PASS");
   console.log("- late Firefox terminal-event protection: PASS");
