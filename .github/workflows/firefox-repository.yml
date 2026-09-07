@@ -54,6 +54,8 @@ jobs:
         run: node extensions/download-manager/tests/test_browser_scheduler.js
       - name: Test Download Manager mixed Firefox/native scheduler
         run: node extensions/download-manager/tests/test_mixed_scheduler.js
+      - name: Test Download Manager lifecycle faults
+        run: node extensions/download-manager/tests/test_lifecycle_faults.js
       - name: Check maintained JavaScript syntax
         shell: bash
         run: |
