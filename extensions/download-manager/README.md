@@ -27,7 +27,7 @@ The extension uses two download engines:
 1. **Firefox engine** — uses Firefox's `downloads` API for normal downloads and maximum browser compatibility.
 2. **Native segmented engine** — uses Firefox Native Messaging to control a local Python helper. The helper probes HTTP range support, downloads byte ranges concurrently, preserves partial files for resume, validates source changes with ETag/Last-Modified/size information, and assembles the final file.
 
-The native helper is not packaged inside the XPI. It is installed separately on the local Linux system.
+The native helper is maintained under `scripts/native-host/` so it is source-controlled with the extension but excluded from the XPI payload. It is installed separately on the local Linux system.
 
 ## Install for development
 
@@ -55,7 +55,7 @@ From the canonical `GoreeCloud/goreecloud-firefox-extensions` repository root:
 python shared/scripts/package_extension.py download-manager
 ```
 
-The resulting `dist/goreecloud-download-manager-0.2.0.xpi` is deterministic and unsigned. Packaging success is not Mozilla signing and does not make the version Stable.
+The resulting `dist/goreecloud-download-manager-0.2.0.xpi` is deterministic and unsigned. Packaging excludes the native helper and source-only scripts. Packaging success is not Mozilla signing and does not make the version Stable.
 
 ## Validation
 
@@ -64,7 +64,7 @@ node --check extensions/download-manager/background.js
 node --check extensions/download-manager/ui/popup.js
 node --check extensions/download-manager/ui/manager.js
 node --check extensions/download-manager/ui/options.js
-python -m py_compile extensions/download-manager/native-host/goreecloud_download_manager_native.py
+python -m py_compile extensions/download-manager/scripts/native-host/goreecloud_download_manager_native.py
 python -m unittest discover -s extensions/download-manager/tests -p 'test_*.py'
 python shared/scripts/validate_repository.py
 python shared/scripts/package_extension.py download-manager

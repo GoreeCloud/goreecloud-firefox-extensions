@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HOST="$ROOT/native-host/goreecloud_download_manager_native.py"
+HOST="$ROOT/scripts/native-host/goreecloud_download_manager_native.py"
+TEMPLATE="$ROOT/scripts/native-host/goreecloud_download_manager.json.in"
 TARGET_DIR="$HOME/.mozilla/native-messaging-hosts"
 TARGET="$TARGET_DIR/goreecloud_download_manager.json"
 
 mkdir -p "$TARGET_DIR"
-python3 - "$ROOT/native-host/goreecloud_download_manager.json.in" "$TARGET" "$HOST" <<'PY'
+python3 - "$TEMPLATE" "$TARGET" "$HOST" <<'PY'
 import json
 import sys
 from pathlib import Path

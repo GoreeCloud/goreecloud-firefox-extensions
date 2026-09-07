@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location(
     "goreecloud_download_manager_native",
-    ROOT / "native-host" / "goreecloud_download_manager_native.py",
+    ROOT / "scripts" / "native-host" / "goreecloud_download_manager_native.py",
 )
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
