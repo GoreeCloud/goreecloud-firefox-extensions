@@ -1,5 +1,15 @@
 # Change Log — GoreeCloud Download Manager Extension
 
+## 0.2.3 — Source candidate
+
+- Fixed Firefox optional cookie-permission acquisition so `browser.permissions.request()` is invoked directly from the Settings-page **Grant optional cookie permission** click handler, preserving Firefox's required user-action context.
+- Removed the Save-path attempt to request permission after an asynchronous permission-status check; Save now refuses to enable cookie forwarding until the explicit Grant flow succeeds.
+- Added Settings status messaging for granted, refused, and failed optional-permission requests.
+- Added permission-change listeners so the Settings status refreshes when Firefox grants or removes the optional permission.
+- Added source-contract tests that keep `cookies` and `<all_urls>` optional and verify the request stays directly bound to the user click handler.
+- This change was triggered by Firefox 155.0.1 / Flathub Flatpak runtime testing in which the 0.2.2 Settings button produced no permission prompt because the request was delegated through the background message handler.
+- Authenticated-cookie transfer acceptance remains pending target-runtime retest with the corrected 0.2.3 candidate.
+
 ## 0.2.2 — Source candidate
 
 - Added same-job recovery for interrupted or errored native downloads so the existing GoreeCloud job ID and `.goreecloud-downloads/<job-id>/` staging data are preserved.

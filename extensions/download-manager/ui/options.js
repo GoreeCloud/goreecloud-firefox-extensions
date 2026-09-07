@@ -1,9 +1,14 @@
 const $ = (selector) => document.querySelector(selector);
 
+const COOKIE_PERMISSION = Object.freeze({
+  permissions: ["cookies"],
+  origins: ["<all_urls>"]
+});
+
 async function refreshCookiePermission() {
-  const result = await browser.runtime.sendMessage({ type: "cookie-permission-status" });
-  $("#cookieStatus").textContent = result.granted ? "Optional cookie permission granted" : "Optional cookie permission not granted";
-  return result.granted;
+  const granted = await browser.permissions.contains(COOKIE_PERMISSION);
+  $("#cookieStatus").textContent = granted ? "Optional cookie permission granted" : "Optional cookie permission not granted";
+  return granted;
 }
 
 async function load() {
@@ -16,28 +21,44 @@ async function load() {
   await refreshCookiePermission();
 }
 
-$("#grantCookies").addEventListener("click", async () => {
-  $("#grantCookies").disabled = true;
+$("#grantCookies").addEventListener("click", () => {
+  // Firefox requires permissions.request() to run directly from a user-action
+  // handler. Do not move this request behind runtime messaging or an awaited
+  // operation, or the transient user activation will be lost.
+  let request;
   try {
-    const result = await browser.runtime.sendMessage({ type: "request-cookie-permission" });
-    $("#cookieStatus").textContent = result.granted ? "Optional cookie permission granted" : "Permission was not granted";
-  } finally {
-    $("#grantCookies").disabled = false;
+    request = browser.permissions.request(COOKIE_PERMISSION);
+  } catch (error) {
+    $("#cookieStatus").textContent = "Optional cookie permission request failed";
+    $("#status").textContent = `Permission request failed: ${error.message || String(error)}`;
+    return;
   }
+
+  $("#grantCookies").disabled = true;
+  $("#status").textContent = "Waiting for Firefox permission decision…";
+
+  request.then((granted) => {
+    $("#cookieStatus").textContent = granted ? "Optional cookie permission granted" : "Permission was not granted";
+    $("#status").textContent = granted
+      ? "Cookie permission granted. Save settings to enable forwarding."
+      : "Firefox did not grant the optional cookie permission.";
+  }).catch((error) => {
+    $("#cookieStatus").textContent = "Optional cookie permission request failed";
+    $("#status").textContent = `Permission request failed: ${error.message || String(error)}`;
+  }).finally(() => {
+    $("#grantCookies").disabled = false;
+  });
 });
 
 $("#save").addEventListener("click", async () => {
   $("#save").disabled = true;
   try {
-    let forwardCookies = $("#forwardCookies").checked;
+    const forwardCookies = $("#forwardCookies").checked;
     if (forwardCookies && !(await refreshCookiePermission())) {
-      const result = await browser.runtime.sendMessage({ type: "request-cookie-permission" });
-      if (!result.granted) {
-        forwardCookies = false;
-        $("#forwardCookies").checked = false;
-        $("#status").textContent = "Saved without cookie forwarding because permission was not granted.";
-      }
+      $("#status").textContent = "Cookie forwarding was not saved. Click Grant optional cookie permission, approve Firefox's prompt, then save again.";
+      return;
     }
+
     const settings = {
       mode: $("#mode").value,
       segments: Number($("#segments").value),
@@ -48,7 +69,7 @@ $("#save").addEventListener("click", async () => {
       completionNotifications: $("#completionNotifications").checked
     };
     await browser.runtime.sendMessage({ type: "save-settings", settings });
-    if (!$("#status").textContent) $("#status").textContent = "Settings saved.";
+    $("#status").textContent = "Settings saved.";
     setTimeout(() => { $("#status").textContent = ""; }, 2200);
   } finally {
     $("#save").disabled = false;
@@ -63,6 +84,14 @@ $("#test").addEventListener("click", async () => {
   } finally {
     $("#test").disabled = false;
   }
+});
+
+browser.permissions.onAdded.addListener(() => {
+  refreshCookiePermission().catch(() => {});
+});
+
+browser.permissions.onRemoved.addListener(() => {
+  refreshCookiePermission().catch(() => {});
 });
 
 load();
