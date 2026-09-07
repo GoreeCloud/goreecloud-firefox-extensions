@@ -268,6 +268,37 @@ class NativeCoreTests(unittest.TestCase):
             self.assertEqual(committed.read_bytes(), b"new-download")
             self.assertFalse(part.exists())
 
+    def test_segmented_binary_assembly_commits_exact_bytes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            payload = bytes(range(256)) * (4 * 1024 * 1024 // 256)
+            midpoint = len(payload) // 2
+            job = mod.DownloadJob({
+                "jobId": "job-segmented-binary-publish",
+                "url": "https://example.test/file.bin",
+                "directory": tmp,
+                "filename": "file.bin",
+                "segments": 2,
+            })
+            job.filename = "file.bin"
+            job.destination = mod.reserve_unique_path(directory / job.filename, job.id)
+            job.total_size = len(payload)
+            job.staging.mkdir(parents=True, exist_ok=True)
+            job.segment_part_path(0).write_bytes(payload[:midpoint])
+            job.segment_part_path(1).write_bytes(payload[midpoint:])
+            info = {
+                "size": len(payload),
+                "ranges": True,
+                "etag": '"fixture"',
+                "last_modified": "Mon, 07 Sep 2026 18:00:00 GMT",
+            }
+
+            with mock.patch.object(mod, "send"):
+                job._run_segmented(info)
+
+            self.assertEqual(job.destination.read_bytes(), payload)
+            self.assertFalse(job.assembled_part_path().exists())
+
     def test_resume_restarts_dead_error_job_with_same_id(self):
         existing = FakeJob(state="error", alive=False)
         with mod.JOBS_LOCK:
