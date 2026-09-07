@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 EXCLUDE_NAMES = {"LICENSE", ".source-baseline"}
 EXCLUDE_SUFFIXES = {".md", ".py", ".pyc"}
-EXCLUDE_PARTS = {"scripts", "__pycache__", ".git"}
+EXCLUDE_PARTS = {"scripts", "tests", "__pycache__", ".git"}
 
 
 def should_include(path: Path, extension_dir: Path) -> bool:
@@ -55,8 +55,16 @@ def main() -> None:
         bad = archive.testzip()
         if bad:
             raise SystemExit(f"Package integrity failure: {bad}")
-        if "manifest.json" not in archive.namelist():
+        names = archive.namelist()
+        if "manifest.json" not in names:
             raise SystemExit("Package does not contain manifest.json at archive root")
+        source_only = [
+            name for name in names
+            if any(part in {"scripts", "tests", "__pycache__", ".git"} for part in Path(name).parts)
+            or Path(name).suffix.lower() in EXCLUDE_SUFFIXES
+        ]
+        if source_only:
+            raise SystemExit(f"Package contains source-only files: {', '.join(source_only)}")
 
     print(output.relative_to(ROOT))
 
