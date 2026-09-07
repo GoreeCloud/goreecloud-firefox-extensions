@@ -2,7 +2,7 @@
 
 ## Status
 
-Version 0.2.6 source candidate. Unsigned; not Release Candidate or Stable.
+Version 0.2.7 source candidate. Unsigned; not Release Candidate or Stable.
 
 ## Components
 
@@ -44,7 +44,7 @@ Deterministic Node regressions load the real background scripts into a VM with m
 
 ### Native segmented helper
 
-The Python native host communicates over Firefox Native Messaging framing. For range-capable HTTP/HTTPS sources it divides a file into up to 32 bounded ranges and runs concurrent workers. Each worker persists its partial range under a job-scoped staging directory.
+The Python native host communicates over Firefox Native Messaging framing. The native helper independently validates that requested download transports are HTTP or HTTPS. For range-capable sources it divides a file into up to 32 bounded ranges and runs concurrent workers. Each worker persists its partial range under a job-scoped staging directory.
 
 Native staging layout:
 
@@ -52,12 +52,25 @@ Native staging layout:
 <download-directory>/.goreecloud-downloads/<job-id>/
 ├── metadata.json
 ├── single.part
+├── assembled.part
 └── segment-000.part ...
 ```
 
-`metadata.json` stores source and destination metadata but never cookies or other request credentials.
+`assembled.part` is transient and is used when segmented downloads are complete enough to assemble but have not yet been safely published to the final destination. `metadata.json` stores source and destination metadata but never cookies or other request credentials.
 
-Before resuming existing parts, the helper compares available ETag, Last-Modified, and source-size information. If the source identity changed, old partial data is discarded before the new transfer begins.
+Before resuming existing parts, the helper compares the persisted URL, available ETag, Last-Modified, and source-size information with the current source. If the URL or validated source identity changed, old partial data is discarded before the replacement transfer begins.
+
+Resumed single downloads and segmented workers do not trust HTTP 206 status alone. The helper validates `Content-Range` syntax and requires the response start to match the exact requested resume offset. Segmented requests additionally require the response end to match the planned segment boundary, and any known total source size must match the probed source size. Bytes are appended only after these checks pass.
+
+The native in-memory job registry is lock-protected. Repeated `start` messages for an already-known job do not create a second worker. A `resume` for a still-running job reuses that job. If the worker previously ended in a recoverable error, a same-ID `resume` can create a replacement in-memory job that reuses the existing job-scoped staging directory. Completed and explicitly cancelled native jobs are not restarted by a later same-ID resume.
+
+### Native destination publication
+
+Native jobs reserve their selected destination paths before transfer workers begin so simultaneous jobs cannot both select the same not-yet-created filename merely because neither final file exists yet.
+
+Downloaded content remains in the job-scoped staging directory until it has passed the applicable size/range checks. Final publication uses a no-overwrite same-filesystem link from staging into the destination directory. If another process creates the reserved destination between selection and publication, the commit receives a collision signal and GoreeCloud selects another collision-safe destination rather than opening the existing file with truncation semantics. The staging source is removed only after the no-overwrite destination publication succeeds.
+
+Because staging is a child of the configured download directory, the current Linux implementation keeps staging and final publication on the same filesystem. Additional operating systems require their own validated publication strategy before native-host support is claimed there.
 
 ### Native recovery controller
 
@@ -69,9 +82,9 @@ For an interrupted or errored native job that previously started, the recovery c
 2. keeps the existing GoreeCloud job record and job ID;
 3. requeues that same job as native without resetting transferred-byte metadata or segment configuration;
 4. lets the primary queue controller issue a native `resume` message because `nativeStarted` remains true; and
-5. allows the helper to reconstruct the missing in-memory job from the existing job-scoped staging directory.
+5. allows the helper to reconstruct missing/dead in-memory state from the existing job-scoped staging directory.
 
-The controller checks helper availability before requeueing so a temporarily unavailable helper does not silently turn a recovery attempt into a Firefox-engine fallback.
+0.2.7 closes a second recovery availability race. The initial helper preflight remains necessary, but the helper can still disappear between that preflight and the scheduler's actual launch. For an already-started native job, recovery therefore bypasses the normal new-job Firefox compatibility fallback: native launch failure propagates as a recoverable error and leaves the job's native identity/staging semantics intact. Fresh native jobs that have never started continue to use the existing compatibility fallback when the helper is unavailable.
 
 When a non-persistent Firefox background context is recreated, native jobs persisted in stale active states (`starting`, `in_progress`, or `downloading`) are reconciled through the same same-ID recovery path. Explicitly paused jobs are not automatically resumed. Jobs already marked `interrupted` or `error` remain user-controlled until **Resume** is selected.
 
@@ -79,7 +92,7 @@ Target Firefox 155.0.1 / Flathub Flatpak testing has accepted the deliberate nat
 
 The same target environment has also accepted non-persistent background-context recreation recovery. During another controlled eight-segment transfer, job ID `4e877c53-cf58-40ff-a9d1-f632f1f72165` retained `metadata.json` and all eight segment files at 6,815,744 bytes each before background termination. Terminating the Firefox extension background script did not remove the job-scoped staging directory or partial segments; the native helper process remained present. Reopening the extension recreated the background context and the transfer subsequently completed to `goreecloud-range-test (2).bin`. The output reproduced the source SHA-256 exactly, byte-for-byte comparison passed, and staging was empty after successful completion.
 
-These tests accept helper-process interruption recovery and non-persistent background-context recovery for the tested target environment. Full-browser restart recovery remains a separate acceptance gate.
+These runtime tests accept helper-process interruption recovery and non-persistent background-context recovery for the earlier tested target baseline. The additional 0.2.7 same-helper/error-thread and recovery-launch fault behavior is currently deterministic source-level evidence. Full-browser restart recovery remains a separate acceptance gate.
 
 ### Native host installation
 
@@ -105,7 +118,7 @@ Cookie forwarding is disabled by default. Firefox's `cookies` permission and `<a
 
 Permission acquisition occurs directly from the Settings page's **Grant optional cookie permission** click handler so `browser.permissions.request()` executes in Firefox's required user-action context. Save does not attempt to request this permission indirectly or after unrelated asynchronous work.
 
-After explicit permission has been granted and cookie forwarding is enabled, the extension reads cookies matching only the target download URL at launch or resume time. It constructs a `Cookie` header in memory and sends that header through Native Messaging for the active request. The helper accepts only allowlisted forwarded headers and does not persist request credentials in `metadata.json`.
+After explicit permission has been granted and cookie forwarding is enabled, the extension reads cookies matching only the target download URL at launch or resume time. It constructs a `Cookie` header in memory and sends that header through Native Messaging for the active request. The helper accepts only allowlisted `Cookie` and `Referer` headers, rejects CR/LF-bearing values, bounds each accepted value to 64 KiB, and does not persist request credentials in `metadata.json`.
 
 Target Firefox 155.0.1 / Flathub Flatpak testing has accepted this path using a controlled cookie-protected range server. Before permission-backed forwarding, the server returned HTTP 401. After the explicit grant, it accepted one authenticated HEAD probe and eight authenticated HTTP 206 requests spanning the complete 256 MiB source. The final output matched source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484` exactly. Native staging and extension `browser.storage.local` scans both passed the controlled test-credential non-persistence checks.
 
@@ -117,6 +130,6 @@ The native helper currently supports HTTP/HTTPS GET-style downloads. It does not
 
 Ordinary retry preserves the source managed job's effective engine and relevant configuration snapshot but creates a fresh GoreeCloud job ID and does not reuse partial segment staging. Native same-job recovery is the separate identity-preserving path for interrupted/errored native transfers with reusable staged partial data.
 
-The 0.2.4–0.2.6 browser, mixed-engine, lifecycle-race, and retry-snapshot regressions are deterministic source-level validation. They do not replace a real target-device gate when a behavior materially depends on Firefox/Flatpak/native-host runtime state.
+The 0.2.4–0.2.7 browser, mixed-engine, lifecycle-race, retry-snapshot, native-range-integrity, no-overwrite-publication, and recovery-fault regressions are deterministic source-level validation. They do not replace a real target-device gate when a behavior materially depends on Firefox/Flatpak/native-host runtime state.
 
 Mozilla signing is outside the download engine. An unsigned candidate may be loaded temporarily for development but is not a persistent Stable Firefox release.
