@@ -1,5 +1,18 @@
 # Change Log — GoreeCloud Download Manager Extension
 
+## 0.2.5 — Source candidate
+
+- Hardened explicit cancellation so the managed `cancelled` state remains authoritative when Firefox emits synchronous or delayed `USER_CANCELED` / `interrupted` events as part of the underlying browser cancellation.
+- Made completed and explicitly cancelled managed jobs resistant to late Firefox/native progress or terminal-state regressions.
+- Prevented late Firefox or Native Messaging events from recreating jobs that the user has already removed from managed history.
+- Added durable monotonic `queueOrder` sequencing so jobs created in the same millisecond retain deterministic FIFO ordering instead of relying on storage enumeration order.
+- Added requested-filename normalization for ordinary retries. If Firefox previously reported an absolute completed destination path, retry reduces it to a safe relative basename before calling `browser.downloads.download()`.
+- Added explicit launch-pending handling so pause/cancel requests that arrive while Firefox is still allocating a numeric download ID are reconciled after the ID is returned rather than being lost.
+- Added failure-notification de-duplication across `error` and `interrupted` transitions belonging to the same unresolved problem incident. Native recovery already clears the terminal notification marker before a new recovery attempt.
+- Added deterministic Node lifecycle-fault coverage using the real extension background scripts with mocked Firefox and Native Messaging APIs, including deliberately hostile synchronous cancellation-event ordering.
+- Added the lifecycle-fault regression to repository CI alongside the existing Firefox scheduler, mixed-engine scheduler, native-core, syntax, deterministic packaging, and archive-verification checks.
+- This is assistant-performed deterministic source validation. It does not claim target-device cancellation-race acceptance, Mozilla signing, persistent signed installation, full-browser restart/native-host acceptance, Release Candidate status, or Stable status.
+
 ## 0.2.4 — Source candidate
 
 - Hardened Firefox-engine resume scheduling so a paused Firefox download that is requeued while all managed slots are occupied remains in GoreeCloud's `queued` state instead of being overwritten back to `paused` by Firefox's underlying paused snapshot.
@@ -31,7 +44,7 @@
 - Added background-context/startup reconciliation for native jobs persisted in stale active states. Paused and already-interrupted jobs remain user-controlled.
 - Added explicit **Resume** treatment for recoverable native jobs in the popup and Manager while keeping ordinary Retry behavior for non-recoverable jobs.
 - Added recovery-state UI messaging and suppressed misleading ETA output for paused/interrupted/error/cancelled/completed jobs in the Manager.
-- Added Node-backed recovery controller tests covering same-ID progress preservation, browser-job exclusion, host-unavailable behavior, and stale-active startup recovery.
+- Added Node-backed recovery controller tests covering same-ID progress preservation, browser-job exclusion, unavailable-helper behavior, and stale-active startup recovery.
 - Carried forward the accepted Firefox 155.0.1 8-segment transfer evidence from 0.2.1.
 - Accepted deliberate native-helper interruption recovery on Firefox 155.0.1 / Flathub Flatpak: the helper was terminated during an active eight-segment transfer, the original job-scoped staging directory retained `metadata.json` plus eight partial segments, **Resume** completed successfully, the original staging directory was cleaned after assembly, and the recovered output matched source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484` byte-for-byte.
 - Accepted collision-safe native naming in the same recovery run: because `goreecloud-range-test.bin` already existed, completion produced `goreecloud-range-test (1).bin` without overwriting the earlier file.
