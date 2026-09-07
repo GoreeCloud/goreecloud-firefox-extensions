@@ -26,7 +26,7 @@ Interrupted or errored native jobs that already started are recoverable using th
 
 If a non-persistent Firefox background context is recreated while a native job is still persisted as active, 0.2.2 reconciles that stale state and attempts same-ID native recovery. Explicitly paused jobs remain paused, and already-interrupted jobs remain under user control until **Resume** is selected.
 
-The 0.2.2 source includes automated controller tests for same-ID progress preservation and recovery behavior. The target Firefox 155.0.1 Flatpak environment has now accepted deliberate native-helper interruption recovery. Non-persistent background-context recreation and full-browser restart recovery remain separate gates.
+The 0.2.2 source includes automated controller tests for same-ID progress preservation and recovery behavior. The target Firefox 155.0.1 Flatpak environment has now accepted both deliberate native-helper interruption recovery and non-persistent background-context recreation recovery. Full-browser restart recovery remains a separate gate.
 
 ## Linux native-host hardening
 
@@ -69,7 +69,9 @@ A controlled 256 MiB HTTP range download then ran as **native · 8 segments**. E
 
 The 0.2.2 recovery path was then exercised by deliberately terminating the installed native helper during another eight-segment transfer. Job-scoped staging survived under job ID `4273f6a6-5372-4c85-a57f-cfea1953c247` with `metadata.json` plus all eight partial segment files; each segment held 14,417,920 bytes when captured. Selecting **Resume** completed the transfer, the original staging directory was removed after successful assembly, and the recovered output matched the same source SHA-256 exactly with byte-for-byte integrity. Because `goreecloud-range-test.bin` already existed, completion selected `goreecloud-range-test (1).bin`, also validating collision-safe destination naming.
 
-This evidence accepts the tested native segmented transfer, live pause/resume, helper-interruption recovery, existing-segment reuse, collision-safe naming, assembly, integrity, and staging-cleanup paths for the tested Firefox 155.0.1 Flatpak environment. It does not yet establish non-persistent background-context recovery, full-browser restart recovery, authenticated-cookie transfer acceptance, Mozilla signing, or persistent signed-install/restart acceptance.
+Non-persistent Firefox background-context recovery was then exercised during another eight-segment transfer. Before background termination, job ID `4e877c53-cf58-40ff-a9d1-f632f1f72165` had `metadata.json` plus eight segment files, each at 6,815,744 bytes. After terminating the extension background script, the native helper process remained present and the same job-scoped staging directory and partial segments remained intact. Reopening the extension recreated the background context; the transfer subsequently completed without losing the staged identity. The resulting collision-safe output `goreecloud-range-test (2).bin` matched source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484` exactly, byte-for-byte comparison reported `BACKGROUND RECOVERY INTEGRITY: PASS`, and `.goreecloud-downloads` contained no remaining files after completion.
+
+This evidence accepts the tested native segmented transfer, live pause/resume, helper-interruption recovery, non-persistent background-context recovery, existing-segment reuse, collision-safe naming, assembly, integrity, and staging-cleanup paths for the tested Firefox 155.0.1 Flatpak environment. It does not yet establish full-browser restart recovery, authenticated-cookie transfer acceptance, Mozilla signing, or persistent signed-install/restart acceptance.
 
 ## Cookie forwarding
 
