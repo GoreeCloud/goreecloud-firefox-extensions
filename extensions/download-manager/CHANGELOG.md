@@ -8,7 +8,10 @@
 - Added explicit **Resume** treatment for recoverable native jobs in the popup and Manager while keeping ordinary Retry behavior for non-recoverable jobs.
 - Added recovery-state UI messaging and suppressed misleading ETA output for paused/interrupted/error/cancelled/completed jobs in the Manager.
 - Added Node-backed recovery controller tests covering same-ID progress preservation, browser-job exclusion, host-unavailable behavior, and stale-active startup recovery.
-- Carried forward the accepted Firefox 155.0.1 8-segment transfer evidence from 0.2.1. Runtime restart-recovery acceptance remains pending until the 0.2.2 candidate is exercised on the target browser.
+- Carried forward the accepted Firefox 155.0.1 8-segment transfer evidence from 0.2.1.
+- Accepted deliberate native-helper interruption recovery on Firefox 155.0.1 / Flathub Flatpak: the helper was terminated during an active eight-segment transfer, the original job-scoped staging directory retained `metadata.json` plus eight partial segments, **Resume** completed successfully, the original staging directory was cleaned after assembly, and the recovered output matched source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484` byte-for-byte.
+- Accepted collision-safe native naming in the same recovery run: because `goreecloud-range-test.bin` already existed, completion produced `goreecloud-range-test (1).bin` without overwriting the earlier file.
+- Non-persistent background-context recovery and full-browser restart recovery remain separate runtime acceptance gates.
 
 ## 0.2.1 — Source candidate
 
