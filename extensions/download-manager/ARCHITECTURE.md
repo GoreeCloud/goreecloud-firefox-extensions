@@ -2,7 +2,7 @@
 
 ## Status
 
-Version 0.2.8 source candidate. Unsigned; not Release Candidate or Stable.
+Version 0.2.9 source candidate. Unsigned; not Release Candidate or Stable.
 
 ## Components
 
@@ -38,18 +38,18 @@ Its current responsibilities include:
 
 The adapter does not reinterpret genuine remote or browser failures as successful operations. Real `error` and `interrupted` states remain problem states and continue to support notification and retry/recovery behavior.
 
-Ordinary Retry and native same-job recovery remain distinct lifecycle operations. Ordinary Retry creates a fresh GoreeCloud job ID and fresh queue-tail position but carries forward the source job's effective transport/configuration snapshot. Native recovery retains the existing GoreeCloud job ID and job-scoped staging directory so partially downloaded segments can be reused.
+Ordinary Retry and native same-job recovery remain distinct lifecycle operations. Ordinary Retry creates a fresh GoreeCloud job ID and fresh queue-tail position but carries forward the source job's effective transport/configuration snapshot. Native recovery retains the existing GoreeCloud job ID and job-scoped staging directory so partially downloaded segments can be reused after native validation succeeds.
 
-Deterministic Node regressions load the real background scripts into a VM with mocked Firefox and Native Messaging APIs. Browser-only, mixed-engine, lifecycle-fault, and retry-snapshot harnesses verify scheduler ceilings, cross-engine slot promotion, same-download-ID resume, hostile cancellation event ordering, late-event finality, removed-job protection, queue ordering, settings-drift resistance, retry filename normalization, legacy absolute-destination compatibility, and notification behavior. These tests are source-level evidence and are distinct from target-device runtime acceptance.
+Deterministic Node regressions load the real background scripts into a VM with mocked Firefox and Native Messaging APIs. Browser-only, mixed-engine, lifecycle-fault, and retry-snapshot harnesses verify scheduler ceilings, cross-engine slot promotion, same-download-ID resume, hostile cancellation event ordering, late-event finality, removed-job protection, queue ordering, settings-drift resistance, retry filename normalization, legacy absolute-destination compatibility, native protocol status, and notification behavior. These tests are source-level evidence and are distinct from target-device runtime acceptance.
 
 ### Native protocol compatibility contract
 
 `native_protocol.js` is loaded **before** `background.js`. It defines the compatibility contract used before any Native Messaging `hello` frame can mark the native host ready. The protocol validator is therefore part of the initial background state machine rather than a post-start monkeypatch.
 
-The 0.2.8 extension requires:
+The 0.2.9 extension requires:
 
 - native protocol version `2`;
-- helper version `0.2.8` or newer while protocol 2 remains compatible; and
+- helper version `0.2.9` or newer while protocol 2 remains compatible; and
 - the capabilities `segmented-range-integrity`, `same-job-recovery`, `no-overwrite-publish`, and `ephemeral-request-headers`.
 
 A legacy helper without `protocolVersion`, an explicitly mismatched protocol, a helper below the minimum compatible version, or a protocol-2 helper missing any required capability is not marked ready. The handshake promise is rejected with an actionable reinstall message and the incompatible Native Messaging port is disconnected so the next connection attempt can discover a repaired helper.
@@ -60,7 +60,7 @@ Fresh native jobs retain the existing compatibility fallback to Firefox when the
 
 ### Native segmented helper
 
-The Python native host communicates over Firefox Native Messaging framing. The 0.2.8 helper emits a versioned `hello` record at startup and in response to `ping`, advertising protocol 2 and the capability set required by the extension.
+The Python native host communicates over Firefox Native Messaging framing. The 0.2.9 helper emits a versioned `hello` record at startup and in response to `ping`, advertising protocol 2 and the capability set required by the extension.
 
 The native helper independently validates that requested download transports are HTTP or HTTPS. For range-capable sources it divides a file into up to 32 bounded ranges and runs concurrent workers. Each worker persists its partial range under a job-scoped staging directory.
 
@@ -76,11 +76,21 @@ Native staging layout:
 
 `assembled.part` is transient and is used when segmented downloads are complete enough to assemble but have not yet been safely published to the final destination. `metadata.json` stores source and destination metadata but never cookies or other request credentials.
 
-Before resuming existing parts, the helper compares the persisted URL, available ETag, Last-Modified, and source-size information with the current source. If the URL or validated source identity changed, old partial data is discarded before the replacement transfer begins.
+### Persisted staging trust boundary
+
+0.2.9 makes a valid `metadata.json` record a prerequisite for reusing any persisted `single.part` or `segment-XXX.part` data. The helper no longer treats the mere presence of partial files as sufficient evidence that they belong to the current source/job identity.
+
+The metadata loader accepts only a JSON object using metadata schema version `1`. The record must contain the exact current GoreeCloud `job_id`; its persisted `url` must be a canonical valid HTTP/HTTPS URL; `size` must be a non-boolean integer no smaller than `-1`; and `filename`, `destination`, `etag`, and `last_modified` must be strings or absent. Each accepted string value is bounded to 64 KiB.
+
+Missing metadata, malformed JSON, non-object JSON, an unsupported metadata version, a different job ID, an invalid or non-canonical persisted URL, an invalid source-size type, or an invalid bounded-string field causes existing staged partial files to be discarded. The helper then writes a fresh valid metadata record before the replacement transfer proceeds.
+
+If metadata passes structural validation, the existing source-identity checks still compare persisted/current URL, known source size, ETag, and Last-Modified before partial bytes are reused. Therefore structural validity is necessary but not sufficient for reuse. A changed source still invalidates the old partials.
+
+This 0.2.9 boundary does **not** yet claim symlink/no-follow protection for staging directories or part files. Filesystem link substitution remains a separate hardening target and release boundary.
 
 Resumed single downloads and segmented workers do not trust HTTP 206 status alone. The helper validates `Content-Range` syntax and requires the response start to match the exact requested resume offset. Segmented requests additionally require the response end to match the planned segment boundary, and any known total source size must match the probed source size. Bytes are appended only after these checks pass.
 
-The native in-memory job registry is lock-protected. Repeated `start` messages for an already-known job do not create a second worker. A `resume` for a still-running job reuses that job. If the worker previously ended in a recoverable error, a same-ID `resume` can create a replacement in-memory job that reuses the existing job-scoped staging directory. Completed and explicitly cancelled native jobs are not restarted by a later same-ID resume.
+The native in-memory job registry is lock-protected. Repeated `start` messages for an already-known job do not create a second worker. A `resume` for a still-running job reuses that job. If the worker previously ended in a recoverable error, a same-ID `resume` can create a replacement in-memory job that reuses the existing job-scoped staging directory only after the persisted staging trust checks succeed. Completed and explicitly cancelled native jobs are not restarted by a later same-ID resume.
 
 ### Native destination publication
 
@@ -100,19 +110,19 @@ For an interrupted or errored native job that previously started, the recovery c
 2. keeps the existing GoreeCloud job record and job ID;
 3. requeues that same job as native without resetting transferred-byte metadata or segment configuration;
 4. lets the primary queue controller issue a native `resume` message because `nativeStarted` remains true; and
-5. allows the helper to reconstruct missing/dead in-memory state from the existing job-scoped staging directory.
+5. allows the helper to reconstruct missing/dead in-memory state from the existing job-scoped staging directory, subject to the 0.2.9 metadata/source validation boundary before partial reuse.
 
 0.2.7 closed a second recovery availability race. The initial helper preflight remains necessary, but the helper can still disappear between that preflight and the scheduler's actual launch. For an already-started native job, recovery therefore bypasses the normal new-job Firefox compatibility fallback: native launch failure propagates as a recoverable error and leaves the job's native identity/staging semantics intact. Fresh native jobs that have never started continue to use the existing compatibility fallback when the helper is unavailable.
 
-0.2.8 makes that preflight compatibility-aware. An old or capability-incomplete helper is treated as unavailable for native recovery instead of being allowed to resume staged data under a protocol contract it does not satisfy.
+0.2.8 made that preflight compatibility-aware. An old or capability-incomplete helper is treated as unavailable for native recovery instead of being allowed to resume staged data under a protocol contract it does not satisfy. 0.2.9 raises the same protocol-2 helper minimum to 0.2.9 because the persisted-staging trust correction lives in the helper.
 
 When a non-persistent Firefox background context is recreated, native jobs persisted in stale active states (`starting`, `in_progress`, or `downloading`) are reconciled through the same same-ID recovery path. Explicitly paused jobs are not automatically resumed. Jobs already marked `interrupted` or `error` remain user-controlled until **Resume** is selected.
 
-Target Firefox 155.0.1 / Flathub Flatpak testing has accepted the deliberate native-helper interruption path. During a controlled 256 MiB eight-segment transfer, terminating the native helper left the original job-scoped staging directory intact with `metadata.json` and all eight partial segment files. Resume completed successfully; the original staging directory was removed after assembly; the recovered file reproduced source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484` exactly; and the collision-safe destination policy produced `goreecloud-range-test (1).bin` because the original filename already existed.
+Target Firefox 155.0.1 / Flathub Flatpak testing has accepted the deliberate native-helper interruption path for an earlier candidate. During a controlled 256 MiB eight-segment transfer, terminating the native helper left the original job-scoped staging directory intact with `metadata.json` and all eight partial segment files. Resume completed successfully; the original staging directory was removed after assembly; the recovered file reproduced source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484` exactly; and the collision-safe destination policy produced `goreecloud-range-test (1).bin` because the original filename already existed.
 
-The same target environment has also accepted non-persistent background-context recreation recovery. During another controlled eight-segment transfer, job ID `4e877c53-cf58-40ff-a9d1-f632f1f72165` retained `metadata.json` and all eight segment files at 6,815,744 bytes each before background termination. Terminating the Firefox extension background script did not remove the job-scoped staging directory or partial segments; the native helper process remained present. Reopening the extension recreated the background context and the transfer subsequently completed to `goreecloud-range-test (2).bin`. The output reproduced the source SHA-256 exactly, byte-for-byte comparison passed, and staging was empty after successful completion.
+The same target environment has also accepted non-persistent background-context recreation recovery for the earlier candidate. During another controlled eight-segment transfer, job ID `4e877c53-cf58-40ff-a9d1-f632f1f72165` retained `metadata.json` and all eight segment files at 6,815,744 bytes each before background termination. Terminating the Firefox extension background script did not remove the job-scoped staging directory or partial segments; the native helper process remained present. Reopening the extension recreated the background context and the transfer subsequently completed to `goreecloud-range-test (2).bin`. The output reproduced the source SHA-256 exactly, byte-for-byte comparison passed, and staging was empty after successful completion.
 
-These runtime tests accept helper-process interruption recovery and non-persistent background-context recovery for the earlier tested target baseline. The additional 0.2.7 same-helper/error-thread and recovery-launch fault behavior and the new 0.2.8 compatibility contract are deterministic source-level evidence until separately reproduced on the target runtime. Full-browser restart recovery remains a separate acceptance gate.
+These runtime tests accept helper-process interruption recovery and non-persistent background-context recovery for the earlier tested target baseline. The additional 0.2.7–0.2.9 recovery, protocol, and staging-trust behavior is deterministic source-level evidence until separately reproduced on the target runtime. Full-browser restart recovery remains a separate acceptance gate.
 
 ### Native host installation
 
@@ -128,7 +138,7 @@ Firefox native-host registration is written to:
 ~/.mozilla/native-messaging-hosts/goreecloud_download_manager.json
 ```
 
-The installer replaces the manifest atomically, compiles the installed helper, and performs startup/ping Native Messaging frame validation. For the 0.2.8 source candidate, installation succeeds only if both hello records report helper version `0.2.8`, protocol `2`, and all required compatibility capabilities. The installed manifest authorizes only `download-manager@goreecloud.com`.
+The installer replaces the manifest atomically, compiles the installed helper, and performs startup/ping Native Messaging frame validation. For the 0.2.9 source candidate, installation succeeds only if both hello records report helper version `0.2.9`, protocol `2`, and all required compatibility capabilities. The installed manifest authorizes only `download-manager@goreecloud.com`.
 
 When Firefox is distributed as a Flatpak, native-host startup can traverse `org.freedesktop.portal.WebExtensions`. The installer reports whether that portal interface is visible and gives explicit Firefox portal-preference guidance rather than granting the confined browser arbitrary host command execution.
 
@@ -150,6 +160,8 @@ The native helper currently supports HTTP/HTTPS GET-style downloads. It does not
 
 Ordinary retry preserves the source managed job's effective engine and relevant configuration snapshot but creates a fresh GoreeCloud job ID and does not reuse partial segment staging. Native same-job recovery is the separate identity-preserving path for interrupted/errored native transfers with reusable staged partial data.
 
-The 0.2.4–0.2.8 browser, mixed-engine, lifecycle-race, retry-snapshot, native-range-integrity, no-overwrite-publication, recovery-fault, and protocol-compatibility regressions are deterministic source-level validation. They do not replace a real target-device gate when a behavior materially depends on Firefox/Flatpak/native-host runtime state.
+The 0.2.4–0.2.9 browser, mixed-engine, lifecycle-race, retry-snapshot, native-range-integrity, no-overwrite-publication, recovery-fault, protocol-compatibility, and staging-metadata regressions are deterministic source-level validation. They do not replace a real target-device gate when a behavior materially depends on Firefox/Flatpak/native-host runtime state.
+
+The current native staging code does not yet establish formal no-follow/symlink-hardening semantics for staging paths. That filesystem edge remains open.
 
 Mozilla signing is outside the download engine. An unsigned candidate may be loaded temporarily for development but is not a persistent Stable Firefox release.

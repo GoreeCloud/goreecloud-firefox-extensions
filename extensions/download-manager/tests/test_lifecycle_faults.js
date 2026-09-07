@@ -76,7 +76,7 @@ function createHarness() {
         };
         setTimeout(() => nativePort.onMessage.emit({
           type: "hello",
-          version: "0.2.8",
+          version: "0.2.9",
           protocolVersion: 2,
           capabilities: [...NATIVE_CAPABILITIES]
         }), 0);
@@ -395,7 +395,7 @@ async function main() {
   await h.settle();
   const status = await statusPromise;
   assert.equal(status.available, true);
-  assert.equal(status.helperVersion, "0.2.8");
+  assert.equal(status.helperVersion, "0.2.9");
   assert.equal(status.protocolVersion, 2);
   await h.nativePort.onMessage.emit({
     type: "progress",

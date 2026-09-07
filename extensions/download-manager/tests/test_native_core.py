@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -117,6 +118,97 @@ class NativeCoreTests(unittest.TestCase):
                 "last_modified": "Mon, 01 Jan 2024 00:00:00 GMT",
             }
             self.assertTrue(job.source_changed(metadata, info))
+
+    def test_missing_metadata_discards_orphan_partial_data(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            job = mod.DownloadJob({
+                "jobId": "job-orphan-parts",
+                "url": "https://example.test/file.bin",
+                "directory": tmp,
+            })
+            job.staging.mkdir(parents=True)
+            part = job.single_part_path()
+            part.write_bytes(b"untrusted-partial")
+            info = {
+                "size": 1024,
+                "etag": '"same"',
+                "last_modified": "Mon, 01 Jan 2024 00:00:00 GMT",
+            }
+
+            self.assertIsNone(job.validated_resume_metadata(info))
+            self.assertFalse(part.exists(), "orphaned partial data must not be reused without trusted metadata")
+
+    def test_malformed_or_untrusted_metadata_discards_partial_data(self):
+        base = {
+            "version": 1,
+            "job_id": "job-metadata",
+            "url": "https://example.test/file.bin",
+            "filename": "file.bin",
+            "destination": "/tmp/file.bin",
+            "size": 1024,
+            "etag": '"same"',
+            "last_modified": "Mon, 01 Jan 2024 00:00:00 GMT",
+        }
+        variants = {
+            "malformed-json": "{",
+            "non-object": "[]",
+            "wrong-version": json.dumps({**base, "version": 99}),
+            "wrong-job": json.dumps({**base, "job_id": "other-job"}),
+            "invalid-url": json.dumps({**base, "url": "file:///tmp/file.bin"}),
+            "non-integer-size": json.dumps({**base, "size": "1024"}),
+            "non-string-destination": json.dumps({**base, "destination": ["/tmp/file.bin"]}),
+        }
+        info = {
+            "size": 1024,
+            "etag": '"same"',
+            "last_modified": "Mon, 01 Jan 2024 00:00:00 GMT",
+        }
+
+        for label, payload in variants.items():
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as tmp:
+                job = mod.DownloadJob({
+                    "jobId": "job-metadata",
+                    "url": "https://example.test/file.bin",
+                    "directory": tmp,
+                })
+                job.staging.mkdir(parents=True)
+                job.metadata_path.write_text(payload, encoding="utf-8")
+                part = job.segment_part_path(0)
+                part.write_bytes(b"untrusted-partial")
+
+                self.assertIsNone(job.validated_resume_metadata(info))
+                self.assertFalse(part.exists(), f"{label} metadata must invalidate staged partial data")
+
+    def test_valid_metadata_preserves_reusable_partial_data(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            job = mod.DownloadJob({
+                "jobId": "job-valid-metadata",
+                "url": "https://example.test/file.bin",
+                "directory": tmp,
+            })
+            job.staging.mkdir(parents=True)
+            metadata = {
+                "version": 1,
+                "job_id": job.id,
+                "url": job.url,
+                "filename": "file.bin",
+                "destination": str(Path(tmp) / "file.bin"),
+                "size": 1024,
+                "etag": '"same"',
+                "last_modified": "Mon, 01 Jan 2024 00:00:00 GMT",
+            }
+            job.metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+            part = job.segment_part_path(0)
+            part.write_bytes(b"trusted-partial")
+            info = {
+                "size": 1024,
+                "etag": '"same"',
+                "last_modified": "Mon, 01 Jan 2024 00:00:00 GMT",
+            }
+
+            loaded = job.validated_resume_metadata(info)
+            self.assertEqual(loaded["job_id"], job.id)
+            self.assertTrue(part.exists(), "validated same-job metadata should preserve reusable partial data")
 
     def test_content_range_parser_and_exact_partial_validation(self):
         self.assertEqual(mod.parse_content_range("bytes 10-19/100"), (10, 19, 100))
