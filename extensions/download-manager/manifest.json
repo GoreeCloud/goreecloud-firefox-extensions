@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GoreeCloud Download Manager Extension",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Queue, pause, resume, retry, and accelerate Firefox downloads with an optional segmented native helper.",
   "browser_specific_settings": {
     "gecko": {
@@ -24,7 +24,8 @@
   ],
   "background": {
     "scripts": [
-      "background.js"
+      "background.js",
+      "recovery.js"
     ]
   },
   "icons": {
