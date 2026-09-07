@@ -45,12 +45,12 @@ const capabilities = [...api.REQUIRED_CAPABILITIES];
             r'''
             const result = api.validateNativeHello({
               type: "hello",
-              version: "0.2.9",
+              version: "0.2.10",
               protocolVersion: 2,
               capabilities
             });
             assert.strictEqual(result.compatible, true);
-            assert.strictEqual(result.helperVersion, "0.2.9");
+            assert.strictEqual(result.helperVersion, "0.2.10");
             assert.strictEqual(result.protocolVersion, 2);
             assert.deepStrictEqual(Array.from(result.missingCapabilities), []);
             '''
@@ -84,14 +84,16 @@ const capabilities = [...api.REQUIRED_CAPABILITIES];
     def test_old_helper_on_protocol_two_is_rejected(self):
         self.run_node(
             r'''
-            const result = api.validateNativeHello({
-              type: "hello",
-              version: "0.2.8",
-              protocolVersion: 2,
-              capabilities
-            });
-            assert.strictEqual(result.compatible, false);
-            assert.match(result.error, /older than the supported 0\.2\.9/);
+            for (const version of ["0.2.8", "0.2.9"]) {
+              const result = api.validateNativeHello({
+                type: "hello",
+                version,
+                protocolVersion: 2,
+                capabilities
+              });
+              assert.strictEqual(result.compatible, false);
+              assert.match(result.error, /older than the supported 0\.2\.10/);
+            }
             '''
         )
 
@@ -114,16 +116,18 @@ const capabilities = [...api.REQUIRED_CAPABILITIES];
     def test_missing_required_capability_is_rejected(self):
         self.run_node(
             r'''
-            const missing = capabilities.filter((item) => item !== "no-overwrite-publish");
-            const result = api.validateNativeHello({
-              type: "hello",
-              version: "0.2.9",
-              protocolVersion: 2,
-              capabilities: missing
-            });
-            assert.strictEqual(result.compatible, false);
-            assert.deepStrictEqual(Array.from(result.missingCapabilities), ["no-overwrite-publish"]);
-            assert.match(result.error, /missing required capabilities/);
+            for (const omitted of ["no-overwrite-publish", "staging-link-rejection"]) {
+              const missing = capabilities.filter((item) => item !== omitted);
+              const result = api.validateNativeHello({
+                type: "hello",
+                version: "0.2.10",
+                protocolVersion: 2,
+                capabilities: missing
+              });
+              assert.strictEqual(result.compatible, false);
+              assert.deepStrictEqual(Array.from(result.missingCapabilities), [omitted]);
+              assert.match(result.error, /missing required capabilities/);
+            }
             '''
         )
 
@@ -133,7 +137,7 @@ const capabilities = [...api.REQUIRED_CAPABILITIES];
             const duplicated = [...capabilities, capabilities[0], "  future-capability  ", ""];
             const result = api.validateNativeHello({
               type: "hello",
-              version: "0.2.9+test",
+              version: "0.2.10+test",
               protocolVersion: "2",
               capabilities: duplicated
             });
@@ -148,7 +152,7 @@ const capabilities = [...api.REQUIRED_CAPABILITIES];
             r'''
             const result = api.validateNativeHello({
               type: "progress",
-              version: "0.2.9",
+              version: "0.2.10",
               protocolVersion: 2,
               capabilities
             });
