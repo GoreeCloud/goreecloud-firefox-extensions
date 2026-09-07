@@ -16,13 +16,14 @@ class InstallerContractTests(unittest.TestCase):
 
     def test_linux_installer_validates_native_version_protocol_and_capabilities(self):
         text = INSTALLER.read_text(encoding="utf-8")
-        self.assertIn('EXPECTED_VERSION = "0.2.9"', text)
+        self.assertIn('EXPECTED_VERSION = "0.2.10"', text)
         self.assertIn("EXPECTED_PROTOCOL = 2", text)
         self.assertIn('value.get("protocolVersion")', text)
         self.assertIn("segmented-range-integrity", text)
         self.assertIn("same-job-recovery", text)
         self.assertIn("no-overwrite-publish", text)
         self.assertIn("ephemeral-request-headers", text)
+        self.assertIn("staging-link-rejection", text)
         self.assertIn("Native host startup handshake", text)
         self.assertIn("Native host ping reply", text)
         self.assertIn("Native host version/protocol self-test: PASS", text)

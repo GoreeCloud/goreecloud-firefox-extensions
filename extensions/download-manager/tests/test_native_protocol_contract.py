@@ -17,13 +17,14 @@ EXPECTED_CAPABILITIES = {
     "same-job-recovery",
     "no-overwrite-publish",
     "ephemeral-request-headers",
+    "staging-link-rejection",
 }
 
 
 class NativeProtocolContractTests(unittest.TestCase):
     def test_manifest_loads_protocol_contract_before_background(self):
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-        self.assertEqual(manifest["version"], "0.2.9")
+        self.assertEqual(manifest["version"], "0.2.10")
         scripts = manifest["background"]["scripts"]
         self.assertGreaterEqual(len(scripts), 2)
         self.assertEqual(scripts[0], "native_protocol.js")
@@ -43,10 +44,10 @@ class NativeProtocolContractTests(unittest.TestCase):
         assert spec.loader is not None
         spec.loader.exec_module(module)
         hello = module.hello_message()
-        self.assertEqual(module.VERSION, "0.2.9")
+        self.assertEqual(module.VERSION, "0.2.10")
         self.assertEqual(module.PROTOCOL_VERSION, 2)
         self.assertEqual(hello["type"], "hello")
-        self.assertEqual(hello["version"], "0.2.9")
+        self.assertEqual(hello["version"], "0.2.10")
         self.assertEqual(hello["protocolVersion"], 2)
         self.assertTrue(EXPECTED_CAPABILITIES.issubset(set(hello["capabilities"])))
 

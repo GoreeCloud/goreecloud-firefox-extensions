@@ -1,11 +1,12 @@
 (function () {
   const REQUIRED_PROTOCOL_VERSION = 2;
-  const MINIMUM_HELPER_VERSION = "0.2.9";
+  const MINIMUM_HELPER_VERSION = "0.2.10";
   const REQUIRED_CAPABILITIES = Object.freeze([
     "segmented-range-integrity",
     "same-job-recovery",
     "no-overwrite-publish",
-    "ephemeral-request-headers"
+    "ephemeral-request-headers",
+    "staging-link-rejection"
   ]);
 
   function normalizeProtocolVersion(value) {

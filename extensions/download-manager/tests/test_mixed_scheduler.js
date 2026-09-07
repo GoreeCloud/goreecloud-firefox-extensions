@@ -11,7 +11,8 @@ const NATIVE_CAPABILITIES = [
   "segmented-range-integrity",
   "same-job-recovery",
   "no-overwrite-publish",
-  "ephemeral-request-headers"
+  "ephemeral-request-headers",
+  "staging-link-rejection"
 ];
 
 function event() {
@@ -92,7 +93,7 @@ function createHarness() {
       connectNative() {
         setTimeout(() => nativeOnMessage.emit({
           type: "hello",
-          version: "0.2.9",
+          version: "0.2.10",
           protocolVersion: 2,
           capabilities: [...NATIVE_CAPABILITIES]
         }), 0);

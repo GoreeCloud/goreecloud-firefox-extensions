@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import concurrent.futures
+import errno
 import json
 import os
 import re
 import shutil
+import stat
 import struct
 import sys
 import threading
@@ -12,13 +14,14 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-VERSION = "0.2.9"
+VERSION = "0.2.10"
 PROTOCOL_VERSION = 2
 PROTOCOL_CAPABILITIES = [
     "segmented-range-integrity",
     "same-job-recovery",
     "no-overwrite-publish",
     "ephemeral-request-headers",
+    "staging-link-rejection",
 ]
 USER_AGENT = f"GoreeCloudDownloadManager/{VERSION}"
 WRITE_LOCK = threading.Lock()
@@ -212,6 +215,66 @@ def thread_is_alive(job):
     return bool(thread and thread.is_alive())
 
 
+def lstat_or_none(path):
+    try:
+        return Path(path).lstat()
+    except FileNotFoundError:
+        return None
+
+
+def require_plain_directory(path, label):
+    path = Path(path)
+    info = lstat_or_none(path)
+    if info is None:
+        return False
+    if stat.S_ISLNK(info.st_mode):
+        raise RuntimeError(f"Refusing symbolic-link {label}: {path}")
+    if not stat.S_ISDIR(info.st_mode):
+        raise RuntimeError(f"Expected directory for {label}: {path}")
+    return True
+
+
+def require_plain_file(path, label, allow_missing=True):
+    path = Path(path)
+    info = lstat_or_none(path)
+    if info is None:
+        if allow_missing:
+            return None
+        raise RuntimeError(f"Missing {label}: {path}")
+    if stat.S_ISLNK(info.st_mode):
+        raise RuntimeError(f"Refusing symbolic-link {label}: {path}")
+    if not stat.S_ISREG(info.st_mode):
+        raise RuntimeError(f"Expected regular file for {label}: {path}")
+    return info
+
+
+def open_nofollow(path, mode, permissions=0o600):
+    """Open a regular file while refusing a symlink as the final path component."""
+    path = Path(path)
+    flags = 0
+    if "r" in mode and all(marker not in mode for marker in "wa+"):
+        flags |= os.O_RDONLY
+    else:
+        flags |= os.O_WRONLY
+    if "w" in mode:
+        flags |= os.O_CREAT | os.O_TRUNC
+    if "a" in mode:
+        flags |= os.O_CREAT | os.O_APPEND
+    if "x" in mode:
+        flags |= os.O_CREAT | os.O_EXCL
+    if "+" in mode:
+        flags = (flags & ~os.O_WRONLY) | os.O_RDWR
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    try:
+        fd = os.open(path, flags, permissions)
+    except OSError as exc:
+        if exc.errno in {errno.ELOOP, errno.EMLINK}:
+            raise RuntimeError(f"Refusing symbolic-link staging file: {path}") from exc
+        raise
+    return os.fdopen(fd, mode)
+
+
 class DownloadJob:
     def __init__(self, msg):
         self.id = str(msg["jobId"])
@@ -237,7 +300,8 @@ class DownloadJob:
         self.effective_segments = 1
         self.last_state = "starting"
         self.last_error = None
-        self.staging = self.directory / ".goreecloud-downloads" / safe_job_id(self.id)
+        self.staging_root = self.directory / ".goreecloud-downloads"
+        self.staging = self.staging_root / safe_job_id(self.id)
         self.metadata_path = self.staging / "metadata.json"
 
     def emit(self, state, **extra):
@@ -245,7 +309,7 @@ class DownloadJob:
             self.last_state = state
             if "error" in extra:
                 self.last_error = extra.get("error")
-            elif state not in {"error"}:
+            elif state != "error":
                 self.last_error = None
         now = time.monotonic()
         with self.bytes_lock:
@@ -274,18 +338,52 @@ class DownloadJob:
         while self.pause_event.is_set() and not self.cancel_event.is_set():
             time.sleep(0.15)
 
+    def ensure_staging_directory(self):
+        self.directory.mkdir(parents=True, exist_ok=True)
+        if not require_plain_directory(self.staging_root, "staging root"):
+            self.staging_root.mkdir(mode=0o700)
+        if not require_plain_directory(self.staging, "job staging directory"):
+            self.staging.mkdir(mode=0o700)
+        require_plain_directory(self.staging_root, "staging root")
+        require_plain_directory(self.staging, "job staging directory")
+
+    def validate_staging_path(self, path, label="staging file", allow_missing=True):
+        self.ensure_staging_directory()
+        path = Path(path)
+        if path.parent != self.staging:
+            raise RuntimeError(f"Refusing staging path outside job directory: {path}")
+        return require_plain_file(path, label, allow_missing=allow_missing)
+
+    def staging_size(self, path):
+        info = self.validate_staging_path(path)
+        return info.st_size if info is not None else 0
+
+    def unlink_staging_file(self, path):
+        path = Path(path)
+        if path.parent != self.staging:
+            raise RuntimeError(f"Refusing staging unlink outside job directory: {path}")
+        info = lstat_or_none(path)
+        if info is None:
+            return
+        if stat.S_ISDIR(info.st_mode) and not stat.S_ISLNK(info.st_mode):
+            raise RuntimeError(f"Refusing directory where staging file is expected: {path}")
+        path.unlink(missing_ok=True)
+
     def load_metadata(self):
-        if not self.metadata_path.exists():
+        self.ensure_staging_directory()
+        info = self.validate_staging_path(self.metadata_path, "metadata.json")
+        if info is None:
             return None
         try:
-            data = json.loads(self.metadata_path.read_text(encoding="utf-8"))
+            with open_nofollow(self.metadata_path, "r") as stream:
+                data = json.load(stream)
+        except (RuntimeError, OSError):
+            raise
         except Exception:
             return None
         if not isinstance(data, dict):
             return None
-        if data.get("version") != 1:
-            return None
-        if data.get("job_id") != self.id:
+        if data.get("version") != 1 or data.get("job_id") != self.id:
             return None
         stored_url = data.get("url")
         if not isinstance(stored_url, str):
@@ -314,7 +412,7 @@ class DownloadJob:
         return metadata
 
     def write_metadata(self, info):
-        self.staging.mkdir(parents=True, exist_ok=True)
+        self.ensure_staging_directory()
         data = {
             "version": 1,
             "job_id": self.id,
@@ -326,8 +424,17 @@ class DownloadJob:
             "last_modified": info.get("last_modified"),
             "created_at": time.time(),
         }
-        temp = self.metadata_path.with_suffix(".tmp")
-        temp.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
+        temp = self.staging / "metadata.tmp"
+        self.unlink_staging_file(temp)
+        with open_nofollow(temp, "x") as stream:
+            json.dump(data, stream, indent=2, sort_keys=True)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        existing = lstat_or_none(self.metadata_path)
+        if existing is not None and stat.S_ISLNK(existing.st_mode):
+            temp.unlink(missing_ok=True)
+            raise RuntimeError(f"Refusing symbolic-link metadata.json: {self.metadata_path}")
         os.replace(temp, self.metadata_path)
 
     def source_changed(self, metadata, info):
@@ -347,19 +454,27 @@ class DownloadJob:
         return False
 
     def clear_staging_parts(self):
-        if self.staging.exists():
-            for child in self.staging.iterdir():
-                if child.name != "metadata.json":
-                    if child.is_dir():
-                        shutil.rmtree(child, ignore_errors=True)
-                    else:
-                        child.unlink(missing_ok=True)
+        self.ensure_staging_directory()
+        for child in list(self.staging.iterdir()):
+            if child.name == "metadata.json":
+                continue
+            info = child.lstat()
+            if stat.S_ISDIR(info.st_mode) and not stat.S_ISLNK(info.st_mode):
+                shutil.rmtree(child, ignore_errors=False)
+            else:
+                child.unlink(missing_ok=True)
 
     def cleanup_staging(self):
-        shutil.rmtree(self.staging, ignore_errors=True)
-        parent = self.staging.parent
+        if not require_plain_directory(self.staging_root, "staging root"):
+            return
+        info = lstat_or_none(self.staging)
+        if info is None:
+            return
+        if stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode):
+            raise RuntimeError(f"Refusing unsafe job staging cleanup: {self.staging}")
+        shutil.rmtree(self.staging, ignore_errors=False)
         try:
-            parent.rmdir()
+            self.staging_root.rmdir()
         except OSError:
             pass
 
@@ -380,13 +495,11 @@ class DownloadJob:
 
     def commit_staged_file(self, source):
         source = Path(source)
-        if not source.is_file():
-            raise RuntimeError("Completed staging file is missing")
-
+        self.validate_staging_path(source, "completed staging file", allow_missing=False)
         while True:
             destination = self.destination
             try:
-                os.link(source, destination)
+                os.link(source, destination, follow_symlinks=False)
             except FileExistsError:
                 release_destination(self.id, destination)
                 self.destination = reserve_unique_path(self.directory / self.filename, self.id)
@@ -400,19 +513,16 @@ class DownloadJob:
 
     def run(self):
         try:
-            self.directory.mkdir(parents=True, exist_ok=True)
-            self.staging.mkdir(parents=True, exist_ok=True)
+            self.ensure_staging_directory()
             info = probe(self.url, self.request_headers)
             metadata = self.validated_resume_metadata(info)
             self.total_size = info["size"]
             self.choose_destination(info, metadata)
             self.write_metadata(info)
-
             if self.total_size > 0 and info["ranges"] and self.segments > 1:
                 self._run_segmented(info)
             else:
                 self._run_single(info)
-
             if self.cancel_event.is_set():
                 self.cleanup_staging()
                 self.emit("cancelled")
@@ -421,7 +531,10 @@ class DownloadJob:
             self.emit("complete")
         except Exception as exc:
             if self.cancel_event.is_set():
-                self.cleanup_staging()
+                try:
+                    self.cleanup_staging()
+                except Exception:
+                    pass
                 self.emit("cancelled")
             else:
                 self.emit("error", error=f"{type(exc).__name__}: {exc}")
@@ -430,11 +543,7 @@ class DownloadJob:
                 release_destination(self.id, self.destination)
 
     def request_base_headers(self, info):
-        headers = {
-            "User-Agent": USER_AGENT,
-            "Accept-Encoding": "identity",
-            **self.request_headers,
-        }
+        headers = {"User-Agent": USER_AGENT, "Accept-Encoding": "identity", **self.request_headers}
         if info.get("etag"):
             headers["If-Range"] = info["etag"]
         elif info.get("last_modified"):
@@ -453,11 +562,10 @@ class DownloadJob:
     def _run_single(self, info):
         self.effective_segments = 1
         part = self.single_part_path()
-        existing = part.stat().st_size if part.exists() else 0
+        existing = self.staging_size(part)
         if self.total_size > 0 and existing > self.total_size:
-            part.unlink(missing_ok=True)
+            self.unlink_staging_file(part)
             existing = 0
-
         headers = self.request_base_headers(info)
         resumable = existing > 0 and info.get("ranges")
         if resumable:
@@ -468,12 +576,11 @@ class DownloadJob:
             self.bytes_received = existing if resumable else 0
         self.last_speed_bytes = self.bytes_received
         self.emit("downloading")
-
         with urllib.request.urlopen(request, timeout=60) as response:
             if resumable:
                 expected_end = self.total_size - 1 if self.total_size > 0 else None
                 validate_partial_response(response, existing, expected_end, self.total_size)
-            with open(part, mode) as output:
+            with open_nofollow(part, mode) as output:
                 last_emit = 0.0
                 while True:
                     if self.cancel_event.is_set():
@@ -491,9 +598,9 @@ class DownloadJob:
                     if now - last_emit >= 0.35:
                         self.emit("paused" if self.pause_event.is_set() else "downloading")
                         last_emit = now
-
-        if self.total_size > 0 and part.stat().st_size != self.total_size:
-            raise RuntimeError(f"Download ended at {part.stat().st_size} bytes; expected {self.total_size}")
+        final_size = self.staging_size(part)
+        if self.total_size > 0 and final_size != self.total_size:
+            raise RuntimeError(f"Download ended at {final_size} bytes; expected {self.total_size}")
         self.commit_staged_file(part)
 
     def _run_segmented(self, info):
@@ -507,15 +614,15 @@ class DownloadJob:
             end = min(size - 1, start + span - 1)
             if start <= end:
                 ranges.append((index, start, end))
-
         restored = 0
         for index, start, end in ranges:
             part = self.segment_part_path(index)
             expected = end - start + 1
-            if part.exists() and part.stat().st_size > expected:
-                part.unlink(missing_ok=True)
-            if part.exists():
-                restored += min(part.stat().st_size, expected)
+            have = self.staging_size(part)
+            if have > expected:
+                self.unlink_staging_file(part)
+                have = 0
+            restored += min(have, expected)
         with self.bytes_lock:
             self.bytes_received = restored
         self.last_speed_bytes = restored
@@ -525,24 +632,23 @@ class DownloadJob:
             index, start, end = item
             part = self.segment_part_path(index)
             expected = end - start + 1
-            have = part.stat().st_size if part.exists() else 0
+            have = self.staging_size(part)
             if have >= expected:
                 return
-
             attempt = 0
             while attempt <= self.retry_count:
                 try:
                     self.wait_if_paused()
                     if self.cancel_event.is_set():
                         return
-                    have = part.stat().st_size if part.exists() else 0
+                    have = self.staging_size(part)
                     request_start = start + have
                     headers = self.request_base_headers(info)
                     headers["Range"] = f"bytes={request_start}-{end}"
                     request = urllib.request.Request(self.url, headers=headers)
                     with urllib.request.urlopen(request, timeout=60) as response:
                         validate_partial_response(response, request_start, end, size)
-                        with open(part, "ab") as output:
+                        with open_nofollow(part, "ab") as output:
                             while have < expected:
                                 if self.cancel_event.is_set():
                                     return
@@ -580,22 +686,21 @@ class DownloadJob:
                     future.result()
             if self.cancel_event.is_set():
                 return
-
             assembled = self.assembled_part_path()
-            assembled.unlink(missing_ok=True)
-            with open(assembled, "wb") as output:
+            self.unlink_staging_file(assembled)
+            with open_nofollow(assembled, "x") as output:
                 for index, start, end in ranges:
                     part = self.segment_part_path(index)
                     expected = end - start + 1
-                    if not part.exists() or part.stat().st_size != expected:
+                    if self.staging_size(part) != expected:
                         raise RuntimeError(f"Segment {index} is incomplete")
-                    with open(part, "rb") as source:
+                    with open_nofollow(part, "rb") as source:
                         while True:
                             chunk = source.read(1024 * 1024)
                             if not chunk:
                                 break
                             output.write(chunk)
-            if assembled.stat().st_size != size:
+            if self.staging_size(assembled) != size:
                 raise RuntimeError("Assembled file size does not match the source size")
             self.commit_staged_file(assembled)
         finally:
