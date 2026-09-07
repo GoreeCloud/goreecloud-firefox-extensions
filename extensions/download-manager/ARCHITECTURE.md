@@ -2,13 +2,13 @@
 
 ## Status
 
-Version 0.2.1 source candidate.
+Version 0.2.2 source candidate.
 
 ## Components
 
 ### Firefox extension
 
-The Manifest V3 extension owns user interaction, queue state, Firefox-download integration, settings, optional permission acquisition, notification behavior, and Native Messaging coordination.
+The Manifest V3 extension owns user interaction, queue state, Firefox-download integration, settings, optional permission acquisition, notification behavior, Native Messaging coordination, and recovery orchestration.
 
 The queue is stored in `browser.storage.local`. Download jobs have a stable GoreeCloud job ID independent of Firefox's numeric `downloadId`, allowing queued and native jobs to share one state model.
 
@@ -32,6 +32,24 @@ Native staging layout:
 `metadata.json` stores source and destination metadata but never cookies or other request credentials.
 
 Before resuming existing parts, the helper compares available ETag, Last-Modified, and source-size information. If the source identity changed, old partial data is discarded before the new transfer begins.
+
+### Native recovery controller
+
+The extension loads `recovery.js` after the primary background controller. Native staging is keyed by the GoreeCloud job ID, so recovery must preserve that ID to reuse partial segments.
+
+For an interrupted or errored native job that previously started, the recovery controller:
+
+1. verifies that the Native Messaging helper can complete its handshake;
+2. keeps the existing GoreeCloud job record and job ID;
+3. requeues that same job as native without resetting transferred-byte metadata or segment configuration;
+4. lets the primary queue controller issue a native `resume` message because `nativeStarted` remains true; and
+5. allows the helper to reconstruct the missing in-memory job from the existing job-scoped staging directory.
+
+The controller checks helper availability before requeueing so a temporarily unavailable helper does not silently turn a recovery attempt into a Firefox-engine fallback.
+
+When a non-persistent Firefox background context is recreated, native jobs persisted in stale active states (`starting`, `in_progress`, or `downloading`) are reconciled through the same same-ID recovery path. Explicitly paused jobs are not automatically resumed. Jobs already marked `interrupted` or `error` remain user-controlled until **Resume** is selected.
+
+This is implemented recovery architecture in the 0.2.2 source candidate. Target-browser restart/recovery acceptance remains pending until validated with the 0.2.2 runtime build.
 
 ### Native host installation
 
