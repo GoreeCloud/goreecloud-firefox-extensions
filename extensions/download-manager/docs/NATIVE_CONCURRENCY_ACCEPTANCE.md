@@ -4,7 +4,7 @@
 
 Accepted runtime evidence for the unsigned 0.2.3 source candidate on Mozilla Firefox 155.0.1 from Flathub Flatpak.
 
-This document records one narrow acceptance gate: native segmented batch scheduling at a configured global download-job concurrency limit of three. It does not represent Firefox-engine acceptance, mixed-engine acceptance, Mozilla signing, Release Candidate status, or Stable status.
+This document records the native segmented batch scheduling gate at a configured global download-job concurrency limit of three together with independent output-integrity verification for the five controlled files. It does not represent Firefox-engine acceptance, mixed-engine acceptance, Mozilla signing, Release Candidate status, or Stable status.
 
 ## Controlled environment
 
@@ -46,19 +46,41 @@ During the controlled batch, `/status` reported:
 
 No requests for controlled jobs 04 or 05 were present in that captured active sample.
 
+## Output integrity evidence
+
+The controlled source payload was:
+
+```text
+/tmp/goreecloud-download-manager-concurrency-test/payload.bin
+SHA-256 3b6a07d0d404fab4e23b6d34bc6696a6a312dd92821332385e5af7c01c421351
+```
+
+Independent `sha256sum` and byte-for-byte `cmp` checks were then run against all five completed outputs in `~/Downloads`:
+
+- `goreecloud-concurrency-01.bin` — SHA-256 `3b6a07d0d404fab4e23b6d34bc6696a6a312dd92821332385e5af7c01c421351` — `INTEGRITY: PASS`
+- `goreecloud-concurrency-02.bin` — SHA-256 `3b6a07d0d404fab4e23b6d34bc6696a6a312dd92821332385e5af7c01c421351` — `INTEGRITY: PASS`
+- `goreecloud-concurrency-03.bin` — SHA-256 `3b6a07d0d404fab4e23b6d34bc6696a6a312dd92821332385e5af7c01c421351` — `INTEGRITY: PASS`
+- `goreecloud-concurrency-04.bin` — SHA-256 `3b6a07d0d404fab4e23b6d34bc6696a6a312dd92821332385e5af7c01c421351` — `INTEGRITY: PASS`
+- `goreecloud-concurrency-05.bin` — SHA-256 `3b6a07d0d404fab4e23b6d34bc6696a6a312dd92821332385e5af7c01c421351` — `INTEGRITY: PASS`
+
+The aggregate check reported `ALL FIVE CONCURRENCY FILES: PASS`.
+
 ## Acceptance interpretation
 
 The captured server state establishes that exactly three native download jobs were active at the sampled point while each job used eight native range workers. The resulting 24 simultaneous HTTP requests therefore correspond to **3 active GoreeCloud jobs × 8 native segment workers**, not 24 scheduler jobs.
 
 The absence of requests for jobs 04 and 05 in the active sample is consistent with the configured global `maxConcurrent = 3` scheduler holding later batch jobs until a job slot became available. The completed Manager state then showed controlled jobs 01 through 05 all finished successfully as native eight-segment jobs.
 
+The independent integrity checks establish that all five completed outputs reproduce the deterministic 64 MiB source payload exactly.
+
 This accepts the following behavior for the tested environment:
 
 - batch submission can progress through more jobs than the configured active-job limit;
 - the global scheduler enforces a three-job active ceiling for the observed native batch;
 - native segment workers do not each consume a global managed-job slot;
-- three native jobs can each use eight concurrent segment workers at the same time; and
-- the five observed controlled native jobs reached the complete state.
+- three native jobs can each use eight concurrent segment workers at the same time;
+- the five observed controlled native jobs reached the complete state; and
+- all five controlled outputs passed SHA-256 and byte-for-byte integrity verification.
 
 ## Not accepted by this evidence
 
@@ -68,7 +90,6 @@ This run does **not** establish:
 - browser-engine pause, queue-slot promotion, and resume behavior;
 - mixed Firefox/native global scheduler behavior;
 - completion-notification acceptance;
-- independent SHA-256 verification of the five 64 MiB outputs;
 - persistent signed installation or full-browser restart recovery;
 - Mozilla signing, Release Candidate qualification, or Stable promotion.
 
