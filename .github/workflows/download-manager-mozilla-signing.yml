@@ -65,7 +65,8 @@ jobs:
           python shared/scripts/validate_repository.py
           python -m py_compile \
             extensions/download-manager/scripts/native-host/goreecloud_download_manager_native.py \
-            extensions/download-manager/tests/signed_restart_smoke.py
+            extensions/download-manager/tests/signed_restart_smoke.py \
+            extensions/download-manager/tests/amo_signed_version_recovery.py
           python -m unittest discover -s extensions/download-manager/tests -p 'test_*.py'
           node extensions/download-manager/tests/test_browser_scheduler.js
           node extensions/download-manager/tests/test_mixed_scheduler.js
@@ -158,112 +159,9 @@ jobs:
             exit "$signing_status"
           fi
 
-          echo "Mozilla already has version ${DOWNLOAD_MANAGER_VERSION}; retrieving that approved version for signed-XPI and exact-payload verification."
-          python - "$DOWNLOAD_MANAGER_VERSION" <<'PY'
-          import base64
-          import hashlib
-          import hmac
-          import json
-          import os
-          import sys
-          import time
-          import uuid
-          from pathlib import Path
-          from urllib.parse import quote
-          from urllib.request import Request, urlopen
-
-          version = sys.argv[1]
-          addon_id = 'download-manager@goreecloud.com'
-          issuer = os.environ['AMO_JWT_ISSUER']
-          secret = os.environ['AMO_JWT_SECRET'].encode('utf-8')
-
-          def b64url(value: bytes) -> str:
-              return base64.urlsafe_b64encode(value).rstrip(b'=').decode('ascii')
-
-          now = int(time.time())
-          header = {'alg': 'HS256', 'typ': 'JWT'}
-          payload = {
-              'iss': issuer,
-              'jti': str(uuid.uuid4()),
-              'iat': now,
-              'exp': now + 60,
-          }
-          encoded_header = b64url(json.dumps(header, separators=(',', ':')).encode('utf-8'))
-          encoded_payload = b64url(json.dumps(payload, separators=(',', ':')).encode('utf-8'))
-          signing_input = f'{encoded_header}.{encoded_payload}'.encode('ascii')
-          signature = b64url(hmac.new(secret, signing_input, hashlib.sha256).digest())
-          token = f'{encoded_header}.{encoded_payload}.{signature}'
-
-          detail_url = (
-              'https://addons.mozilla.org/api/v5/addons/addon/'
-              f'{quote(addon_id, safe="")}/versions/{quote(version, safe="")}/'
-          )
-          detail_request = Request(
-              detail_url,
-              headers={
-                  'Authorization': f'JWT {token}',
-                  'Accept': 'application/json',
-                  'User-Agent': 'GoreeCloud-Download-Manager-Signing-Acceptance/1.0',
-              },
-          )
-          with urlopen(detail_request, timeout=60) as response:
-              detail = json.load(response)
-
-          if detail.get('version') != version:
-              raise SystemExit(f"AMO version mismatch: {detail.get('version')!r}")
-          if detail.get('channel') != 'unlisted':
-              raise SystemExit(f"AMO version is not unlisted: {detail.get('channel')!r}")
-          file_info = detail.get('file') or {}
-          if str(file_info.get('status', '')).lower() != 'public':
-              raise SystemExit(f"AMO existing file is not approved/public: {file_info.get('status')!r}")
-          download_url = file_info.get('url')
-          if not isinstance(download_url, str) or not download_url.startswith('https://'):
-              raise SystemExit(f'AMO existing file has invalid download URL: {download_url!r}')
-
-          # AMO's is_mozilla_signed_extension flag means Mozilla's internal-certificate
-          # class, not ordinary AMO signing. Ordinary signed WebExtensions can report
-          # false here. The release gate therefore relies on approved status, the AMO
-          # file hash, XPI signature metadata, exact payload parity, and Firefox's own
-          # persistent-install acceptance rather than treating this flag as required.
-          internal_certificate = file_info.get('is_mozilla_signed_extension')
-          print(f'AMO internal-certificate flag (informational): {internal_certificate!r}')
-
-          download_request = Request(
-              download_url,
-              headers={'User-Agent': 'GoreeCloud-Download-Manager-Signing-Acceptance/1.0'},
-          )
-          with urlopen(download_request, timeout=120) as response:
-              signed_bytes = response.read()
-
-          expected_hash = file_info.get('hash')
-          actual_hash = hashlib.sha256(signed_bytes).hexdigest()
-          if not isinstance(expected_hash, str) or not expected_hash.startswith('sha256:'):
-              raise SystemExit(f'AMO existing file is missing a SHA-256 hash: {expected_hash!r}')
-          if expected_hash.split(':', 1)[1].lower() != actual_hash:
-              raise SystemExit(
-                  f'AMO signed-file hash mismatch: api={expected_hash} downloaded=sha256:{actual_hash}'
-              )
-
-          target = Path('dist/mozilla') / f'existing-{version}.xpi'
-          target.write_bytes(signed_bytes)
-          Path('dist/mozilla-signing-source.txt').write_text('existing-version\n', encoding='utf-8')
-          Path('dist/amo-existing-version-metadata.json').write_text(
-              json.dumps(
-                  {
-                      'version': version,
-                      'channel': detail.get('channel'),
-                      'fileId': file_info.get('id'),
-                      'fileStatus': file_info.get('status'),
-                      'fileHash': expected_hash,
-                      'internalCertificateFlag': internal_certificate,
-                  },
-                  indent=2,
-                  sort_keys=True,
-              ) + '\n',
-              encoding='utf-8',
-          )
-          print(f'Retrieved existing approved AMO version {version}: sha256:{actual_hash}')
-          PY
+          echo "Mozilla already has version ${DOWNLOAD_MANAGER_VERSION}; retrieving that approved version through Mozilla's authenticated signed-file API."
+          python extensions/download-manager/tests/amo_signed_version_recovery.py \
+            "$DOWNLOAD_MANAGER_VERSION" dist/mozilla
 
       - name: Normalize and inspect Mozilla-signed XPI
         shell: bash
@@ -378,6 +276,9 @@ jobs:
               'fullBrowserNativeRecoveryAccepted': True,
               'stablePromoted': False,
           }
+          amo_metadata_path = Path('dist/amo-existing-version-metadata.json')
+          if amo_metadata_path.exists():
+              record['amoExistingVersion'] = json.loads(amo_metadata_path.read_text(encoding='utf-8'))
           Path('dist/download-manager-signing-evidence.json').write_text(
               json.dumps(record, indent=2, sort_keys=True) + '\n', encoding='utf-8'
           )

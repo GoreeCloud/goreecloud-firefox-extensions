@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY_ROOT = ROOT.parents[1]
 WORKFLOW = REPOSITORY_ROOT / ".github" / "workflows" / "download-manager-mozilla-signing.yml"
 SMOKE = ROOT / "tests" / "signed_restart_smoke.py"
+AMO_RECOVERY = ROOT / "tests" / "amo_signed_version_recovery.py"
 SIGNING = ROOT / "SIGNING.md"
 PLATFORM_REVIEW = ROOT / "PLATFORM_SYSTEM_RELEASE_REVIEW.md"
 
@@ -30,24 +31,42 @@ class SigningContractTests(unittest.TestCase):
         self.assertIn('if [[ "$GITHUB_SHA" != "$main_sha" ]]', text)
 
     def test_existing_signed_version_can_be_recovered_only_with_exact_payload_verification(self):
-        text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("already exists", text)
-        self.assertIn("https://addons.mozilla.org/api/v5/addons/addon/", text)
-        self.assertIn("AMO existing file is not approved/public", text)
-        self.assertIn("AMO existing file is missing a SHA-256 hash", text)
-        self.assertIn("signed XPI does not contain Mozilla signature metadata", text)
-        self.assertIn("Mozilla-signed XPI payload inventory differs", text)
-        self.assertIn("Mozilla-signed XPI changed runtime payload bytes", text)
-        self.assertIn("signedPayloadMatchesCandidate", text)
-        self.assertIn("mozillaSigningSource", text)
-        self.assertIn("mozilla-signing-source.txt", text)
-        self.assertIn("amo-existing-version-metadata.json", text)
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        recovery = AMO_RECOVERY.read_text(encoding="utf-8")
+        self.assertIn("already exists", workflow)
+        self.assertIn("amo_signed_version_recovery.py", workflow)
+        self.assertIn("/api/v5/addons/addon/", recovery)
+        self.assertIn("AMO existing file is not approved/public", recovery)
+        self.assertIn("AMO existing file is missing a SHA-256 hash", recovery)
+        self.assertIn("signed XPI does not contain Mozilla signature metadata", workflow)
+        self.assertIn("Mozilla-signed XPI payload inventory differs", workflow)
+        self.assertIn("Mozilla-signed XPI changed runtime payload bytes", workflow)
+        self.assertIn("signedPayloadMatchesCandidate", workflow)
+        self.assertIn("mozillaSigningSource", workflow)
+        self.assertIn("mozilla-signing-source.txt", workflow)
+        self.assertIn("amo-existing-version-metadata.json", workflow)
+        self.assertIn("amoExistingVersion", workflow)
+
+    def test_existing_version_download_uses_authenticated_file_api_without_redirect_credential_forwarding(self):
+        recovery = AMO_RECOVERY.read_text(encoding="utf-8")
+        self.assertIn("/api/v4/file/{file_id}/", recovery)
+        self.assertIn('"Authorization": f"JWT {token}"', recovery)
+        self.assertIn("class NoRedirect", recovery)
+        self.assertIn("X-Target-Digest", recovery)
+        self.assertIn('mirror_request = Request(location, headers={"User-Agent": USER_AGENT})', recovery)
+        self.assertNotIn(
+            'mirror_request = Request(location, headers={"Authorization"',
+            recovery,
+        )
+        self.assertIn("AMO signed-file hash mismatch", recovery)
+        self.assertIn("AMO redirect X-Target-Digest mismatch", recovery)
+        self.assertIn("authenticatedDownloadApi", recovery)
 
     def test_internal_certificate_flag_is_informational_not_ordinary_signing_gate(self):
-        text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("internal-certificate flag (informational)", text)
-        self.assertIn("not ordinary AMO signing", text)
-        self.assertNotIn("AMO existing file is not marked Mozilla-signed", text)
+        recovery = AMO_RECOVERY.read_text(encoding="utf-8")
+        self.assertIn("internal-certificate flag (informational)", recovery)
+        self.assertIn("is_mozilla_signed_extension", recovery)
+        self.assertNotIn("AMO existing file is not marked Mozilla-signed", recovery)
 
     def test_signed_restart_smoke_requires_persistent_install_and_no_reinstall(self):
         text = SMOKE.read_text(encoding="utf-8")
