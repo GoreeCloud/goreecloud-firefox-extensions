@@ -22,11 +22,11 @@ GoreeCloud Download Manager Extension is a Firefox Manifest V3 download-manageme
 
 ## 0.2.2 recovery hardening
 
-Interrupted or errored native jobs that already started are now recoverable using the **same GoreeCloud job ID**. The extension verifies that the native helper can be reached, requeues the existing job without discarding its progress metadata, and sends a native `resume` request. The helper can then reconstruct the job from the existing `.goreecloud-downloads/<job-id>/` staging directory and segment files.
+Interrupted or errored native jobs that already started are recoverable using the **same GoreeCloud job ID**. The extension verifies that the native helper can be reached, requeues the existing job without discarding its progress metadata, and sends a native `resume` request. The helper can then reconstruct the job from the existing `.goreecloud-downloads/<job-id>/` staging directory and segment files.
 
 If a non-persistent Firefox background context is recreated while a native job is still persisted as active, 0.2.2 reconciles that stale state and attempts same-ID native recovery. Explicitly paused jobs remain paused, and already-interrupted jobs remain under user control until **Resume** is selected.
 
-The 0.2.2 source includes automated controller tests for same-ID progress preservation and recovery behavior. Target Firefox runtime restart-recovery acceptance is still pending and must not be inferred from the source implementation alone.
+The 0.2.2 source includes automated controller tests for same-ID progress preservation and recovery behavior. The target Firefox 155.0.1 Flatpak environment has now accepted deliberate native-helper interruption recovery. Non-persistent background-context recreation and full-browser restart recovery remain separate gates.
 
 ## Linux native-host hardening
 
@@ -63,11 +63,13 @@ For Firefox distributed as a Flatpak, the installer checks whether the `org.free
 
 ## Target runtime evidence
 
-The 0.2.1 baseline was exercised on Mozilla Firefox 155.0.1 from Flathub Flatpak. The unsigned XPI loaded temporarily with the fixed add-on ID, the background script started, popup/Manager/Settings pages rendered, the installed native helper passed direct hello/ping framing, Firefox presented the WebExtensions portal authorization prompt, and the extension reported **Native helper connection opened** after approval.
+The extension has been exercised on Mozilla Firefox 155.0.1 from Flathub Flatpak. The unsigned XPI loaded temporarily with the fixed add-on ID, the background script started, popup/Manager/Settings pages rendered, the installed native helper passed direct hello/ping framing, Firefox presented the WebExtensions portal authorization prompt, and the extension reported **Native helper connection opened** after approval.
 
 A controlled 256 MiB HTTP range download then ran as **native · 8 segments**. Exactly eight segment files existed while the job was paused at 108 MiB / 42%, resume completed the transfer, the assembled file matched source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484`, byte-for-byte comparison passed, and native staging was empty after successful completion.
 
-This evidence accepts the tested native segmented transfer, live pause/resume, assembly, integrity, and staging-cleanup path. It does not yet establish 0.2.2 restart recovery, authenticated-cookie transfer acceptance, Mozilla signing, or persistent signed-install/restart acceptance.
+The 0.2.2 recovery path was then exercised by deliberately terminating the installed native helper during another eight-segment transfer. Job-scoped staging survived under job ID `4273f6a6-5372-4c85-a57f-cfea1953c247` with `metadata.json` plus all eight partial segment files; each segment held 14,417,920 bytes when captured. Selecting **Resume** completed the transfer, the original staging directory was removed after successful assembly, and the recovered output matched the same source SHA-256 exactly with byte-for-byte integrity. Because `goreecloud-range-test.bin` already existed, completion selected `goreecloud-range-test (1).bin`, also validating collision-safe destination naming.
+
+This evidence accepts the tested native segmented transfer, live pause/resume, helper-interruption recovery, existing-segment reuse, collision-safe naming, assembly, integrity, and staging-cleanup paths for the tested Firefox 155.0.1 Flatpak environment. It does not yet establish non-persistent background-context recovery, full-browser restart recovery, authenticated-cookie transfer acceptance, Mozilla signing, or persistent signed-install/restart acceptance.
 
 ## Cookie forwarding
 
@@ -101,4 +103,4 @@ python shared/scripts/package_extension.py download-manager
 
 ## Release state
 
-0.2.2 remains a source candidate until target recovery and remaining runtime tests pass, Mozilla signing completes, the signed artifact installs persistently in the target Firefox build, restart behavior is verified, native-host integration is revalidated against the signed add-on ID, and the release is explicitly promoted.
+0.2.2 remains a source candidate until remaining runtime tests pass, Mozilla signing completes, the signed artifact installs persistently in the target Firefox build, restart behavior is verified, native-host integration is revalidated against the signed add-on ID, and the release is explicitly promoted.

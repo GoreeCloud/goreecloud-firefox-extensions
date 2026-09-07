@@ -49,7 +49,9 @@ The controller checks helper availability before requeueing so a temporarily una
 
 When a non-persistent Firefox background context is recreated, native jobs persisted in stale active states (`starting`, `in_progress`, or `downloading`) are reconciled through the same same-ID recovery path. Explicitly paused jobs are not automatically resumed. Jobs already marked `interrupted` or `error` remain user-controlled until **Resume** is selected.
 
-This is implemented recovery architecture in the 0.2.2 source candidate. Target-browser restart/recovery acceptance remains pending until validated with the 0.2.2 runtime build.
+Target Firefox 155.0.1 / Flathub Flatpak testing has accepted the deliberate native-helper interruption path. During a controlled 256 MiB eight-segment transfer, terminating the native helper left the original job-scoped staging directory intact with `metadata.json` and all eight partial segment files. Resume completed successfully; the original staging directory was removed after assembly; the recovered file reproduced source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484` exactly; and the collision-safe destination policy produced `goreecloud-range-test (1).bin` because the original filename already existed.
+
+This accepts helper-process interruption recovery for the tested target environment. Non-persistent background-context recreation and full-browser restart recovery remain separate acceptance gates.
 
 ### Native host installation
 
