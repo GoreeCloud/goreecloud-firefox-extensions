@@ -33,12 +33,21 @@ class SigningContractTests(unittest.TestCase):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("already exists", text)
         self.assertIn("https://addons.mozilla.org/api/v5/addons/addon/", text)
-        self.assertIn("is_mozilla_signed_extension", text)
+        self.assertIn("AMO existing file is not approved/public", text)
+        self.assertIn("AMO existing file is missing a SHA-256 hash", text)
+        self.assertIn("signed XPI does not contain Mozilla signature metadata", text)
         self.assertIn("Mozilla-signed XPI payload inventory differs", text)
         self.assertIn("Mozilla-signed XPI changed runtime payload bytes", text)
         self.assertIn("signedPayloadMatchesCandidate", text)
         self.assertIn("mozillaSigningSource", text)
         self.assertIn("mozilla-signing-source.txt", text)
+        self.assertIn("amo-existing-version-metadata.json", text)
+
+    def test_internal_certificate_flag_is_informational_not_ordinary_signing_gate(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("internal-certificate flag (informational)", text)
+        self.assertIn("not ordinary AMO signing", text)
+        self.assertNotIn("AMO existing file is not marked Mozilla-signed", text)
 
     def test_signed_restart_smoke_requires_persistent_install_and_no_reinstall(self):
         text = SMOKE.read_text(encoding="utf-8")
