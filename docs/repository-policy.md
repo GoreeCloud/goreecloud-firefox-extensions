@@ -88,11 +88,11 @@ Where applicable, extensions follow GoreeCloud application branding, Glaze UI, W
 
 Privacy Shield adapters must not treat branding as evidence of implementation. Browser-specific Privacy Shield claims remain limited to implemented, testable Firefox behavior and do not confer platform authority outside the adapter's accepted scope.
 
-## Current migration state
+## Current migration and release state
 
 - `GoreeCloud/goreecloud-source-resync` → `extensions/source-resync/`: canonical Firefox source migration accepted.
 - `GoreeCloud/goreecloud-redirector` → `extensions/redirector/`: canonical Firefox source migration accepted; later canonical source versions retain independent signing gates from the historically accepted signed v0.2.0 release.
 - `GoreeCloud/goreecloud-bookmark-browser-extension` → `extensions/bookmarks/`: legacy cross-browser Linkwarden-derived repository inspected; canonical Firefox-specific first-party replacement foundation accepted. Bookmarks remains a source baseline rather than a Stable release.
-- `extensions/privacy-shield/`: first-party Firefox Privacy Shield adapter introduced directly in the canonical repository; no legacy standalone Firefox extension repository exists. Current checked-in source is 0.2.0 candidate while 0.1.1 remains the accepted Stable Firefox release until the 0.2.0 release gates are completed.
+- `extensions/privacy-shield/`: first-party Firefox Privacy Shield adapter introduced directly in the canonical repository; no legacy standalone Firefox extension repository exists. Version 0.2.0 is the accepted Stable Firefox release for Mozilla unlisted/self-distribution after completed human target acceptance, exact reviewed-payload Mozilla signing, signed-artifact runtime/popup/compatibility/MV3 acceptance, persistent signed installation, and full same-profile Firefox restart acceptance. The exact Stable evidence is recorded in `extensions/privacy-shield/RELEASE-PROMOTION-0.2.0.md`.
 
 Legacy repositories remain useful only to the extent required for provenance, cross-browser boundaries, redirects, compatibility, or historical release continuity.

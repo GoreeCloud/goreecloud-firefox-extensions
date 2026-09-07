@@ -38,8 +38,8 @@
       "directory": "extensions/privacy-shield",
       "gecko_id": "privacy-shield@goreecloud.com",
       "source_version": "0.2.0",
-      "source_state": "candidate",
-      "accepted_stable_version": "0.1.1",
+      "source_state": "stable",
+      "accepted_stable_version": "0.2.0",
       "legacy_repository": null,
       "broad_host_permission_review": "extensions/privacy-shield/BROAD_HOST_PERMISSION_REVIEW.md"
     }
