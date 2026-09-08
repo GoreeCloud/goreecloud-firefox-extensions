@@ -66,13 +66,13 @@ class NativeProtocolContractTests(unittest.TestCase):
         self.assertNotIn("not stable", text.lower())
         self.assertNotIn(">stable<", text.lower())
 
-    def test_inventory_matches_manifest_version(self):
+    def test_inventory_matches_manifest_and_accepted_stable_version(self):
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         inventory = json.loads(INVENTORY.read_text(encoding="utf-8"))
         record = next(item for item in inventory["extensions"] if item["slug"] == "download-manager")
         self.assertEqual(record["source_version"], manifest["version"])
-        self.assertEqual(record["source_state"], "source-candidate")
-        self.assertIsNone(record["accepted_stable_version"])
+        self.assertEqual(record["source_state"], "stable")
+        self.assertEqual(record["accepted_stable_version"], manifest["version"])
 
 
 if __name__ == "__main__":
