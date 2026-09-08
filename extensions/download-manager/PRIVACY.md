@@ -4,7 +4,7 @@
 
 The extension stores download-management state locally in Firefox, including URL, filename, engine, progress, queue state, configured segment count, destination metadata returned by the native helper, and timestamps needed to manage the download.
 
-No GoreeCloud server, analytics service, advertising service, or third-party telemetry endpoint is used by this source candidate.
+No GoreeCloud server, analytics service, advertising service, or third-party telemetry endpoint is used by the accepted Stable 0.2.11 release.
 
 ## Optional cookie permission
 
@@ -21,3 +21,7 @@ The native helper writes partial download data and non-secret resume metadata to
 ## Data minimization
 
 The extension does not intentionally collect browsing history. Context-menu downloads receive only the selected link/media URL needed to start that requested download. Optional cookies are limited to the requested target URL.
+
+## Stable release evidence boundary
+
+The 0.2.11 Stable promotion does not broaden this privacy boundary. Its governed signed-runtime acceptance exercised persistent installation, full browser restart, native same-job recovery, and final publication without introducing a GoreeCloud telemetry or remote-service dependency. Any later feature that adds synchronization, remote management, analytics, account-scoped state, or new data flows requires renewed privacy review before release.
