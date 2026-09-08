@@ -9,6 +9,7 @@ REPOSITORY_ROOT = ROOT.parents[1]
 MANIFEST = ROOT / "manifest.json"
 BACKGROUND = ROOT / "background.js"
 OPTIONS = ROOT / "ui" / "options.js"
+OPTIONS_HTML = ROOT / "ui" / "options.html"
 HELPER = ROOT / "scripts" / "native-host" / "goreecloud_download_manager_native.py"
 INVENTORY = REPOSITORY_ROOT / "docs" / "extension-inventory.json"
 
@@ -24,7 +25,7 @@ EXPECTED_CAPABILITIES = {
 class NativeProtocolContractTests(unittest.TestCase):
     def test_manifest_loads_protocol_contract_before_background(self):
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-        self.assertEqual(manifest["version"], "0.2.11")
+        self.assertEqual(manifest["version"], "0.2.12")
         scripts = manifest["background"]["scripts"]
         self.assertGreaterEqual(len(scripts), 2)
         self.assertEqual(scripts[0], "native_protocol.js")
@@ -58,12 +59,20 @@ class NativeProtocolContractTests(unittest.TestCase):
         self.assertIn("result.error", text)
         self.assertIn("protocol ${protocol} ready", text)
 
+    def test_packaged_settings_label_is_lifecycle_neutral(self):
+        text = OPTIONS_HTML.read_text(encoding="utf-8")
+        self.assertIn("GoreeCloud Download Manager Extension 0.2.12", text)
+        self.assertNotIn("source candidate", text.lower())
+        self.assertNotIn("not stable", text.lower())
+        self.assertNotIn(">stable<", text.lower())
+
     def test_inventory_matches_manifest_version(self):
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         inventory = json.loads(INVENTORY.read_text(encoding="utf-8"))
         record = next(item for item in inventory["extensions"] if item["slug"] == "download-manager")
         self.assertEqual(record["source_version"], manifest["version"])
         self.assertEqual(record["source_state"], "source-candidate")
+        self.assertIsNone(record["accepted_stable_version"])
 
 
 if __name__ == "__main__":

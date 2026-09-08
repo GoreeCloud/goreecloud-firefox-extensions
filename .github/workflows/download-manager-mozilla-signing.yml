@@ -58,7 +58,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "DOWNLOAD_MANAGER_VERSION=$VERSION" >> "$GITHUB_ENV"
 
-      - name: Validate exact source candidate
+      - name: Validate exact source state
         shell: bash
         run: |
           set -euo pipefail
@@ -176,7 +176,7 @@ jobs:
             "$DOWNLOAD_MANAGER_VERSION" "$candidate" "$signed"
           unzip -t "dist/goreecloud-download-manager-${DOWNLOAD_MANAGER_VERSION}-signed.xpi"
 
-      - name: Install matching 0.2.10 native helper
+      - name: Install matching native helper
         run: ./extensions/download-manager/scripts/install-native-host-linux.sh
 
       - name: Install Selenium
@@ -204,11 +204,28 @@ jobs:
           signed_line = Path('dist/signed-sha256.txt').read_text(encoding='utf-8').strip()
           signing_source = Path('dist/mozilla-signing-source.txt').read_text(encoding='utf-8').strip()
           parity = json.loads(Path('dist/signed-xpi-parity.json').read_text(encoding='utf-8'))
+          inventory = json.loads(Path('docs/extension-inventory.json').read_text(encoding='utf-8'))
+          entry = next(
+              (item for item in inventory.get('extensions', []) if item.get('slug') == 'download-manager'),
+              None,
+          )
+          if entry is None:
+              raise SystemExit('download-manager is missing from the canonical extension inventory')
+          if entry.get('source_version') != version:
+              raise SystemExit(
+                  f"download-manager inventory/source version mismatch: {entry.get('source_version')!r} != {version!r}"
+              )
+          stable_promoted = (
+              entry.get('source_state') == 'stable'
+              and entry.get('accepted_stable_version') == version
+          )
           record = {
               'schemaVersion': 1,
               'product': 'GoreeCloud Download Manager Extension',
               'version': version,
               'sourceRevision': source_revision,
+              'sourceState': entry.get('source_state'),
+              'acceptedStableVersion': entry.get('accepted_stable_version'),
               'githubWorkflowRunId': int(run_id),
               'candidateSha256': candidate_line.split()[0],
               'signedSha256': signed_line.split()[0],
@@ -221,7 +238,7 @@ jobs:
               'signedXpiParity': parity,
               'persistentInstallRestartAccepted': True,
               'fullBrowserNativeRecoveryAccepted': True,
-              'stablePromoted': False,
+              'stablePromoted': stable_promoted,
           }
           amo_metadata_path = Path('dist/amo-existing-version-metadata.json')
           if amo_metadata_path.exists():
