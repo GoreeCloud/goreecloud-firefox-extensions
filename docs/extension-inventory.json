@@ -18,8 +18,8 @@
       "directory": "extensions/download-manager",
       "gecko_id": "download-manager@goreecloud.com",
       "source_version": "0.2.12",
-      "source_state": "source-candidate",
-      "accepted_stable_version": null,
+      "source_state": "stable",
+      "accepted_stable_version": "0.2.12",
       "legacy_repository": null
     },
     {
