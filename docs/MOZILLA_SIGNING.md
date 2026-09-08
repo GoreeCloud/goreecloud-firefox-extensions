@@ -33,10 +33,13 @@ The manifest version must match `source_version` exactly. `accepted_stable_versi
 
 Current examples:
 
-- GoreeCloud Privacy Shield checks in source version 0.2.0 as a candidate while 0.1.1 remains the independently accepted Mozilla-unlisted Stable Firefox release. The 0.2.0 candidate still requires its remaining manual compatibility/UI, Mozilla signing, signed-artifact runtime, persistent-install/restart, and governed promotion gates.
+- GoreeCloud Download Manager Extension checks in source version 0.2.11 as **Stable**, with accepted Stable version 0.2.11. Governed signing/restart run `34174320808` established exact signed-payload parity, matching native-helper compatibility, persistent installation, full Firefox process restart survival without reinstalling, automatic same-job preserved-range recovery, exact final integrity, staging cleanup, and helper reconnection.
+- GoreeCloud Privacy Shield checks in source version 0.2.0 as **Stable**, with accepted Stable version 0.2.0 after Mozilla unlisted signing and its governed signed-runtime/persistent-restart acceptance.
 - GoreeCloud Redirector checks in source version 0.2.1 while historical Mozilla-signed Stable acceptance remains version 0.2.0. The later source version requires its own signing and runtime acceptance before it can be called Stable.
 - GoreeCloud Bookmarks checks in source version 0.1.1 as a source candidate with no accepted Stable version yet. Its server contract, Firefox runtime acceptance, signing, persistent installation, restart, and post-restart validation remain required before Stable promotion.
 - GoreeCloud Source Resync checks in source version 1.1.2 as canonical source with no accepted Stable version currently recorded in the shared inventory.
+
+Stable status is version-specific. A later source change does not inherit the Stable status of Download Manager 0.2.11, Privacy Shield 0.2.0, Redirector 0.2.0, or any other accepted version without its own required release evidence and explicit lifecycle record.
 
 ## Packaging helper
 
@@ -50,6 +53,7 @@ Examples:
 
 ```bash
 python shared/scripts/package_extension.py bookmarks
+python shared/scripts/package_extension.py download-manager
 python shared/scripts/package_extension.py redirector
 python shared/scripts/package_extension.py source-resync
 python shared/scripts/package_extension.py privacy-shield
