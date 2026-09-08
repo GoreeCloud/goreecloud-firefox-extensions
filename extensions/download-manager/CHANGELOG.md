@@ -1,15 +1,19 @@
 # Change Log — GoreeCloud Download Manager Extension
 
-## 0.2.11 — Source candidate
+## 0.2.11 — Stable
 
 - Fixed the native segmented-publication defect exposed by governed Mozilla-signed 0.2.10 full-browser restart acceptance: `assembled.part` was opened in text-exclusive mode and failed when binary segment chunks were written after all source bytes had recovered.
 - Changed segmented assembly to binary-exclusive `"xb"` mode, retaining exclusive creation and the existing no-follow staging protections while allowing byte-for-byte binary assembly.
 - Added a deterministic native-core regression that prebuilds completed binary segment files, runs the actual segmented assembly/final-publication path, and verifies the committed output bytes exactly without relying on network timing.
 - Advanced the extension manifest and native helper to 0.2.11 while retaining Native Messaging protocol 2.
 - Raised the extension-side minimum compatible helper version to 0.2.11 so the known-defective 0.2.10 helper fails closed until the fixed helper is installed.
-- Advanced Linux installer self-test expectations, protocol compatibility tests, canonical extension inventory, Settings presentation, README, and signed full-restart acceptance expectations to the 0.2.11 source-candidate line.
+- Advanced Linux installer self-test expectations, protocol compatibility tests, canonical extension inventory, Settings presentation, README, and signed full-restart acceptance expectations to the 0.2.11 line.
 - Carried forward the signed 0.2.10 diagnostic evidence that persistent installation, full Firefox restart survival, same-job recovery dispatch, preserved segment reuse, and recovery of all 67,108,864 source bytes were functioning before final publication failed. That run remains diagnostic evidence and does not count as release acceptance.
-- 0.2.11 remains a source candidate until exact-head repository CI, Mozilla signing, persistent signed installation, full-browser restart/native recovery, exact final SHA-256 integrity, staging cleanup, retained release provenance, and explicit lifecycle/documentation promotion all pass.
+- Exact source revision `7a9c33e5e194a05b792c1aa902c72b72f9fdf1fe` passed the governed 71-test/source-contract suite, Firefox and mixed schedulers, lifecycle faults, retry snapshots, syntax checks, deterministic packaging, and archive verification.
+- Mozilla accepted 0.2.11 as a new unlisted signing submission in GitHub Actions run `34174320808`; candidate SHA-256 is `8dab36b259a2837b8218ef2b45af57f0698870a8e15424e66df54db528e34f7d` and Mozilla-signed XPI SHA-256 is `074d901fa18d66ec5d5ee55bcacdfbf066567eec02902f5c6d2c43a361a75830`.
+- The signed 0.2.11 extension installed persistently, survived a complete Firefox 155.0.1 process restart without reinstalling, automatically recovered the same native job with preserved non-boundary HTTP Range offsets, completed 67,108,864 bytes with zero manual Resume actions, reproduced source SHA-256 `a4a99d83daaac4823006cd3b14df26d1a256042591ad7d2f83e7ecbb203c342f`, cleaned original staging, and reconnected the matching 0.2.11 helper.
+- Retained release evidence is artifact `goreecloud-download-manager-0.2.11-mozilla-signed`, artifact ID `10036841722`, artifact ZIP SHA-256 `4b832680de6a7556c3ef9d3021e6d3b270e2f0639539757bbd531badcaca1358`.
+- 0.2.11 was promoted to Stable only after the source, signing, persistent-install, full-browser restart/native-recovery, final-integrity, staging-cleanup, provenance-retention, Platform-System review, and release-documentation gates passed.
 
 ## 0.2.10 — Source candidate
 
