@@ -1,5 +1,16 @@
 # Change Log — GoreeCloud Download Manager Extension
 
+## 0.2.11 — Source candidate
+
+- Fixed the native segmented-publication defect exposed by governed Mozilla-signed 0.2.10 full-browser restart acceptance: `assembled.part` was opened in text-exclusive mode and failed when binary segment chunks were written after all source bytes had recovered.
+- Changed segmented assembly to binary-exclusive `"xb"` mode, retaining exclusive creation and the existing no-follow staging protections while allowing byte-for-byte binary assembly.
+- Added a deterministic native-core regression that prebuilds completed binary segment files, runs the actual segmented assembly/final-publication path, and verifies the committed output bytes exactly without relying on network timing.
+- Advanced the extension manifest and native helper to 0.2.11 while retaining Native Messaging protocol 2.
+- Raised the extension-side minimum compatible helper version to 0.2.11 so the known-defective 0.2.10 helper fails closed until the fixed helper is installed.
+- Advanced Linux installer self-test expectations, protocol compatibility tests, canonical extension inventory, Settings presentation, README, and signed full-restart acceptance expectations to the 0.2.11 source-candidate line.
+- Carried forward the signed 0.2.10 diagnostic evidence that persistent installation, full Firefox restart survival, same-job recovery dispatch, preserved segment reuse, and recovery of all 67,108,864 source bytes were functioning before final publication failed. That run remains diagnostic evidence and does not count as release acceptance.
+- 0.2.11 remains a source candidate until exact-head repository CI, Mozilla signing, persistent signed installation, full-browser restart/native recovery, exact final SHA-256 integrity, staging cleanup, retained release provenance, and explicit lifecycle/documentation promotion all pass.
+
 ## 0.2.10 — Source candidate
 
 - Hardened native staging against symbolic-link substitution and related filesystem-following hazards before persisted partial data, metadata, or assembled output can participate in recovery or publication.

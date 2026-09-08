@@ -14,7 +14,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-VERSION = "0.2.10"
+VERSION = "0.2.11"
 PROTOCOL_VERSION = 2
 PROTOCOL_CAPABILITIES = [
     "segmented-range-integrity",
@@ -688,7 +688,7 @@ class DownloadJob:
                 return
             assembled = self.assembled_part_path()
             self.unlink_staging_file(assembled)
-            with open_nofollow(assembled, "x") as output:
+            with open_nofollow(assembled, "xb") as output:
                 for index, start, end in ranges:
                     part = self.segment_part_path(index)
                     expected = end - start + 1

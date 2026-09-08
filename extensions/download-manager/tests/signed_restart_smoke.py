@@ -3,7 +3,7 @@
 
 This acceptance test deliberately requires a Mozilla-signed Download Manager XPI.
 It installs the extension non-temporarily into an in-place Firefox profile, proves the
-0.2.10 native helper handshake, starts a throttled segmented transfer, quits Firefox
+0.2.11 native helper handshake, starts a throttled segmented transfer, quits Firefox
 while job-scoped partial data exists, then starts a new Firefox process against the
 same profile without reinstalling the add-on. Completion after restart must reuse the
 same native staging identity and reproduce the deterministic source bytes exactly.
@@ -29,7 +29,7 @@ from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 
 EXPECTED_ADDON_ID = "download-manager@goreecloud.com"
-EXPECTED_HELPER_STATUS = "Native helper 0.2.10 · protocol 2 ready."
+EXPECTED_HELPER_STATUS = "Native helper 0.2.11 · protocol 2 ready."
 FIXED_EXTENSION_UUID = "8a92c583-f78e-4f61-a129-44c0a0b02110"
 PAYLOAD_SIZE = 64 * 1024 * 1024
 SEGMENTS = 8

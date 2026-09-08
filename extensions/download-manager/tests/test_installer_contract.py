@@ -16,7 +16,7 @@ class InstallerContractTests(unittest.TestCase):
 
     def test_linux_installer_validates_native_version_protocol_and_capabilities(self):
         text = INSTALLER.read_text(encoding="utf-8")
-        self.assertIn('EXPECTED_VERSION = "0.2.10"', text)
+        self.assertIn('EXPECTED_VERSION = "0.2.11"', text)
         self.assertIn("EXPECTED_PROTOCOL = 2", text)
         self.assertIn('value.get("protocolVersion")', text)
         self.assertIn("segmented-range-integrity", text)

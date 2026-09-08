@@ -2,7 +2,7 @@
 
 ## Status
 
-Version 0.2.10 source candidate. Unsigned; not Release Candidate or Stable.
+Version 0.2.11 source candidate. Unsigned; not Release Candidate or Stable.
 
 ## Firefox extension
 
@@ -26,13 +26,13 @@ Ordinary Retry creates a new GoreeCloud job at the queue tail while preserving t
 
 `native_protocol.js` loads before `background.js` and validates each Native Messaging `hello` before a helper can become ready.
 
-The 0.2.10 extension requires:
+The 0.2.11 extension requires:
 
 - native protocol version `2`;
-- helper version `0.2.10` or newer while protocol 2 remains compatible; and
+- helper version `0.2.11` or newer while protocol 2 remains compatible; and
 - capabilities `segmented-range-integrity`, `same-job-recovery`, `no-overwrite-publish`, `ephemeral-request-headers`, and `staging-link-rejection`.
 
-Legacy, protocol-mismatched, too-old, or capability-incomplete helpers fail closed with reinstall guidance. Fresh native jobs retain Firefox compatibility fallback when native startup is unavailable; already-started same-job native recovery does not silently become a fresh Firefox transfer.
+0.2.10 is deliberately below the minimum even though it speaks protocol 2, because governed signed-restart testing exposed a final segmented-publication defect in that helper line. Legacy, protocol-mismatched, too-old, or capability-incomplete helpers fail closed with reinstall guidance. Fresh native jobs retain Firefox compatibility fallback when native startup is unavailable; already-started same-job native recovery does not silently become a fresh Firefox transfer.
 
 ## Native segmented helper
 
@@ -54,9 +54,9 @@ Persisted bytes are reusable only when `metadata.json` passes the supported sche
 
 A structurally valid record then passes URL, known source size, ETag, and Last-Modified checks. Structural validity is necessary but not sufficient for byte reuse.
 
-### 0.2.10 staging filesystem boundary
+### 0.2.10 staging filesystem boundary retained by 0.2.11
 
-The Linux helper additionally rejects symbolic-link substitution at the persistent staging boundary:
+The Linux helper rejects symbolic-link substitution at the persistent staging boundary:
 
 1. `.goreecloud-downloads` must be a real directory, not a link;
 2. `<job-id>` staging must be a real directory, not a link;
@@ -76,7 +76,9 @@ These controls materially reduce link-following risk but do not claim protection
 
 Resumed and segmented requests require valid HTTP 206 `Content-Range` responses matching the requested start, planned end where applicable, and known total source size. Bytes are not appended before these checks pass.
 
-Native jobs reserve destination paths to prevent simultaneous name selection. Segmented content assembles to job-local `assembled.part`, then final publication uses a no-overwrite same-filesystem link. Destination collision after reservation selects another collision-safe name instead of truncating/replacing an external file.
+Native jobs reserve destination paths to prevent simultaneous name selection. Segmented content assembles to job-local `assembled.part` using a binary-exclusive (`xb`) no-follow stream, then final publication uses a no-overwrite same-filesystem link. Destination collision after reservation selects another collision-safe name instead of truncating/replacing an external file.
+
+0.2.11's binary-exclusive assembly mode fixes the defect found in the signed 0.2.10 restart diagnostic, where all recovered bytes reached staging but text-mode assembly rejected byte writes before final publication.
 
 ### Native recovery
 
@@ -110,16 +112,16 @@ and the manifest to:
 ~/.mozilla/native-messaging-hosts/goreecloud_download_manager.json
 ```
 
-The installer performs compile plus startup/ping protocol validation and requires helper version 0.2.10/protocol 2/all required capabilities. Firefox Flatpak can use the XDG `org.freedesktop.portal.WebExtensions` path.
+The installer performs compile plus startup/ping protocol validation and requires helper version 0.2.11/protocol 2/all required capabilities. Firefox Flatpak can use the XDG `org.freedesktop.portal.WebExtensions` path.
 
 ## Validation model
 
-Deterministic Python/Node regressions exercise native core behavior, staging metadata trust, staging-link rejection, recovery behavior, browser scheduler, mixed scheduler, lifecycle faults, retry snapshots, permission contracts, installer/protocol contracts, source syntax, deterministic XPI packaging, and archive exclusion.
+Deterministic Python/Node regressions exercise native core behavior, binary segmented assembly/publication, staging metadata trust, staging-link rejection, recovery behavior, browser scheduler, mixed scheduler, lifecycle faults, retry snapshots, permission contracts, installer/protocol contracts, source syntax, deterministic XPI packaging, and archive exclusion.
 
-Earlier target Firefox 155.0.1 / Flatpak evidence remains accepted only for the actually tested runtime baseline. 0.2.10's new filesystem behavior remains source-level until exact-head CI and any required later runtime gate pass.
+Earlier target Firefox 155.0.1 / Flatpak evidence remains accepted only for the actually tested runtime baseline. The signed 0.2.10 restart diagnostic additionally established persistent install/restart and same-job range recovery up to complete staging bytes, but its publication failure prevents treating that run as release acceptance. 0.2.11's fix remains source-level until exact-head CI and the new signed restart gate pass.
 
 ## Current boundaries
 
 The native helper does not reproduce arbitrary request bodies, JavaScript execution, DRM, anti-bot challenge state, service-worker authorization, or every browser-only credential mechanism. Windows and macOS native helper support are not implemented.
 
-Mozilla signing is outside the engine implementation. A temporary unsigned candidate is not a persistent Stable Firefox release. Stable promotion requires successful source validation, required Platform-System release reviews, Mozilla signing, and persistent signed-install/restart evidence.
+Mozilla signing is outside the engine implementation. A temporary unsigned candidate is not a persistent Stable Firefox release. Stable promotion requires successful source validation, required Platform-System release review, Mozilla signing, persistent signed-install/restart recovery with exact final integrity, retained provenance, and explicit lifecycle/documentation promotion.

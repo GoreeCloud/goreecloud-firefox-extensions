@@ -24,7 +24,9 @@ and writes the Firefox native-messaging manifest to:
 ~/.mozilla/native-messaging-hosts/goreecloud_download_manager.json
 ```
 
-The 0.2.10 installer compiles the installed helper and performs a Native Messaging startup/ping self-test before reporting success. The self-test requires helper version `0.2.10`, protocol `2`, and the capabilities `segmented-range-integrity`, `same-job-recovery`, `no-overwrite-publish`, `ephemeral-request-headers`, and `staging-link-rejection`. A stale, mismatched, or capability-incomplete helper fails closed instead of being silently treated as compatible.
+The 0.2.11 installer compiles the installed helper and performs a Native Messaging startup/ping self-test before reporting success. The self-test requires helper version `0.2.11`, protocol `2`, and the capabilities `segmented-range-integrity`, `same-job-recovery`, `no-overwrite-publish`, `ephemeral-request-headers`, and `staging-link-rejection`. A stale, mismatched, or capability-incomplete helper fails closed instead of being silently treated as compatible.
+
+0.2.11 is required because the Mozilla-signed 0.2.10 full-browser restart diagnostic exposed a segmented-publication defect in the 0.2.10 helper: it attempted to write binary recovered segment data through a text-mode assembled staging stream. The 0.2.11 helper fixes that final assembly path while retaining the existing metadata, range-integrity, no-overwrite, and staging-link protections.
 
 The helper requires trusted metadata and source identity before persisted partial reuse. It also rejects symbolic-link substitution at the native staging root, per-job staging directory, metadata/part/assembled files, and final staging-source publication boundary. File opens use no-follow semantics where supported by the host OS. These controls are defense in depth for the Linux native helper; they do not claim a universal filesystem sandbox against another process with unrestricted access to the same user account.
 
@@ -44,10 +46,10 @@ Do not grant the Firefox sandbox arbitrary host command execution merely to work
 
 ## Verification
 
-In the extension Settings page, click **Test native helper**. A successful 0.2.10 connection reports the validated helper version and protocol, for example:
+In the extension Settings page, click **Test native helper**. A successful 0.2.11 connection reports the validated helper version and protocol, for example:
 
 ```text
-Native helper 0.2.10 · protocol 2 ready.
+Native helper 0.2.11 · protocol 2 ready.
 ```
 
 A legacy helper, protocol mismatch, minimum-version failure, or missing required capability is rejected with reinstall guidance. The handshake is necessary but not sufficient for release acceptance. Mozilla signing and persistent signed-install/restart validation remain independent release gates.
