@@ -28,14 +28,16 @@ The native helper is a same-user local process, not a security sandbox. The stag
 
 ## Deterministic and runtime evidence
 
-The current source suite includes native-core coverage for binary segmented assembly/publication in addition to the existing metadata-trust, range-integrity, no-overwrite, symlink-safety, protocol, installer, scheduler, lifecycle, retry, permission, syntax, deterministic-package, and archive-verification contracts.
+The accepted 0.2.11 source revision `7a9c33e5e194a05b792c1aa902c72b72f9fdf1fe` passed native-core coverage for binary segmented assembly/publication in addition to metadata-trust, range-integrity, no-overwrite, symlink-safety, protocol, installer, scheduler, lifecycle, retry, permission, syntax, deterministic-package, and archive-verification contracts.
 
-Earlier Firefox 155.0.1 / Flathub Flatpak runtime evidence remains accepted for the previously tested transfer, pause/resume, same-job helper interruption recovery, non-persistent background-context recovery, authenticated-cookie transfer, native concurrency, and initial Firefox queue behavior. Later modeled edge behavior is not reclassified as target-device evidence merely because deterministic tests pass.
+Earlier Firefox 155.0.1 / Flathub Flatpak runtime evidence remains accepted for the previously tested transfer, pause/resume, same-job helper interruption recovery, non-persistent background-context recovery, authenticated-cookie transfer, native concurrency, and initial Firefox queue behavior.
 
-The governed Mozilla-signed 0.2.10 restart diagnostic is also retained as evidence of persistent signed installation, full Firefox process survival, same-job recovery dispatch, non-boundary HTTP Range reuse, and recovery of all 67,108,864 source bytes. It is not release acceptance because final segmented publication failed with `TypeError: write() argument must be str, not bytes`. 0.2.11 directly fixes that defect and must pass a new signed-runtime gate.
+The governed Mozilla-signed 0.2.10 restart diagnostic is retained as evidence of persistent signed installation, full Firefox process survival, same-job recovery dispatch, non-boundary HTTP Range reuse, and recovery of all 67,108,864 source bytes. It was not release acceptance because final segmented publication failed with `TypeError: write() argument must be str, not bytes`.
 
-## Signed-release gate
+0.2.11 corrected that binary/text assembly boundary and then passed the fresh signed-runtime gate in GitHub Actions run `34174320808`. The Mozilla-signed XPI installed persistently, survived a new Firefox process without reinstalling, automatically recovered the same native job with preserved partial ranges, published the final file successfully, reproduced source SHA-256 `a4a99d83daaac4823006cd3b14df26d1a256042591ad7d2f83e7ecbb203c342f`, cleaned staging, and reconnected the matching helper. No manual Resume action was required after restart.
 
-Before Stable promotion, the **Mozilla-signed 0.2.11 artifact** must pass the governed persistent-install/full-browser-restart acceptance. That test must prove non-temporary installation, survival across a new Firefox process without reinstalling, post-restart native-helper compatibility, preservation/reuse of partial native staging through the process exit, same-job recovery, binary-safe final publication, exact final-file SHA-256 integrity, and post-completion staging cleanup.
+## Stable security disposition
 
-The product-specific seven-system applicability review is recorded in `PLATFORM_SYSTEM_RELEASE_REVIEW.md`; it does not claim Wardveil Security platform integration or any other platform integration that is absent from the implementation.
+The **Mozilla-signed 0.2.11 artifact has passed** the governed persistent-install/full-browser-restart acceptance. Stable runtime provenance is bound to signed XPI SHA-256 `074d901fa18d66ec5d5ee55bcacdfbf066567eec02902f5c6d2c43a361a75830` and signing run `34174320808`.
+
+The product-specific seven-system applicability review is recorded in `PLATFORM_SYSTEM_RELEASE_REVIEW.md`; this security disposition does not claim Wardveil Security platform integration or any other platform integration absent from the implementation. Future runtime changes require a renewed review and versioned acceptance appropriate to their changed scope.
