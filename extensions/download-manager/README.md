@@ -1,6 +1,6 @@
 # GoreeCloud Download Manager Extension
 
-**Status:** 0.2.10 source candidate — unsigned, not Release Candidate or Stable
+**Status:** 0.2.11 source candidate — unsigned, not Release Candidate or Stable
 
 GoreeCloud Download Manager Extension is GoreeCloud's first-party Firefox Manifest V3 download manager. It provides managed queueing, pause/resume, retries, batch input, telemetry, and an optional separately installed Linux Native Messaging helper for segmented HTTP range transfers and durable same-job recovery.
 
@@ -20,8 +20,9 @@ Native Messaging host: `goreecloud_download_manager`
 - Fail-closed staged-metadata validation before persisted partial bytes are eligible for reuse.
 - URL/size/ETag/Last-Modified source-identity checks before staged partial reuse.
 - Strict native HTTP 206 / `Content-Range` validation before resumed or segmented bytes are appended.
-- Native staging symlink rejection and no-follow regular-file opens for the 0.2.10 Linux helper.
+- Native staging symlink rejection and no-follow regular-file opens for the Linux helper.
 - Collision-safe native destination reservation and no-overwrite final publication from staging.
+- Binary-safe segmented assembly before final publication.
 - Versioned extension/native protocol negotiation with required capability validation.
 - Optional target-site cookie forwarding behind explicit Firefox optional permission.
 - Completion/failure notifications.
@@ -31,13 +32,23 @@ Native Messaging host: `goreecloud_download_manager`
 - Cross-platform requested-filename normalization for browser retries.
 - GoreeCloud product branding and Glaze-aligned popup, Manager, and Settings interfaces.
 
+## 0.2.11 segmented publication fix
+
+The governed Mozilla-signed 0.2.10 full-browser restart acceptance proved that same-job recovery itself was functioning: the signed extension survived a full Firefox restart, retained the original GoreeCloud job identity, preserved native staging, issued resumed HTTP Range requests inside the existing segment boundaries, and recovered all 67,108,864 source bytes.
+
+The run then exposed a native publication defect. Segmented assembly opened `assembled.part` with text-exclusive mode (`"x"`) and attempted to write binary byte chunks, producing `TypeError: write() argument must be str, not bytes` after transfer completion. 0.2.11 changes that assembly target to binary-exclusive mode (`"xb"`), preserving the existing exclusive-create and no-follow protections while allowing byte-for-byte assembly.
+
+A deterministic native-core regression now prebuilds completed binary segments, runs the actual segmented assembly/publication path without network timing, and verifies the committed output byte-for-byte. The extension-side helper minimum is raised to **0.2.11** so the known-defective 0.2.10 helper is rejected until the matching fixed helper is installed.
+
+0.2.11 still requires a new Mozilla-signed artifact and successful governed persistent-install/full-browser-restart recovery acceptance before any Stable promotion.
+
 ## 0.2.10 staging filesystem safety
 
-0.2.10 closes the explicit native-staging symbolic-link gap left open by 0.2.9. The helper now validates the `.goreecloud-downloads` staging root and per-job staging path with `lstat` semantics and rejects them if they are symbolic links or non-directories. Reusable metadata, single-part, segment, and assembled staging entries must be regular non-link files.
+0.2.10 closed the explicit native-staging symbolic-link gap left open by 0.2.9. The helper validates the `.goreecloud-downloads` staging root and per-job staging path with `lstat` semantics and rejects them if they are symbolic links or non-directories. Reusable metadata, single-part, segment, and assembled staging entries must be regular non-link files.
 
 Supported file opens use `O_NOFOLLOW`, metadata is written through an exclusive job-local temporary regular file with flush/fsync before atomic replacement, invalid-staging cleanup unlinks a link entry instead of following it, segmented reads/writes use the same validated staging helpers, and final no-overwrite publication validates the staging source and calls `os.link(..., follow_symlinks=False)`.
 
-Native protocol 2 now additionally requires capability `staging-link-rejection` and raises the compatible helper minimum to **0.2.10**. A 0.2.9 helper is therefore rejected by a 0.2.10 extension until the matching helper is installed.
+Native protocol 2 requires capability `staging-link-rejection`. 0.2.11 retains this contract while raising the compatible helper minimum from 0.2.10 to 0.2.11 because of the segmented binary-publication defect described above.
 
 Deterministic `test_staging_link_safety.py` coverage verifies staging-root link rejection, job-directory link rejection, metadata and part link rejection without reading/modifying external targets, safe invalid-staging cleanup, final-publication source rejection, and the ordinary regular-file path.
 
@@ -47,7 +58,7 @@ These controls materially reduce symlink-following risk at the Linux staging bou
 
 0.2.9 made a valid `metadata.json` record a prerequisite for persisted partial reuse. A reusable record must use metadata schema version `1`, match the exact current GoreeCloud job ID, contain a canonical HTTP/HTTPS URL and valid source-size type, and keep bounded string/null filename/destination/ETag/Last-Modified fields. Missing or invalid metadata causes existing staged transfer parts to be discarded. Structurally valid metadata still passes current URL, known size, ETag, and Last-Modified identity checks before bytes are reused.
 
-0.2.10 retains that trust contract and adds the separate filesystem-link checks. See `docs/STAGING_METADATA_TRUST.md` and `docs/STAGING_LINK_SAFETY.md`.
+0.2.11 retains that trust contract and the filesystem-link checks introduced in 0.2.10. See `docs/STAGING_METADATA_TRUST.md` and `docs/STAGING_LINK_SAFETY.md`.
 
 ## Recovery model
 
@@ -83,7 +94,7 @@ and registered at:
 ~/.mozilla/native-messaging-hosts/goreecloud_download_manager.json
 ```
 
-The 0.2.10 installer compiles the helper and requires startup/ping hello frames reporting helper version `0.2.10`, protocol `2`, and all required capabilities, including `staging-link-rejection`.
+The 0.2.11 installer compiles the helper and requires startup/ping hello frames reporting helper version `0.2.11`, protocol `2`, and all required capabilities, including `staging-link-rejection`.
 
 For Firefox Flatpak, use the WebExtensions XDG portal path. If discovery fails after a successful helper self-test, open `about:config`, set `widget.use-xdg-desktop-portal.native-messaging` to `1`, restart Firefox, and approve the portal authorization prompt.
 
@@ -101,11 +112,13 @@ Mozilla Firefox 155.0.1 from Flathub Flatpak has accepted the earlier tested run
 - native five-job batch concurrency at `maxConcurrent = 3` with five-file integrity; and
 - initial Firefox-engine 3-active / 2-queued ceiling with completion-driven promotion.
 
-0.2.4–0.2.10 scheduler, lifecycle, retry-snapshot, range-integrity, no-overwrite-publication, additional recovery, protocol, metadata-trust, and staging-link behavior is deterministic source-level evidence until its exact source candidate passes repository CI. Persistent full-browser restart acceptance remains gated on a Mozilla-signed artifact.
+The Mozilla-signed 0.2.10 restart run additionally proved persistent installation, extension survival across a full Firefox process restart, same-job recovery dispatch, preserved-range reuse, and complete-byte recovery, but it failed final segmented publication because of the text/binary assembly defect fixed in 0.2.11. That failed run is diagnostic evidence, not Stable acceptance.
+
+0.2.4–0.2.11 scheduler, lifecycle, retry-snapshot, range-integrity, no-overwrite-publication, recovery, protocol, metadata-trust, staging-link, and binary-publication behavior remains deterministic/source evidence until the exact 0.2.11 source candidate passes repository CI. Persistent full-browser restart acceptance remains gated on a Mozilla-signed 0.2.11 artifact.
 
 ## Development installation and packaging
 
-Load the unsigned XPI or `manifest.json` temporarily through `about:debugging` → **This Firefox** → **Load Temporary Add-on**. Reinstall the native helper from the same 0.2.10 source checkout and use **Test native helper** before native transfers.
+Load the unsigned XPI or `manifest.json` temporarily through `about:debugging` → **This Firefox** → **Load Temporary Add-on**. Reinstall the native helper from the same 0.2.11 source checkout and use **Test native helper** before native transfers.
 
 Build the deterministic unsigned candidate:
 
@@ -116,7 +129,7 @@ python shared/scripts/package_extension.py download-manager
 Expected output:
 
 ```text
-dist/goreecloud-download-manager-0.2.10.xpi
+dist/goreecloud-download-manager-0.2.11.xpi
 ```
 
 The XPI excludes the separately installed native helper and source-only scripts/tests/documentation. Packaging is not Mozilla signing.
@@ -143,8 +156,8 @@ python shared/scripts/package_extension.py download-manager
 
 ## Current boundaries
 
-0.2.10 does not establish Windows/macOS native-host support, arbitrary POST/body downloads, complete browser authorization-state reproduction, mirror failover, bandwidth limiting, time scheduling, automatic browser-wide interception, or origin/user-supplied cryptographic checksum enforcement. Formal Platform-System applicability/release review and Mozilla signing/persistent signed-install/restart acceptance remain release gates where required.
+0.2.11 does not establish Windows/macOS native-host support, arbitrary POST/body downloads, complete browser authorization-state reproduction, mirror failover, bandwidth limiting, time scheduling, automatic browser-wide interception, or origin/user-supplied cryptographic checksum enforcement. Formal Platform-System applicability/release review and Mozilla signing/persistent signed-install/restart acceptance remain release gates where required.
 
 ## Release state
 
-0.2.10 remains an **unsigned Active Development source candidate**. Source tests and unsigned packaging do not independently establish Mozilla signing, persistent signed installation, full signed Firefox restart/native-host acceptance, Release Candidate qualification, or Stable promotion.
+0.2.11 remains an **unsigned Active Development source candidate**. Source tests and unsigned packaging do not independently establish Mozilla signing, persistent signed installation, full signed Firefox restart/native-host acceptance, Release Candidate qualification, or Stable promotion.
