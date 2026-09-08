@@ -1,5 +1,20 @@
 # Change Log — GoreeCloud Download Manager Extension
 
+## 0.2.12 — Stable
+
+- Promoted GoreeCloud Download Manager Extension 0.2.12 to **Stable** after exact-source repository validation, Mozilla unlisted signing, signed-payload parity verification, persistent installation, full Firefox process restart, automatic same-job native recovery, exact final-file integrity, staging cleanup, and post-restart native-helper reconnection all passed.
+- 0.2.12 corrects the final release-quality issue found during the attempted 0.2.11 promotion: the packaged Settings page in the signed 0.2.11 XPI still visibly identified itself as a `source candidate`. Rather than mutating an already-signed version, 0.2.12 advances the Firefox manifest and replaces that packaged lifecycle claim with the neutral product/version label `GoreeCloud Download Manager Extension 0.2.12`.
+- Added a source contract that requires the packaged Settings UI to display 0.2.12 while containing no embedded `source candidate`, `not Stable`, or `Stable` lifecycle claim. Lifecycle authority remains the canonical extension inventory and retained signing evidence, not hard-coded packaged UI text.
+- Retained the already-accepted native helper version **0.2.11 / protocol 2** unchanged because no native-helper behavior changed in 0.2.12. The 0.2.11 helper contains the binary-exclusive segmented-publication fix and remains the minimum compatible helper for this extension release.
+- Governed Mozilla signing/restart run `34176105690` signed exact source revision `2cc6d3bbe6ec2c63d49bec338bd68f154747be70` as a new 0.2.12 submission.
+- Deterministic candidate SHA-256: `779425b150921c1969462066a3e79cb345d976d11369a6891b5611c63a3d5537`.
+- Mozilla-signed XPI SHA-256: `4c02a152a258c4f8e76581ece2cb2a41f088463a4464354da0c374dfb2957f25`.
+- The signed non-manifest runtime payload matched the candidate byte-for-byte; governed manifest normalization was JSON-serialization-only.
+- Firefox 155.0.1 installed the signed XPI persistently, exited the full browser process while validated partial native staging existed, restarted the same profile without reinstalling, restored the signed extension, reconnected to helper 0.2.11, and automatically resumed the exact same GoreeCloud job through HTTP Range requests inside preserved segments.
+- The recovered transfer completed at 67,108,864 bytes with **zero manual Resume actions**. Source and recovered output SHA-256 both equaled `a4a99d83daaac4823006cd3b14df26d1a256042591ad7d2f83e7ecbb203c342f`; the original staging directory was removed after completion.
+- Retained signing artifact: `goreecloud-download-manager-0.2.12-mozilla-signed`, artifact ID `10037385022`; artifact ZIP SHA-256 `17ba5f469b04979f5405f618abae5fc461e4e5c583f10e2d6484fe9706b6e747`.
+- Pre-promotion evidence correctly recorded `sourceState: source-candidate`, `acceptedStableVersion: null`, and `stablePromoted: false`. The final Stable lifecycle commit changes the canonical inventory to `source_state: stable` and `accepted_stable_version: 0.2.12`; the post-promotion signing rerun must recover the same approved 0.2.12 artifact and record `stablePromoted: true` before governance closure.
+
 ## 0.2.11 — Source candidate
 
 - Fixed the native segmented-publication defect exposed by governed Mozilla-signed 0.2.10 full-browser restart acceptance: `assembled.part` was opened in text-exclusive mode and failed when binary segment chunks were written after all source bytes had recovered.
@@ -9,7 +24,7 @@
 - Raised the extension-side minimum compatible helper version to 0.2.11 so the known-defective 0.2.10 helper fails closed until the fixed helper is installed.
 - Advanced Linux installer self-test expectations, protocol compatibility tests, canonical extension inventory, Settings presentation, README, and signed full-restart acceptance expectations to the 0.2.11 source-candidate line.
 - Carried forward the signed 0.2.10 diagnostic evidence that persistent installation, full Firefox restart survival, same-job recovery dispatch, preserved segment reuse, and recovery of all 67,108,864 source bytes were functioning before final publication failed. That run remains diagnostic evidence and does not count as release acceptance.
-- 0.2.11 remains a source candidate until exact-head repository CI, Mozilla signing, persistent signed installation, full-browser restart/native recovery, exact final SHA-256 integrity, staging cleanup, retained release provenance, and explicit lifecycle/documentation promotion all pass.
+- 0.2.11 remained a source candidate. Although governed signing run `34174320808` subsequently passed full signed restart/recovery acceptance, final promotion was intentionally withheld because the signed Settings page still self-identified as a source candidate. 0.2.12 corrects that packaged release-label contradiction and repeats the signed gate.
 
 ## 0.2.10 — Source candidate
 
@@ -24,7 +39,7 @@
 - Advanced the native helper, manifest, inventory, Linux installer validation, protocol contracts, scheduler/lifecycle harnesses, Settings presentation, README, installation, architecture, staging trust documentation, and source changelog to 0.2.10 source-candidate state.
 - Extended Native Messaging protocol 2 capability requirements with `staging-link-rejection` and raised the compatible helper minimum to `0.2.10`, so a stale 0.2.9 helper fails closed until the matching helper is reinstalled.
 - The filesystem hardening materially reduces staging symlink-following risk on the supported Linux helper path. It does not claim a universal race-proof filesystem sandbox against a malicious process with unrestricted access to the same user account between every filesystem operation.
-- 0.2.10 remains deterministic source work until its exact PR head passes repository CI. It does not independently establish target-device 0.2.10 acceptance, Mozilla signing, persistent signed installation, full-browser restart/native-host acceptance, Release Candidate status, or Stable status.
+- 0.2.10 remained deterministic source work and was never promoted Stable.
 
 ## 0.2.9 — Source candidate
 
@@ -38,7 +53,7 @@
 - Raised the extension-side minimum compatible helper version to `0.2.9` so an updated extension fails closed on a stale 0.2.8 helper until the matching helper is reinstalled.
 - Advanced the Linux installer self-test, native protocol tests, protocol source contract, mixed-engine scheduler harness, lifecycle-fault harness, manifest, canonical extension inventory, Settings presentation, README, installation guide, architecture documentation, and source changelog to 0.2.9 source-candidate state.
 - This change does not yet establish symlink/no-follow staging hardening; staging path/link substitution remains a separate filesystem hardening boundary.
-- 0.2.9 remains deterministic source work until the exact PR head passes repository CI. It does not establish target-device 0.2.9 helper acceptance, Mozilla signing, persistent signed installation, full-browser restart/native-host acceptance, Release Candidate status, or Stable status.
+- 0.2.9 remained deterministic source work and was never promoted Stable.
 
 ## 0.2.8 — Source candidate
 
@@ -53,7 +68,7 @@
 - Added deterministic native protocol tests covering compatible/current and future helpers, legacy/mismatched protocols, minimum-version enforcement, missing required capabilities, capability normalization/de-duplication, invalid handshakes, manifest script ordering, background protocol enforcement/status integration, helper metadata, Settings presentation, installer contract, and inventory-version consistency.
 - Advanced the canonical extension inventory, Settings presentation, README, installation guide, architecture documentation, and source changelog to 0.2.8 source-candidate state.
 - Fresh native jobs retain the normal Firefox compatibility fallback if the helper cannot be used. Already-started native recovery retains the 0.2.7 identity-preserving no-fallback rule, so a recovery attempt is not silently converted into a new Firefox transfer.
-- This is deterministic source-level hardening until exact-head repository CI and any later target-runtime checks are accepted. It does not establish target-device 0.2.8 helper compatibility acceptance, Mozilla signing, persistent signed installation, full-browser restart/native-host acceptance, Release Candidate status, or Stable status.
+- 0.2.8 remained deterministic source work and was never promoted Stable.
 
 ## 0.2.7 — Source candidate
 
@@ -69,7 +84,7 @@
 - Advanced the separately installed native helper protocol/version presentation to 0.2.7.
 - Expanded deterministic native-core tests for transport validation, stale-source staging invalidation, exact partial-response semantics, destination reservation, no-overwrite finalization, live/dead/terminal same-ID recovery behavior, and duplicate-start handling.
 - Expanded deterministic recovery-controller tests to prove that recovery launch failure propagates without compatibility fallback while fresh native jobs retain compatibility fallback.
-- This is deterministic source-level hardening. It does not independently establish target-device 0.2.7 native-helper acceptance, full-browser restart recovery, Mozilla signing, persistent signed installation, Release Candidate status, or Stable status.
+- 0.2.7 remained deterministic source work and was never promoted Stable.
 
 ## 0.2.6 — Source candidate
 
@@ -80,7 +95,7 @@
 - Made queue-sequence allocation migration-safe by reconciling the sequence key against the highest persisted `queueOrder` before allocating a new queue-tail position.
 - Added deterministic Node retry-snapshot regression coverage for requested-filename normalization, traversal/absolute/UNC path reduction, clean relative-subdirectory preservation, Settings drift, engine/native-configuration snapshot preservation, legacy absolute Firefox destination compatibility, and retry queue-tail sequencing.
 - Added the retry-snapshot regression to Firefox Repository CI and advanced manifest, inventory, Settings presentation, README, and changelog to 0.2.6 source-candidate state.
-- This is deterministic source hardening. It does not independently claim target-device retry-race acceptance, Mozilla signing, persistent signed installation, full-browser restart/native-host acceptance, Release Candidate status, or Stable status.
+- 0.2.6 remained deterministic source work and was never promoted Stable.
 
 ## 0.2.5 — Source candidate
 
@@ -93,7 +108,7 @@
 - Added failure-notification de-duplication across `error` and `interrupted` transitions belonging to the same unresolved problem incident. Native recovery already clears the terminal notification marker before a new recovery attempt.
 - Added deterministic Node lifecycle-fault coverage using the real extension background scripts with mocked Firefox and Native Messaging APIs, including deliberately hostile synchronous cancellation-event ordering.
 - Added the lifecycle-fault regression to repository CI alongside the existing Firefox scheduler, mixed-engine scheduler, native-core, syntax, deterministic packaging, and archive-verification checks.
-- This is assistant-performed deterministic source validation. It does not claim target-device cancellation-race acceptance, Mozilla signing, persistent signed installation, full-browser restart/native-host acceptance, Release Candidate status, or Stable status.
+- 0.2.5 remained deterministic source work and was never promoted Stable.
 
 ## 0.2.4 — Source candidate
 
@@ -102,7 +117,7 @@
 - Added `scheduler_hardening.js` as a post-background state adapter so the scheduler can preserve its managed queue semantics without changing Firefox's underlying paused download until a slot is actually available.
 - Added an automated Node regression harness with a mocked Firefox `downloads` API. It validates the initial 3-active / 2-queued ceiling, single-job pause-driven promotion, resume-while-full queue retention, resistance to paused Firefox snapshots/deltas, existing-download resume when a slot opens, no replacement download creation, and completion notification emission.
 - Added the Firefox scheduler regression harness to repository CI and advanced manifest, inventory, and Settings version presentation to 0.2.4 source-candidate state.
-- 0.2.4 remains unsigned Active Development. Runtime signing, persistent signed installation, full-browser restart acceptance, and remaining mixed-engine stress gates remain separate release requirements.
+- 0.2.4 remained unsigned Active Development and was never promoted Stable.
 
 ## 0.2.3 — Source candidate
 
@@ -117,7 +132,7 @@
 - Accepted credential non-persistence for the controlled test credential: native staging scan reported `NATIVE COOKIE PERSISTENCE: PASS`, extension `browser.storage.local` scan reported `BROWSER COOKIE PERSISTENCE: PASS`, and native staging was empty after successful completion.
 - Accepted native batch scheduler concurrency at `maxConcurrent = 3` on Firefox 155.0.1 / Flathub Flatpak. The controlled concurrency server reported exactly three active native download paths at the captured sample, each with eight HTTP Range workers, for `activeRequests = 24` and `peakRequests = 24`; controlled jobs 04 and 05 had not yet issued requests. The Manager later showed controlled jobs 01 through 05 complete at 64 MiB each with `native · 8 segments` badges. This accepts the three-managed-job native scheduler ceiling and confirms segment workers do not each consume a global managed-job slot.
 - Accepted independent integrity for all five controlled 64 MiB native-concurrency outputs. The deterministic source SHA-256 was `3b6a07d0d404fab4e23b6d34bc6696a6a312dd92821332385e5af7c01c421351`; files `goreecloud-concurrency-01.bin` through `goreecloud-concurrency-05.bin` each reproduced that SHA-256 exactly, every byte-for-byte `cmp` check reported `INTEGRITY: PASS`, and the aggregate result was `ALL FIVE CONCURRENCY FILES: PASS`.
-- Accepted the initial Firefox downloads-engine concurrency gate at `maxConcurrent = 3` on Firefox 155.0.1 / Flathub Flatpak. A five-URL controlled batch presented `3 Active`, `2 Queued`, and `0 Completed` with Firefox engine badges; the server independently reported exactly three active paths, `activeRequests = 3`, and `peakRequests = 3`. After jobs 01–03 completed, queued jobs 04–05 were promoted and became the only two active requests while `peakRequests` remained 3. Browser-engine pause/resume slot behavior, notifications, and mixed-engine concurrency remain separate gates.
+- Accepted the initial Firefox downloads-engine concurrency gate at `maxConcurrent = 3` on Firefox 155.0.1 / Flathub Flatpak. A five-URL controlled batch presented `3 Active`, `2 Queued`, and `0 Completed` with Firefox engine badges; the server independently reported exactly three active paths, `activeRequests = 3`, and `peakRequests = 3`. After jobs 01–03 completed, queued jobs 04–05 were promoted and became the only two active requests while `peakRequests` remained 3.
 
 ## 0.2.2 — Source candidate
 
@@ -131,7 +146,7 @@
 - Accepted deliberate native-helper interruption recovery on Firefox 155.0.1 / Flathub Flatpak: the helper was terminated during an active eight-segment transfer, the original job-scoped staging directory retained `metadata.json` plus eight partial segments, **Resume** completed successfully, the original staging directory was cleaned after assembly, and the recovered output matched source SHA-256 `a6d72ac7690f53be6ae46ba88506bd97302a093f7108472bd9efc3cefda06484` byte-for-byte.
 - Accepted collision-safe native naming in the same recovery run: because `goreecloud-range-test.bin` already existed, completion produced `goreecloud-range-test (1).bin` without overwriting the earlier file.
 - Accepted non-persistent Firefox background-context recovery on Firefox 155.0.1 / Flathub Flatpak. Before background termination, job ID `4e877c53-cf58-40ff-a9d1-f632f1f72165` retained `metadata.json` plus eight segment files, each at 6,815,744 bytes. After terminating the extension background script, the native helper process remained present and the same staging directory and segment files remained intact. Reopening the extension recreated the background context and the transfer completed to collision-safe output `goreecloud-range-test (2).bin`; its SHA-256 matched the source exactly, byte-for-byte comparison reported `BACKGROUND RECOVERY INTEGRITY: PASS`, and native staging was empty after completion.
-- Full-browser restart recovery remains a separate runtime acceptance gate.
+- Full-browser restart recovery was later accepted by the signed 0.2.11/0.2.12 release work.
 
 ## 0.2.1 — Source candidate
 

@@ -1,108 +1,89 @@
 # Download Manager test scope
 
-Automated tests under this directory cover native-helper core behavior, binary segmented assembly/publication, recovery/controller contracts, optional-permission contracts, installer behavior, controlled HTTP fixtures, Firefox downloads-engine scheduling, mixed Firefox/native scheduling, lifecycle-fault ordering, native protocol compatibility, persisted staging metadata trust, and staging filesystem safety.
+Automated tests cover native-helper core behavior, binary segmented assembly/publication, recovery/controller contracts, optional-permission contracts, installer behavior, controlled HTTP fixtures, Firefox downloads-engine scheduling, mixed Firefox/native scheduling, lifecycle-fault ordering, native protocol compatibility, persisted staging metadata trust, staging filesystem safety, and lifecycle-neutral packaged release labeling.
 
-Target-environment acceptance is kept separate when a real Firefox build, Native Messaging integration, persistent Mozilla-signed installation, or full browser-process restart is required.
+Target-environment acceptance remains separate when a real Firefox build, Native Messaging integration, persistent Mozilla-signed installation, or full browser-process restart is required.
 
-## Accepted Firefox 155.0.1 / Flathub Flatpak evidence
+## Stable 0.2.12 signed-runtime acceptance
 
-The tested target environment has accepted:
+GoreeCloud Download Manager Extension **0.2.12 is Stable**. Governed run `34176105690` exercised the exact Mozilla-signed artifact on Firefox 155.0.1 and accepted:
 
-1. temporary unsigned XPI loading with add-on ID `download-manager@goreecloud.com`;
-2. popup, Manager, Settings, and Manifest V3 background startup;
-3. Linux native-host protocol self-test and Firefox WebExtensions portal authorization;
-4. native 8-segment HTTP range transfer, live pause/resume, exact SHA-256 integrity, and staging cleanup;
-5. same-job recovery after deliberate native-helper interruption;
-6. non-persistent Firefox background-context recreation recovery;
-7. collision-safe native destination naming;
-8. the controlled cookie-authenticated native path, including eight authenticated HTTP 206 ranges, exact final integrity, and controlled credential non-persistence checks in both native staging and `browser.storage.local`;
-9. native batch scheduler concurrency with `maxConcurrent = 3`;
-10. exact integrity for all five completed controlled native-concurrency outputs; and
-11. the initial Firefox downloads-engine three-job queue ceiling and completion-driven queue promotion.
+1. exact source revision `2cc6d3bbe6ec2c63d49bec338bd68f154747be70`;
+2. deterministic candidate SHA-256 `779425b150921c1969462066a3e79cb345d976d11369a6891b5611c63a3d5537`;
+3. Mozilla-signed XPI SHA-256 `4c02a152a258c4f8e76581ece2cb2a41f088463a4464354da0c374dfb2957f25`;
+4. signed non-manifest payload byte parity with the candidate;
+5. persistent non-temporary installation;
+6. accepted native helper 0.2.11 / protocol 2 handshake;
+7. a native eight-segment transfer with validated partial staging before browser exit;
+8. full Firefox process termination and restart using the same profile without reinstalling;
+9. signed extension survival after restart;
+10. automatic same-job recovery through HTTP Range requests beginning inside preserved segments;
+11. completion at 67,108,864 bytes;
+12. source/recovered SHA-256 equality at `a4a99d83daaac4823006cd3b14df26d1a256042591ad7d2f83e7ecbb203c342f`;
+13. cleanup of the original job staging directory;
+14. post-restart native-helper reconnection; and
+15. **zero manual Resume actions** after restart.
 
-Detailed target-runtime evidence is recorded under `../docs/`.
+The retained signed artifact is `goreecloud-download-manager-0.2.12-mozilla-signed`, artifact ID `10037385022`, artifact ZIP SHA-256 `17ba5f469b04979f5405f618abae5fc461e4e5c583f10e2d6484fe9706b6e747`.
 
-## Signed full-browser restart evidence and 0.2.11 regression
+## Why 0.2.12 followed 0.2.11
 
-The governed Mozilla-signed 0.2.10 restart run established several important runtime facts but did **not** pass the release gate. It proved persistent signed installation, survival across a new Firefox process without reinstalling, preservation of the exact GoreeCloud job identity and partial staging, startup recovery dispatch, resumed HTTP Range requests inside preserved segments, and recovery of all 67,108,864 source bytes.
+Signed 0.2.10 proved persistent installation and same-job preserved-range recovery but failed final publication because `assembled.part` was opened as text while binary chunks were written.
 
-Final segmented publication then failed with:
+Helper 0.2.11 corrected the path to binary-exclusive `xb` mode and gained a deterministic binary-publication regression. Signed extension 0.2.11 then passed the full restart/recovery gate, but its packaged Settings page still visibly identified itself as a `source candidate`. GoreeCloud withheld Stable promotion rather than modifying an already-signed release.
 
-```text
-TypeError: write() argument must be str, not bytes
-```
+0.2.12 advances only the Firefox extension version and packaged Settings label. The label is lifecycle-neutral, and `test_native_protocol_contract.py` now rejects embedded `source candidate`, `not Stable`, or hard-coded Stable wording in the packaged Settings heading. The accepted native helper remains 0.2.11 / protocol 2.
 
-The root cause was the native helper opening `assembled.part` in text-exclusive mode while writing binary segment chunks. 0.2.11 changes that assembly stream to binary-exclusive `xb` mode while retaining exclusive-create and no-follow protections.
+## Accepted earlier target-runtime evidence
 
-`test_native_core.py` now includes a deterministic regression that prebuilds completed binary segments, exercises the actual assembly/publication path, and verifies byte-for-byte committed output. The 0.2.11 helper is the minimum compatible protocol-2 helper, so 0.2.10 is rejected despite speaking the same protocol.
+Firefox 155.0.1 / Flathub Flatpak testing also accepted:
 
-A fresh Mozilla-signed 0.2.11 full-browser restart run remains mandatory before Stable promotion.
+- popup, Manager, Settings, and Manifest V3 background startup;
+- Firefox WebExtensions portal native-host authorization;
+- native segmented transfer with live pause/resume and exact integrity;
+- same-job recovery after deliberate helper interruption;
+- non-persistent background-context recreation recovery;
+- collision-safe native destination naming;
+- controlled cookie-authenticated native transfer and credential non-persistence;
+- native batch scheduling with `maxConcurrent = 3` and five-file integrity; and
+- the Firefox downloads-engine three-job queue ceiling and completion-driven promotion.
+
+Detailed historical evidence is retained under `../docs/` and in the product changelog.
 
 ## Persisted staging metadata regressions
 
-`test_native_core.py` verifies that staged partial bytes are not reusable without a trusted metadata record. Coverage includes:
+`test_native_core.py` verifies that staged partial bytes are not reusable without a trusted metadata record. Coverage includes missing metadata/orphaned parts, malformed/non-object JSON, unsupported schema versions, foreign job identity, invalid transport URL, invalid source-size/destination values, and valid same-job partial preservation when source identity still matches.
 
-- missing `metadata.json` with orphaned partial files;
-- malformed or non-object JSON;
-- unsupported metadata schema version;
-- metadata for a different GoreeCloud job ID;
-- invalid persisted transport URL;
-- invalid source-size or destination-field types; and
-- valid same-job metadata preserving reusable partial bytes when current source identity still matches.
+Separate staging-link tests cover symlink rejection, no-follow file handling, safe invalid-staging cleanup, and final-publication source validation.
 
-These tests validate the structural trust boundary before URL, known source length, ETag, and Last-Modified source-identity comparisons. Separate filesystem tests cover staging symlink/no-follow behavior.
+## Scheduler and lifecycle regressions
 
-## Automated Firefox scheduler regression
-
-Run:
+Run the browser scheduler:
 
 ```bash
 node extensions/download-manager/tests/test_browser_scheduler.js
 ```
 
-The test evaluates the real extension background scripts in a Node VM with a mocked Firefox WebExtensions API and in-memory extension storage. It validates the three-active ceiling, queued promotion, resume-while-full behavior, protection from stale paused snapshots and `USER_CANCELED` noise, reuse of the existing Firefox download ID, and completion notifications.
-
-## Automated mixed-engine scheduler regression
-
-Run:
+Run the mixed Firefox/native scheduler:
 
 ```bash
 node extensions/download-manager/tests/test_mixed_scheduler.js
 ```
 
-This deterministic harness exercises Firefox and native jobs under the same managed `maxConcurrent` ceiling. It verifies cross-engine slot promotion, resume-while-full queue retention, same-Firefox-download-ID resume, native promotion when a browser slot is released, engine assignment preservation, protocol-compatible native-helper handshake, and notification behavior. Native segment workers remain internal to their managed native job rather than consuming the global job slots individually.
-
-## Automated lifecycle-fault regression
-
-Run:
+Run lifecycle-fault coverage:
 
 ```bash
 node extensions/download-manager/tests/test_lifecycle_faults.js
 ```
 
-The harness uses the real background scripts with mocked Firefox and Native Messaging APIs and deliberately hostile asynchronous ordering. It verifies deterministic FIFO tie ordering, explicit cancellation finality, late-event protection, removed-job protection, retry normalization and queue placement, compatible native-status behavior, failure-notification de-duplication, and stale Native Messaging event suppression.
-
-## Automated retry-snapshot regression
-
-Run:
+Run retry snapshot coverage:
 
 ```bash
 node extensions/download-manager/tests/test_retry_snapshots.js
 ```
 
-The retry suite verifies safe requested-filename normalization, absolute/traversal/UNC reduction, clean relative-subdirectory preservation, engine/configuration snapshot preservation across Settings drift, native segment/retry/directory snapshot preservation, legacy destination compatibility, and queue-tail sequencing.
-
-## Controlled queue/concurrency server
-
-Use `concurrency_test_server.py` for observable Firefox/native runtime concurrency testing. It exposes deterministic 64 MiB downloads with distinct filenames on `127.0.0.1:8767` by default and records active request counts at `/status`.
-
-```bash
-python3 extensions/download-manager/tests/concurrency_test_server.py
-curl -s http://127.0.0.1:8767/status
-```
-
-With a configured global managed-download limit of three, the controlled native batch produced an active sample containing only jobs 01, 02, and 03, with eight HTTP Range workers per job. All five resulting native outputs matched the deterministic source SHA-256 exactly.
+These suites cover concurrency ceilings, queue promotion, resume-while-full semantics, same-download-ID resume, cross-engine scheduling, deterministic ordering, cancellation finality, late-event/removed-job protection, launch-pending reconciliation, failure notification de-duplication, requested-filename normalization, configuration snapshot preservation, and queue-tail retry behavior.
 
 ## Evidence boundary
 
-Passing deterministic source CI is necessary but does not replace Mozilla signing, persistent signed installation, full-browser restart/native-host recovery, exact final-file integrity, or another target-runtime gate that genuinely requires the packaged signed system. Diagnostic failures remain recorded as failures rather than being reclassified as acceptance.
+Passing deterministic source CI is necessary but does not replace signed runtime evidence. Stable 0.2.12 has separately passed Mozilla signing, persistent installation, full-browser restart/native same-job recovery, final integrity, staging cleanup, and release provenance gates. Future runtime versions must obtain their own evidence rather than inheriting 0.2.12 acceptance.

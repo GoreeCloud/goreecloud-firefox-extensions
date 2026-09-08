@@ -31,6 +31,17 @@ class SigningContractTests(unittest.TestCase):
         self.assertIn("git rev-parse origin/main", text)
         self.assertIn('if [[ "$GITHUB_SHA" != "$main_sha" ]]', text)
 
+    def test_signing_evidence_derives_stable_lifecycle_from_inventory(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("docs/extension-inventory.json", text)
+        self.assertIn("item.get('slug') == 'download-manager'", text)
+        self.assertIn("entry.get('source_state') == 'stable'", text)
+        self.assertIn("entry.get('accepted_stable_version') == version", text)
+        self.assertIn("'sourceState': entry.get('source_state')", text)
+        self.assertIn("'acceptedStableVersion': entry.get('accepted_stable_version')", text)
+        self.assertIn("'stablePromoted': stable_promoted", text)
+        self.assertNotIn("'stablePromoted': False", text)
+
     def test_existing_signed_version_can_be_recovered_only_with_governed_payload_verification(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         recovery = AMO_RECOVERY.read_text(encoding="utf-8")
@@ -95,7 +106,7 @@ class SigningContractTests(unittest.TestCase):
         self.assertIn("post-restart SHA-256 integrity", text)
         self.assertIn("post-restart native helper reconnect", text)
 
-    def test_signed_restart_smoke_exercises_user_controlled_same_job_resume(self):
+    def test_signed_restart_smoke_exercises_same_job_recovery_with_bounded_user_resume(self):
         text = SMOKE.read_text(encoding="utf-8")
         self.assertIn("persisted native job rendered after restart", text)
         self.assertIn("extension_job_snapshot", text)
@@ -128,12 +139,13 @@ class SigningContractTests(unittest.TestCase):
         self.assertIn("driver.current_url == target", text)
         self.assertNotIn("driver.get(extension_url(path))", text)
 
-    def test_signing_and_platform_review_docs_preserve_release_boundary(self):
+    def test_signing_and_platform_review_docs_record_stable_0_2_12_boundary(self):
         signing = SIGNING.read_text(encoding="utf-8")
         review = PLATFORM_REVIEW.read_text(encoding="utf-8")
-        self.assertIn("0.2.10", signing)
-        self.assertIn("Mozilla-signed", signing)
-        self.assertIn("not Stable", signing)
+        self.assertIn("0.2.12 is Stable", signing)
+        self.assertIn("34176105690", signing)
+        self.assertIn("4c02a152a258c4f8e76581ece2cb2a41f088463a4464354da0c374dfb2957f25", signing)
+        self.assertIn("0.2.11 / protocol 2", signing)
         for system in (
             "GoreeCloud Manager",
             "Privacy Shield",
@@ -145,7 +157,7 @@ class SigningContractTests(unittest.TestCase):
         ):
             self.assertIn(system, review)
         self.assertIn("does not claim platform integration", review)
-        self.assertIn("Stable promotion remains gated", review)
+        self.assertIn("previously documented Stable gates are satisfied", review)
 
 
 if __name__ == "__main__":
