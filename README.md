@@ -45,7 +45,7 @@ Additional extension directories use concise lowercase kebab-case names under `e
 | Extension | Canonical directory | Firefox add-on ID | Canonical source state | Legacy repository |
 | --- | --- | --- | --- | --- |
 | GoreeCloud Bookmarks | `extensions/bookmarks/` | `goreecloud-bookmarks@goreecloud.com` | Source baseline; not Stable | `GoreeCloud/goreecloud-bookmark-browser-extension` |
-| GoreeCloud Download Manager Extension | `extensions/download-manager/` | `download-manager@goreecloud.com` | 0.2.0 source candidate; unsigned; not Stable | None |
+| GoreeCloud Download Manager Extension | `extensions/download-manager/` | `download-manager@goreecloud.com` | Stable 0.2.11 accepted for Mozilla unlisted/self-distribution | None |
 | GoreeCloud Privacy Shield | `extensions/privacy-shield/` | `privacy-shield@goreecloud.com` | Stable 0.2.0 accepted for Mozilla unlisted/self-distribution | None |
 | GoreeCloud Redirector | `extensions/redirector/` | `redirector@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-redirector` |
 | GoreeCloud Source Resync | `extensions/source-resync/` | `source-resync@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-source-resync` |
@@ -88,7 +88,7 @@ See [`docs/MOZILLA_SIGNING.md`](docs/MOZILLA_SIGNING.md). Each extension keeps a
 
 Privacy Shield 0.2.0 is the current accepted Stable Privacy Shield Firefox release for Mozilla unlisted/self-distribution after exact-payload Mozilla signing, signed-artifact runtime and popup verification, persistent installation, full same-profile Firefox restart acceptance, and governed target-environment acceptance. Stable 0.1.1 remains preserved as the prior accepted release record.
 
-GoreeCloud Download Manager Extension 0.2.0 is an unsigned source candidate. It remains outside Stable until its independent target-runtime, native-host, signing, persistent-install/restart, integrity, security, and privacy gates pass.
+GoreeCloud Download Manager Extension 0.2.11 is the accepted Stable Download Manager Firefox release for Mozilla unlisted/self-distribution. Its governed signing run `34174320808` proved exact signed-payload parity, matching 0.2.11 native-helper compatibility, persistent installation, survival across a full Firefox process restart without reinstalling, automatic same-job partial-range recovery, binary-safe final publication, exact final SHA-256 integrity, staging cleanup, and native-helper reconnection.
 
 ## Maintenance rule
 
