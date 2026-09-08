@@ -2,52 +2,55 @@
 
 ## Current state
 
-GoreeCloud Download Manager Extension **0.2.11** is currently an unsigned Active Development source candidate and is **not Stable**. The canonical add-on ID is `download-manager@goreecloud.com`; the Linux Native Messaging host manifest authorizes that same ID.
+GoreeCloud Download Manager Extension **0.2.12 is Stable** for Mozilla unlisted/self-distribution. The canonical add-on ID is `download-manager@goreecloud.com`; the Linux Native Messaging host manifest authorizes that same ID.
 
-Temporary loading of an unsigned XPI through `about:debugging` is development-only evidence. It is not persistent installation and must not be represented as Mozilla signing, Release Candidate acceptance, or Stable release acceptance.
+The accepted extension release uses native helper **0.2.11 / protocol 2**. The helper version intentionally remains 0.2.11 because 0.2.12 changes only the Firefox extension version and packaged lifecycle-neutral Settings label; the already-accepted binary segmented-publication, recovery, filesystem-safety, and protocol behavior of helper 0.2.11 is unchanged.
 
-0.2.11 supersedes the signed 0.2.10 diagnostic artifact. The governed 0.2.10 restart run proved persistent installation, full Firefox restart survival, same-job native recovery dispatch, partial-range reuse, and recovery of the complete 64 MiB fixture, but final segmented publication failed because the native helper assembled binary segment bytes through a text-mode output stream. 0.2.11 fixes that native publication path and therefore requires a new signed artifact and fresh restart acceptance.
+## Accepted 0.2.12 signing evidence
+
+Governed GitHub Actions run `34176105690` signed exact source revision `2cc6d3bbe6ec2c63d49bec338bd68f154747be70` as a **new Mozilla submission**.
+
+- deterministic candidate SHA-256: `779425b150921c1969462066a3e79cb345d976d11369a6891b5611c63a3d5537`;
+- Mozilla-signed XPI SHA-256: `4c02a152a258c4f8e76581ece2cb2a41f088463a4464354da0c374dfb2957f25`;
+- retained artifact ID: `10037385022`;
+- retained artifact ZIP SHA-256: `17ba5f469b04979f5405f618abae5fc461e4e5c583f10e2d6484fe9706b6e747`;
+- signed non-manifest runtime payload: byte-for-byte equal to candidate;
+- governed manifest normalization: JSON serialization only;
+- persistent non-temporary installation: accepted;
+- full Firefox 155.0.1 process restart without reinstalling: accepted;
+- same-job native preserved-range recovery: accepted;
+- binary-safe final publication: accepted;
+- final output size: 67,108,864 bytes;
+- source and recovered output SHA-256: `a4a99d83daaac4823006cd3b14df26d1a256042591ad7d2f83e7ecbb203c342f`;
+- original job staging cleanup: accepted;
+- post-restart helper reconnect: accepted;
+- manual Resume actions after restart: `0`.
+
+The pre-promotion run correctly recorded `sourceState: source-candidate`, `acceptedStableVersion: null`, and `stablePromoted: false`. After repository lifecycle promotion, the canonical inventory records `source_state: stable` and `accepted_stable_version: 0.2.12`. The final governed rerun is expected to recover the exact already-approved 0.2.12 artifact, repeat signed-runtime acceptance, and record `stablePromoted: true` against the final Stable main revision.
+
+## Why 0.2.11 was not promoted
+
+Mozilla-signed 0.2.11 passed full restart/native recovery acceptance in run `34174320808`, but the final packaged-runtime audit found that its Settings page still visibly called itself a `source candidate`. GoreeCloud deliberately withheld Stable promotion rather than modifying an already-signed version in place.
+
+0.2.12 advances the Firefox manifest and changes the packaged Settings label to lifecycle-neutral `GoreeCloud Download Manager Extension 0.2.12`. A source regression prevents lifecycle claims from being embedded in that packaged label. No native-helper behavior changed.
 
 ## Governed signing workflow
 
-The repository maintains `.github/workflows/download-manager-mozilla-signing.yml`. It supports manual `workflow_dispatch` and an automated release branch named `release/download-manager-signing`.
+The repository maintains `.github/workflows/download-manager-mozilla-signing.yml`. The automated signing branch `release/download-manager-signing` must point **exactly** at authoritative `main` before signing proceeds.
 
-For the automated path, the workflow refuses to sign unless the release branch points **exactly** at authoritative `main`. It then:
+The workflow:
 
-1. validates the canonical repository and the complete Download Manager deterministic source suite;
-2. compiles the native helper and signed-restart acceptance source;
-3. builds the deterministic unsigned XPI for the manifest-declared Download Manager version;
-4. verifies the fixed add-on ID and exact manifest version in the packaged candidate;
-5. records the candidate SHA-256 and source Git revision;
-6. requires repository secrets `AMO_JWT_ISSUER` and `AMO_JWT_SECRET`;
-7. submits the exact extracted candidate payload to Mozilla Add-ons through `web-ext` using the unlisted signing channel, or retrieves the exact already-approved version only when Mozilla reports that same version already exists;
-8. verifies the returned XPI contains Mozilla `META-INF/` signature material, preserves the fixed add-on ID/version, and matches the candidate runtime payload under the governed manifest-normalization rules;
-9. installs the matching Linux native helper from the same source revision;
-10. installs the Mozilla-signed XPI non-temporarily into a real Firefox profile;
-11. starts a throttled eight-segment native transfer, exits the Firefox process while validated partial staging exists, and starts a new Firefox process against the same profile without reinstalling the add-on;
-12. requires the signed extension UI and native helper to return after restart, the original staged job to resume through non-boundary HTTP Range offsets, the final output to reproduce source SHA-256 exactly, and the original staging directory to clean after completion; and
-13. retains the signed XPI, candidate/signed hashes, source revision, signed-restart log, and a machine-readable signing evidence record as a GitHub Actions artifact.
+1. validates the canonical inventory, Download Manager source contracts, Python/native sources, browser/native schedulers, lifecycle faults, retry snapshots, and JavaScript syntax;
+2. builds a deterministic unsigned XPI from the manifest-declared version;
+3. records exact candidate SHA-256 and source revision;
+4. submits the exact candidate to Mozilla's unlisted signing channel, or retrieves the exact already-approved version only when Mozilla reports that same version already exists;
+5. verifies Mozilla signature material, add-on ID/version, payload inventory, non-manifest byte parity, and governed manifest normalization;
+6. installs the compatible native helper from the same repository revision;
+7. installs the signed XPI persistently into Firefox;
+8. starts a throttled native segmented transfer, exits the complete Firefox process while validated partial staging exists, and starts a new Firefox process against the same profile without reinstalling;
+9. requires signed extension survival, same-job preserved-range recovery, final exact SHA-256 integrity, staging cleanup, and helper reconnect; and
+10. writes a machine-readable evidence record whose `sourceState`, `acceptedStableVersion`, and `stablePromoted` fields are derived from the canonical extension inventory.
 
-## Required release evidence
+## Release boundary
 
-A successful 0.2.11 signing workflow must establish all of these facts before lifecycle promotion:
-
-- exact source revision and deterministic candidate SHA-256;
-- Mozilla-signed 0.2.11 XPI SHA-256;
-- fixed add-on ID `download-manager@goreecloud.com` preserved through signing;
-- matching 0.2.11 native helper and protocol/capability handshake;
-- persistent non-temporary installation;
-- full Firefox process restart without a second install call;
-- extension UI/background availability after restart;
-- matching native helper connection after restart;
-- native partial staging present before process exit and preserved across exit;
-- same-job native range recovery after restart rather than a fresh transfer;
-- binary-safe final segmented assembly/publication;
-- exact final output integrity and successful staging cleanup; and
-- retained GitHub workflow/run provenance.
-
-The Platform-System applicability review is documented separately in `PLATFORM_SYSTEM_RELEASE_REVIEW.md`. Its 0.2.11 delta review carries forward the existing local-product conclusions while accounting for the binary-publication fix; it does not claim integrations that do not exist.
-
-## Promotion boundary
-
-Even a Mozilla-signed artifact is not automatically Stable. Stable promotion requires a successful signed-install/restart/native-recovery workflow, inspection of the retained evidence, explicit repository lifecycle promotion, and synchronization of the canonical GoreeCloud project specification and changelog with the exact signing artifact hashes and workflow provenance.
+Temporary unsigned loading and deterministic packaging remain development evidence only. Stable status is version-specific and requires the accepted signed runtime plus explicit canonical lifecycle promotion. Any later Download Manager version must obtain its own applicable signing, restart/recovery, integrity, review, and promotion evidence before replacing 0.2.12 as Stable.
