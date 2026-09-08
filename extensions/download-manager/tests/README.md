@@ -22,7 +22,7 @@ The tested target environment has accepted:
 
 Detailed target-runtime evidence is recorded under `../docs/`.
 
-## Signed full-browser restart evidence and 0.2.11 regression
+## Signed full-browser restart evidence and 0.2.11 Stable regression closure
 
 The governed Mozilla-signed 0.2.10 restart run established several important runtime facts but did **not** pass the release gate. It proved persistent signed installation, survival across a new Firefox process without reinstalling, preservation of the exact GoreeCloud job identity and partial staging, startup recovery dispatch, resumed HTTP Range requests inside preserved segments, and recovery of all 67,108,864 source bytes.
 
@@ -34,9 +34,13 @@ TypeError: write() argument must be str, not bytes
 
 The root cause was the native helper opening `assembled.part` in text-exclusive mode while writing binary segment chunks. 0.2.11 changes that assembly stream to binary-exclusive `xb` mode while retaining exclusive-create and no-follow protections.
 
-`test_native_core.py` now includes a deterministic regression that prebuilds completed binary segments, exercises the actual assembly/publication path, and verifies byte-for-byte committed output. The 0.2.11 helper is the minimum compatible protocol-2 helper, so 0.2.10 is rejected despite speaking the same protocol.
+`test_native_core.py` includes a deterministic regression that prebuilds completed binary segments, exercises the actual assembly/publication path, and verifies byte-for-byte committed output. The 0.2.11 helper is the minimum compatible protocol-2 helper, so 0.2.10 is rejected despite speaking the same protocol.
 
-A fresh Mozilla-signed 0.2.11 full-browser restart run remains mandatory before Stable promotion.
+The fresh Mozilla-signed **0.2.11** full-browser restart run `34174320808` passed the release-critical acceptance. Firefox 155.0.1 installed the signed XPI non-temporarily, started a native eight-segment transfer, preserved partial staging across a complete Firefox process exit, reopened the same profile without reinstalling the add-on, restored the signed extension and matching helper, automatically resumed the exact same GoreeCloud job through HTTP Range offsets inside the preserved segments, and completed all 67,108,864 bytes.
+
+The accepted run required **zero manual Resume actions** after restart. Final output SHA-256 matched source SHA-256 exactly at `a4a99d83daaac4823006cd3b14df26d1a256042591ad7d2f83e7ecbb203c342f`, the original staging directory was removed, and the native helper reconnected successfully. The deterministic candidate SHA-256 was `8dab36b259a2837b8218ef2b45af57f0698870a8e15424e66df54db528e34f7d`; the Mozilla-signed XPI SHA-256 was `074d901fa18d66ec5d5ee55bcacdfbf066567eec02902f5c6d2c43a361a75830`.
+
+This closes the 0.2.10 segmented-publication failure and supplies the signed-runtime evidence used for Stable 0.2.11 promotion.
 
 ## Persisted staging metadata regressions
 
@@ -105,4 +109,4 @@ With a configured global managed-download limit of three, the controlled native 
 
 ## Evidence boundary
 
-Passing deterministic source CI is necessary but does not replace Mozilla signing, persistent signed installation, full-browser restart/native-host recovery, exact final-file integrity, or another target-runtime gate that genuinely requires the packaged signed system. Diagnostic failures remain recorded as failures rather than being reclassified as acceptance.
+Passing deterministic source CI is necessary but does not replace Mozilla signing, persistent signed installation, full-browser restart/native-host recovery, exact final-file integrity, or another target-runtime gate that genuinely requires the packaged signed system. Stable 0.2.11 has separately passed those signed-runtime gates; future runtime versions must obtain their own evidence rather than inheriting 0.2.11 acceptance. Diagnostic failures remain recorded as failures rather than being reclassified as acceptance.
