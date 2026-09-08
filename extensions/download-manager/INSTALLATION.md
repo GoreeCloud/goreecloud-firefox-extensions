@@ -2,7 +2,9 @@
 
 ## Firefox extension
 
-Unsigned Development builds may be loaded temporarily from `about:debugging` → **This Firefox** → **Load Temporary Add-on**. Persistent installation requires Mozilla signing and remains a separate release gate until a signed artifact passes the persistent-install/restart smoke test.
+GoreeCloud Download Manager Extension **0.2.11 is the accepted Stable Mozilla-signed release** for unlisted/self-distribution. Its governed release run installed the signed XPI non-temporarily, restarted the full Firefox process using the same profile without reinstalling, and completed the required native same-job recovery/integrity acceptance.
+
+Unsigned Development builds may still be loaded temporarily from `about:debugging` → **This Firefox** → **Load Temporary Add-on**. Temporary loading is development-only and does not replace the accepted signed artifact or establish Stable status for any later version.
 
 ## Linux native helper
 
@@ -52,4 +54,6 @@ In the extension Settings page, click **Test native helper**. A successful 0.2.1
 Native helper 0.2.11 · protocol 2 ready.
 ```
 
-A legacy helper, protocol mismatch, minimum-version failure, or missing required capability is rejected with reinstall guidance. The handshake is necessary but not sufficient for release acceptance. Mozilla signing and persistent signed-install/restart validation remain independent release gates.
+A legacy helper, protocol mismatch, minimum-version failure, or missing required capability is rejected with reinstall guidance. The handshake alone is not release acceptance; for Stable 0.2.11 the separate Mozilla signing and persistent-install/full-browser-restart acceptance was completed in governed GitHub Actions run `34174320808`.
+
+Any later runtime version must repeat the applicable signing, installation, restart, recovery, integrity, and lifecycle-promotion gates before it can replace 0.2.11 as Stable.
