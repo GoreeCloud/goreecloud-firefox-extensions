@@ -31,6 +31,17 @@ class SigningContractTests(unittest.TestCase):
         self.assertIn("git rev-parse origin/main", text)
         self.assertIn('if [[ "$GITHUB_SHA" != "$main_sha" ]]', text)
 
+    def test_signing_evidence_derives_stable_lifecycle_from_inventory(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("docs/extension-inventory.json", text)
+        self.assertIn("item.get('slug') == 'download-manager'", text)
+        self.assertIn("entry.get('source_state') == 'stable'", text)
+        self.assertIn("entry.get('accepted_stable_version') == version", text)
+        self.assertIn("'sourceState': entry.get('source_state')", text)
+        self.assertIn("'acceptedStableVersion': entry.get('accepted_stable_version')", text)
+        self.assertIn("'stablePromoted': stable_promoted", text)
+        self.assertNotIn("'stablePromoted': False", text)
+
     def test_existing_signed_version_can_be_recovered_only_with_governed_payload_verification(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         recovery = AMO_RECOVERY.read_text(encoding="utf-8")
@@ -128,12 +139,13 @@ class SigningContractTests(unittest.TestCase):
         self.assertIn("driver.current_url == target", text)
         self.assertNotIn("driver.get(extension_url(path))", text)
 
-    def test_signing_and_platform_review_docs_preserve_release_boundary(self):
+    def test_signing_and_platform_review_docs_preserve_stable_boundary(self):
         signing = SIGNING.read_text(encoding="utf-8")
         review = PLATFORM_REVIEW.read_text(encoding="utf-8")
         self.assertIn("0.2.10", signing)
         self.assertIn("Mozilla-signed", signing)
-        self.assertIn("not Stable", signing)
+        self.assertIn("0.2.11 is Stable", signing)
+        self.assertIn("34174320808", signing)
         for system in (
             "GoreeCloud Manager",
             "Privacy Shield",
@@ -145,7 +157,7 @@ class SigningContractTests(unittest.TestCase):
         ):
             self.assertIn(system, review)
         self.assertIn("does not claim platform integration", review)
-        self.assertIn("Stable promotion remains gated", review)
+        self.assertIn("previously documented Stable gates are satisfied", review)
 
 
 if __name__ == "__main__":
