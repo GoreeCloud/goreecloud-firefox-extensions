@@ -1,14 +1,18 @@
 # Security — GoreeCloud Download Manager Extension
 
+## Stable release status
+
+GoreeCloud Download Manager Extension **0.2.12 is Stable** for Mozilla unlisted/self-distribution. Its accepted Firefox runtime uses native helper **0.2.11 / protocol 2**; the helper version is intentionally unchanged because 0.2.12 changes only the extension version and packaged lifecycle-neutral Settings label.
+
 ## Trust boundaries
 
 The Firefox extension has access to privileged download APIs, local extension storage, notifications, context menus, and Native Messaging. Cookie access and broad host access are optional rather than required.
 
 The native helper can write files to the configured local destination and make outbound HTTP/HTTPS requests for user-requested downloads. Its native messaging manifest allows only the fixed Firefox add-on ID `download-manager@goreecloud.com`.
 
-The native helper is a same-user local process, not a security sandbox. The staging protections introduced in 0.2.10 and retained by 0.2.11 materially harden against link substitution but do not claim to defeat an unrestricted malicious process running as the same operating-system user between every filesystem operation.
+The native helper is a same-user local process, not a security sandbox. The staging protections introduced in 0.2.10 and retained by helper 0.2.11 materially harden against link substitution but do not claim to defeat an unrestricted malicious process running as the same OS user between every filesystem operation.
 
-## Implemented 0.2.11 safeguards
+## Implemented safeguards
 
 - Download URLs are restricted to HTTP/HTTPS before queueing and independently validated by the native helper.
 - Native filenames and job identifiers are sanitized before filesystem use.
@@ -19,23 +23,23 @@ The native helper is a same-user local process, not a security sandbox. The stag
 - Expected segment sizes and assembled total size are validated when source size is known.
 - The native job registry is lock-protected; duplicate active starts are idempotent; completed/cancelled jobs are not restarted through same-ID recovery.
 - Concurrent native downloads reserve collision-safe destinations before publication.
-- Segmented final assembly uses binary-exclusive (`xb`) creation under the validated job staging directory so binary chunks are written without weakening exclusive-create semantics.
+- Segmented final assembly uses binary-exclusive (`xb`) creation under the validated job staging directory.
 - Final native publication uses a no-overwrite staging-to-destination commit rather than truncating an existing destination.
 - The `.goreecloud-downloads` staging root and per-job staging directory reject symbolic-link or unexpected non-directory substitutions.
 - `metadata.json`, single-part, assembled, and segmented staging entries must be regular non-link files before reuse.
 - Supported staging file opens use no-follow semantics, invalid link entries are cleaned without traversing external targets, and publication rejects a symbolic-link staging source.
-- Native protocol 2 requires helper version 0.2.11+ plus the integrity/recovery capabilities, including `staging-link-rejection`, before the helper is treated as compatible. The known-defective 0.2.10 helper is therefore rejected.
+- Native protocol 2 requires helper version 0.2.11+ plus the required integrity/recovery capabilities, including `staging-link-rejection`; the known-defective 0.2.10 helper is rejected.
 
-## Deterministic and runtime evidence
+## Deterministic and signed-runtime evidence
 
-The current source suite includes native-core coverage for binary segmented assembly/publication in addition to the existing metadata-trust, range-integrity, no-overwrite, symlink-safety, protocol, installer, scheduler, lifecycle, retry, permission, syntax, deterministic-package, and archive-verification contracts.
+The source suite covers binary segmented assembly/publication, metadata trust, range integrity, no-overwrite publication, symlink safety, protocol compatibility, installer behavior, browser/native schedulers, lifecycle faults, retry snapshots, permission contracts, syntax, deterministic packaging, archive verification, and lifecycle-neutral packaged release labeling.
 
-Earlier Firefox 155.0.1 / Flathub Flatpak runtime evidence remains accepted for the previously tested transfer, pause/resume, same-job helper interruption recovery, non-persistent background-context recovery, authenticated-cookie transfer, native concurrency, and initial Firefox queue behavior. Later modeled edge behavior is not reclassified as target-device evidence merely because deterministic tests pass.
+Governed Mozilla-signed 0.2.12 run `34176105690` validated exact source revision `2cc6d3bbe6ec2c63d49bec338bd68f154747be70`. Candidate SHA-256 was `779425b150921c1969462066a3e79cb345d976d11369a6891b5611c63a3d5537`; Mozilla-signed XPI SHA-256 was `4c02a152a258c4f8e76581ece2cb2a41f088463a4464354da0c374dfb2957f25`.
 
-The governed Mozilla-signed 0.2.10 restart diagnostic is also retained as evidence of persistent signed installation, full Firefox process survival, same-job recovery dispatch, non-boundary HTTP Range reuse, and recovery of all 67,108,864 source bytes. It is not release acceptance because final segmented publication failed with `TypeError: write() argument must be str, not bytes`. 0.2.11 directly fixes that defect and must pass a new signed-runtime gate.
+The signed XPI installed persistently in Firefox 155.0.1, survived a full browser process restart without reinstalling, reconnected to helper 0.2.11, automatically recovered the exact same native job through HTTP Range offsets inside preserved segments, completed binary publication at 67,108,864 bytes, matched source SHA-256 `a4a99d83daaac4823006cd3b14df26d1a256042591ad7d2f83e7ecbb203c342f`, cleaned original staging, and required zero manual Resume actions after restart.
 
-## Signed-release gate
+## Release disposition
 
-Before Stable promotion, the **Mozilla-signed 0.2.11 artifact** must pass the governed persistent-install/full-browser-restart acceptance. That test must prove non-temporary installation, survival across a new Firefox process without reinstalling, post-restart native-helper compatibility, preservation/reuse of partial native staging through the process exit, same-job recovery, binary-safe final publication, exact final-file SHA-256 integrity, and post-completion staging cleanup.
+The signed-runtime security gate is satisfied for Stable 0.2.12. The product-specific seven-system applicability review is recorded in `PLATFORM_SYSTEM_RELEASE_REVIEW.md`; it does not claim Wardveil Security platform integration or other platform integration that is absent from the implementation.
 
-The product-specific seven-system applicability review is recorded in `PLATFORM_SYSTEM_RELEASE_REVIEW.md`; it does not claim Wardveil Security platform integration or any other platform integration that is absent from the implementation.
+Any later version that changes privileged browser surfaces, helper transport, filesystem behavior, permissions, authentication forwarding, or remote/control capabilities requires renewed security review and release evidence before replacing 0.2.12 as Stable.
