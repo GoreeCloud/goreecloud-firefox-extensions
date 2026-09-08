@@ -1,6 +1,6 @@
 # GoreeCloud Download Manager Extension
 
-**Status:** 0.2.11 source candidate — unsigned, not Release Candidate or Stable
+**Status:** 0.2.11 Stable — Mozilla-signed; full-browser restart/native recovery accepted
 
 GoreeCloud Download Manager Extension is GoreeCloud's first-party Firefox Manifest V3 download manager. It provides managed queueing, pause/resume, retries, batch input, telemetry, and an optional separately installed Linux Native Messaging helper for segmented HTTP range transfers and durable same-job recovery.
 
@@ -38,9 +38,9 @@ The governed Mozilla-signed 0.2.10 full-browser restart acceptance proved that s
 
 The run then exposed a native publication defect. Segmented assembly opened `assembled.part` with text-exclusive mode (`"x"`) and attempted to write binary byte chunks, producing `TypeError: write() argument must be str, not bytes` after transfer completion. 0.2.11 changes that assembly target to binary-exclusive mode (`"xb"`), preserving the existing exclusive-create and no-follow protections while allowing byte-for-byte assembly.
 
-A deterministic native-core regression now prebuilds completed binary segments, runs the actual segmented assembly/publication path without network timing, and verifies the committed output byte-for-byte. The extension-side helper minimum is raised to **0.2.11** so the known-defective 0.2.10 helper is rejected until the matching fixed helper is installed.
+A deterministic native-core regression prebuilds completed binary segments, runs the actual segmented assembly/publication path without network timing, and verifies the committed output byte-for-byte. The extension-side helper minimum is **0.2.11** so the known-defective 0.2.10 helper is rejected until the matching fixed helper is installed.
 
-0.2.11 still requires a new Mozilla-signed artifact and successful governed persistent-install/full-browser-restart recovery acceptance before any Stable promotion.
+The fixed 0.2.11 candidate subsequently passed governed Mozilla signing and full-browser restart acceptance in GitHub Actions run `34174320808` from exact source revision `7a9c33e5e194a05b792c1aa902c72b72f9fdf1fe`. The signed extension persisted across a new Firefox 155.0.1 process without reinstalling, automatically recovered the same native job with preserved non-boundary HTTP ranges, completed 67,108,864 bytes with zero manual Resume actions, reproduced source SHA-256 `a4a99d83daaac4823006cd3b14df26d1a256042591ad7d2f83e7ecbb203c342f`, cleaned the original staging directory, and reconnected the 0.2.11 helper after restart.
 
 ## 0.2.10 staging filesystem safety
 
@@ -98,9 +98,9 @@ The 0.2.11 installer compiles the helper and requires startup/ping hello frames 
 
 For Firefox Flatpak, use the WebExtensions XDG portal path. If discovery fails after a successful helper self-test, open `about:config`, set `widget.use-xdg-desktop-portal.native-messaging` to `1`, restart Firefox, and approve the portal authorization prompt.
 
-## Target-runtime evidence carried forward
+## Target-runtime evidence
 
-Mozilla Firefox 155.0.1 from Flathub Flatpak has accepted the earlier tested runtime baseline:
+Mozilla Firefox 155.0.1 from Flathub Flatpak accepted the earlier runtime baseline:
 
 - temporary unsigned XPI load with fixed add-on ID and working Manifest V3 background/UI;
 - Flatpak → XDG WebExtensions portal → GoreeCloud native-host launch/handshake;
@@ -112,13 +112,13 @@ Mozilla Firefox 155.0.1 from Flathub Flatpak has accepted the earlier tested run
 - native five-job batch concurrency at `maxConcurrent = 3` with five-file integrity; and
 - initial Firefox-engine 3-active / 2-queued ceiling with completion-driven promotion.
 
-The Mozilla-signed 0.2.10 restart run additionally proved persistent installation, extension survival across a full Firefox process restart, same-job recovery dispatch, preserved-range reuse, and complete-byte recovery, but it failed final segmented publication because of the text/binary assembly defect fixed in 0.2.11. That failed run is diagnostic evidence, not Stable acceptance.
+The Mozilla-signed 0.2.10 restart run additionally proved persistent installation, extension survival across a full Firefox process restart, same-job recovery dispatch, preserved-range reuse, and complete-byte recovery, but it failed final segmented publication because of the text/binary assembly defect fixed in 0.2.11. That failed run remains diagnostic evidence rather than release acceptance.
 
-0.2.4–0.2.11 scheduler, lifecycle, retry-snapshot, range-integrity, no-overwrite-publication, recovery, protocol, metadata-trust, staging-link, and binary-publication behavior remains deterministic/source evidence until the exact 0.2.11 source candidate passes repository CI. Persistent full-browser restart acceptance remains gated on a Mozilla-signed 0.2.11 artifact.
+The exact 0.2.11 source revision `7a9c33e5e194a05b792c1aa902c72b72f9fdf1fe` passed the full 71-test source suite, browser/mixed schedulers, lifecycle faults, retry snapshots, syntax checks, deterministic packaging, Mozilla signing, runtime payload parity, persistent signed installation, full Firefox restart/native recovery, exact output integrity, staging cleanup, and helper reconnect in run `34174320808`. Candidate SHA-256 is `8dab36b259a2837b8218ef2b45af57f0698870a8e15424e66df54db528e34f7d`; Mozilla-signed XPI SHA-256 is `074d901fa18d66ec5d5ee55bcacdfbf066567eec02902f5c6d2c43a361a75830`.
 
 ## Development installation and packaging
 
-Load the unsigned XPI or `manifest.json` temporarily through `about:debugging` → **This Firefox** → **Load Temporary Add-on**. Reinstall the native helper from the same 0.2.11 source checkout and use **Test native helper** before native transfers.
+For development only, load an unsigned XPI or `manifest.json` temporarily through `about:debugging` → **This Firefox** → **Load Temporary Add-on**. Reinstall the native helper from the same 0.2.11 source checkout and use **Test native helper** before native transfers.
 
 Build the deterministic unsigned candidate:
 
@@ -132,7 +132,7 @@ Expected output:
 dist/goreecloud-download-manager-0.2.11.xpi
 ```
 
-The XPI excludes the separately installed native helper and source-only scripts/tests/documentation. Packaging is not Mozilla signing.
+The XPI excludes the separately installed native helper and source-only scripts/tests/documentation. The accepted Stable Firefox artifact is the Mozilla-signed XPI retained by signing run `34174320808`, not the unsigned deterministic package.
 
 ## Validation
 
@@ -156,8 +156,8 @@ python shared/scripts/package_extension.py download-manager
 
 ## Current boundaries
 
-0.2.11 does not establish Windows/macOS native-host support, arbitrary POST/body downloads, complete browser authorization-state reproduction, mirror failover, bandwidth limiting, time scheduling, automatic browser-wide interception, or origin/user-supplied cryptographic checksum enforcement. Formal Platform-System applicability/release review and Mozilla signing/persistent signed-install/restart acceptance remain release gates where required.
+0.2.11 does not establish Windows/macOS native-host support, arbitrary POST/body downloads, complete browser authorization-state reproduction, mirror failover, bandwidth limiting, time scheduling, automatic browser-wide interception, or origin/user-supplied cryptographic checksum enforcement. Those remain future capabilities rather than implied Stable features. Future releases must repeat the applicable Platform-System, source-validation, signing, and runtime-acceptance gates for their own changed scope.
 
 ## Release state
 
-0.2.11 remains an **unsigned Active Development source candidate**. Source tests and unsigned packaging do not independently establish Mozilla signing, persistent signed installation, full signed Firefox restart/native-host acceptance, Release Candidate qualification, or Stable promotion.
+**0.2.11 is the accepted Stable release.** Stable acceptance is bound to source revision `7a9c33e5e194a05b792c1aa902c72b72f9fdf1fe`, GitHub Actions run `34174320808`, candidate SHA-256 `8dab36b259a2837b8218ef2b45af57f0698870a8e15424e66df54db528e34f7d`, Mozilla-signed XPI SHA-256 `074d901fa18d66ec5d5ee55bcacdfbf066567eec02902f5c6d2c43a361a75830`, and retained artifact `goreecloud-download-manager-0.2.11-mozilla-signed` (artifact ID `10036841722`, artifact ZIP SHA-256 `4b832680de6a7556c3ef9d3021e6d3b270e2f0639539757bbd531badcaca1358`).
