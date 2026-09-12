@@ -1,6 +1,14 @@
-export const CONFIG_SCHEMA_VERSION = 1;
+export const CONFIG_SCHEMA_VERSION = 2;
+export const STANDARD_WEBSPACE_ID = "standard";
 
 export const BUILTIN_WEBSPACES = Object.freeze([
+  {
+    id: STANDARD_WEBSPACE_ID,
+    name: "Standard",
+    color: "toolbar",
+    icon: "circle",
+    description: "Default isolated Webspace for websites that are not assigned elsewhere."
+  },
   { id: "goreecloud", name: "GoreeCloud", color: "blue", icon: "fingerprint" },
   { id: "google", name: "Google", color: "red", icon: "circle" },
   { id: "microsoft", name: "Microsoft", color: "purple", icon: "briefcase" },
@@ -20,7 +28,8 @@ export const RULE_PRIORITY = Object.freeze({
 export const DEFAULT_CONFIG = Object.freeze({
   schemaVersion: CONFIG_SCHEMA_VERSION,
   routingEnabled: true,
-  defaultBehavior: "normal",
+  defaultBehavior: "webspace",
+  defaultWebspaceId: STANDARD_WEBSPACE_ID,
   webspaces: {},
   userRules: [],
   exceptions: []
