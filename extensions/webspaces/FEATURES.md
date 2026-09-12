@@ -1,11 +1,12 @@
 # GoreeCloud Webspaces — Features
 
-## Implemented in the 0.1.10 source candidate
+## Implemented in the 0.1.11 source candidate
 
 - Built-in Standard, GoreeCloud, Google, Microsoft, and Meta Webspaces.
 - **Standard fallback:** ordinary external HTTP(S) websites with no more-specific routing rule open in the isolated Standard Webspace while automatic routing is active.
 - **Per-Webspace storage isolation:** every managed Webspace is required to own a distinct Firefox contextual identity and unique `cookieStoreId`; duplicate or missing cookie-store mappings fail the isolation invariant instead of silently sharing authenticated state.
 - **Isolation Health:** the manager verifies the current GoreeCloud-managed identity map against Firefox contextual identities, reports managed Webspaces, unique cookie stores, identities present, and per-Webspace health, and detects missing/shared mappings without reading cookie contents.
+- **Isolation Health runtime channel:** health requests use the dedicated `webspaces-health:*` namespace so Firefox does not route them into the main `webspaces:*` request handler.
 - Deterministic provider routing, explicit assignments, exceptions, and reason codes; higher-priority user/provider destinations supersede Standard.
 - `localhost`, loopback addresses, and local-development hosts remain explicit-only instead of automatically falling back to Standard.
 - Configuration schema migration from schema 1 to schema 2 normalizes prior fallback settings to Standard while preserving existing Webspaces, assignments, and exceptions.
