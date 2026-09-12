@@ -1,5 +1,5 @@
 import { PROVIDER_RULES } from "./provider-rules.js";
-import { RULE_PRIORITY } from "./constants.js";
+import { RULE_PRIORITY, STANDARD_WEBSPACE_ID } from "./constants.js";
 import { getRoutingPause, pauseAppliesToHostname } from "./routing-controls.js";
 
 export function normalizeHostname(hostname) {
@@ -20,6 +20,14 @@ export function domainMatches(hostname, domain) {
   const host = normalizeHostname(hostname);
   const base = normalizeHostname(domain);
   return host === base || host.endsWith(`.${base}`);
+}
+
+export function isExplicitOnlyLocalHostname(hostname) {
+  const host = normalizeHostname(hostname);
+  if (host === "localhost" || host.endsWith(".localhost")) return true;
+  if (host === "::1" || host === "[::1]") return true;
+  if (/^127(?:\.\d{1,3}){3}$/.test(host)) return true;
+  return false;
 }
 
 function candidate(rule, priority, reason) {
@@ -151,21 +159,30 @@ export function analyzeRouting(rawUrl, config, now = Date.now()) {
     };
   }
 
-  const defaultTarget = config.defaultBehavior === "webspace"
-    ? config.webspaces?.[config.defaultWebspaceId]
-    : null;
-  if (defaultTarget?.id) {
+  if (isExplicitOnlyLocalHostname(hostname)) {
+    const decision = {
+      action: "normal",
+      reason: "local-development-explicit-only",
+      matchedRule: null,
+      webspaceId: null,
+      priority: null
+    };
+    return { hostname, decision, candidates: [] };
+  }
+
+  const standard = config.webspaces?.[STANDARD_WEBSPACE_ID];
+  if (standard?.id) {
     const decision = {
       action: "webspace",
-      reason: "default-webspace",
+      reason: "standard-fallback",
       matchedRule: null,
-      webspaceId: defaultTarget.id,
+      webspaceId: STANDARD_WEBSPACE_ID,
       priority: RULE_PRIORITY.DEFAULT
     };
     return { hostname, decision, candidates: [] };
   }
 
-  const decision = { action: "normal", reason: "no-matching-rule", matchedRule: null, webspaceId: null, priority: null };
+  const decision = { action: "normal", reason: "standard-webspace-unavailable", matchedRule: null, webspaceId: null, priority: null };
   return { hostname, decision, candidates: [] };
 }
 
