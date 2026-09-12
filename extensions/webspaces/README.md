@@ -14,6 +14,7 @@ GoreeCloud Webspaces is a Firefox extension for isolated browsing environments, 
 
 - Built-in Webspaces are Standard, GoreeCloud, Google, Microsoft, and Meta.
 - Standard has its own Firefox contextual identity and is the default destination for otherwise-unassigned external HTTP(S) websites while automatic routing is active.
+- Every GoreeCloud-managed Webspace is required to own a distinct Firefox contextual identity and unique `cookieStoreId`; the source now fails closed if two managed Webspaces are mapped to the same Firefox cookie store or if a managed Webspace lacks one.
 - Explicit user assignments, user exceptions, provider mappings, and higher-priority routing rules continue to supersede Standard according to deterministic precedence.
 - Deliberate routing pauses and explicit exceptions may keep a site outside Standard when their higher-priority semantics apply.
 - `localhost`, loopback addresses, and local-development hosts remain explicit-only and are not automatically swept into Standard.
@@ -30,6 +31,14 @@ The broader implemented slice includes deterministic provider/user/exception rou
 Standard is the V1 fallback for ordinary external HTTP(S) websites that do not match a more specific destination. It is not a claim that every browser page can or should be containerized. Browser-internal pages, unsupported schemes, explicit exceptions, active routing pauses, and explicit-only local-development hosts may remain outside Standard.
 
 Standard does not replace the routing priority system. If a site is assigned to Work or recognized as Google, Microsoft, Meta, GoreeCloud, or another higher-priority destination, that specific rule wins. The goal is to eliminate routine unassigned browsing in Normal Firefox while preserving deliberate escape and development cases.
+
+## Per-Webspace isolation invariant
+
+Each managed Webspace must map one-to-one to a distinct Firefox contextual identity. A `cookieStoreId` may belong to only one GoreeCloud Webspace at a time. Standard, GoreeCloud, Google, Microsoft, Meta, every custom persistent Webspace, every duplicated Webspace, and every temporary Webspace therefore use separate Firefox cookie stores.
+
+Firefox contextual identities separate cookies by design and Firefox's container model also partitions supported site state through contextual identity/origin attributes, including storage such as localStorage and IndexedDB and cache state where Firefox supports that partitioning. Webspaces does not claim that browser-global history, bookmarks, saved passwords, or other browser-global state are independently isolated merely because a tab is in a Webspace.
+
+Creating, duplicating, importing, or resetting a Webspace must result in a fresh contextual identity rather than reuse another Webspace's authenticated browser state. If persisted configuration would cause two managed Webspaces to share a cookie store, Webspaces fails closed instead of silently running with a broken isolation boundary.
 
 ## Keyboard-shortcut boundary
 
@@ -55,7 +64,7 @@ GLAZE UI V1.3 / `1.3.0` remains the shared Stable consumer target. Webspaces map
 
 ## Firefox contextual-identity boundary
 
-Firefox contextual identities are browser-level primitives and are not private to one extension. Webspaces remains the GoreeCloud product and configuration authority for its Webspace model, but Firefox owns the underlying contextual identities.
+Firefox contextual identities are browser-level primitives and are not private to one extension. Webspaces remains the GoreeCloud product and configuration authority for its Webspace model, but Firefox owns the underlying contextual identities and the actual browser-state partitioning guarantees.
 
 ## Development validation
 
@@ -70,4 +79,4 @@ Webspaces does not by itself provide a VPN, separate IP addresses, operating-sys
 
 ## Authoritative product specification
 
-The broader product requirements remain in the canonical GoreeCloud Drive record **Project Specification — Webspaces.docx**, which now defines Standard as the V1 fallback for otherwise-unassigned external HTTP(S) websites.
+The broader product requirements remain in the canonical GoreeCloud Drive record **Project Specification — Webspaces.docx**, which defines Standard as the V1 fallback and requires a distinct Firefox cookie store/contextual identity for every GoreeCloud-managed Webspace.
