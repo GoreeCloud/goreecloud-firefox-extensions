@@ -4,19 +4,21 @@
 **Component path:** `extensions/webspaces/`  
 **Source lifecycle:** Source candidate / Active Development  
 **Firefox add-on ID:** `webspaces@goreecloud.com`  
-**Source version:** `0.1.5`
+**Source version:** `0.1.6`
 
 GoreeCloud Webspaces is a Firefox extension for isolated browsing environments, deterministic website routing, and multi-account separation. Firefox contextual identities are the browser isolation mechanism; GoreeCloud Webspaces is the product, management surface, routing authority, and user-facing abstraction.
 
 ## Implemented source-candidate capabilities
 
-0.1.5 provides built-in GoreeCloud, Google, Microsoft, and Meta Webspaces; deterministic provider/user/exception routing; race-hardened tab migration; first-party Glaze UI popup and manager; explainable routing; context-menu Open Link, Move Tab, Always Open This Site In, and Remove Assignment actions; persistent and temporary custom Webspaces; temporary Close & Forget; appearance/description editing; duplicate, lock/unlock, reset, and custom deletion; searchable/editable site assignments; local conflict detection and rule testing; local managed-tab counts; and portable JSON configuration import/export.
+0.1.6 carries the 0.1.5 lifecycle, context-menu, explainability, temporary-Webspace, assignment-management, portability, and Glaze UI capabilities forward while hardening two runtime edges found during live Firefox testing: semantic hidden controls are preserved even when Glaze button styles are applied, and a quick/site-context reassignment can no longer retarget a rule away from a locked Webspace.
+
+The broader implemented slice includes built-in GoreeCloud, Google, Microsoft, and Meta Webspaces; deterministic provider/user/exception routing; race-hardened tab migration; first-party Glaze UI popup and manager; explainable routing; context-menu Open Link, Move Tab, Always Open This Site In, and Remove Assignment actions; persistent and temporary custom Webspaces; temporary Close & Forget; appearance/description editing; duplicate, lock/unlock, reset, and custom deletion; searchable/editable site assignments; local conflict detection and rule testing; local managed-tab counts; and portable JSON configuration import/export.
 
 Duplicating a Webspace creates a fresh isolated identity. Copied explicit assignments are disabled by default so duplication does not silently create competing active routes. Reset creates a replacement Firefox contextual identity before retiring the old identity.
 
 ## Close & Forget boundary
 
-Close & Forget closes tabs associated with a temporary Webspace and asks Firefox to remove that contextual identity. It does not claim verified deletion of every cache entry, browser artifact, network record, or other state outside what Firefox's contextual-identity APIs establish. Webspaces does not request `browsingData` merely to make a broader deletion claim.
+Close & Forget is exposed only while the active tab is actually inside a temporary Webspace. It closes tabs associated with that temporary Webspace and asks Firefox to remove that contextual identity. It does not claim verified deletion of every cache entry, browser artifact, network record, or other state outside what Firefox's contextual-identity APIs establish. Webspaces does not request `browsingData` merely to make a broader deletion claim.
 
 ## Portability boundary
 

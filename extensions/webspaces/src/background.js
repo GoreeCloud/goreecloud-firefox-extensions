@@ -388,6 +388,9 @@ async function addOrAssign(input, { replaceExisting = true } = {}) {
   const kind = input.kind === "exact" ? "exact" : "domain";
   const value = normalizeAssignmentHostname(input.value);
   const existing = (current.userRules ?? []).find((rule) => rule.kind === kind && rule.value === value);
+  if (existing && existing.webspaceId !== input.webspaceId) {
+    assertRuleUnlocked(current, existing);
+  }
   if (existing && !replaceExisting && existing.webspaceId !== input.webspaceId) {
     const target = current.webspaces?.[existing.webspaceId]?.name ?? existing.webspaceId;
     throw new Error(`${value} is already assigned to ${target}. Edit the existing rule instead.`);
