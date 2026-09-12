@@ -1,4 +1,5 @@
 export const COMMAND_WEBSPACE_TARGETS = Object.freeze({
+  "open-standard-webspace": "standard",
   "open-goreecloud-webspace": "goreecloud",
   "open-google-webspace": "google",
   "open-microsoft-webspace": "microsoft",
