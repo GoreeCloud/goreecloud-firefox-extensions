@@ -13,8 +13,8 @@ export const colorMap = Object.freeze({
   toolbar: "#5b6b82"
 });
 
-const builtinColor = Object.freeze({ goreecloud: "blue", google: "red", microsoft: "purple", meta: "turquoise" });
-const builtinGlyph = Object.freeze({ goreecloud: "G", google: "G", microsoft: "M", meta: "∞" });
+const builtinColor = Object.freeze({ standard: "toolbar", goreecloud: "blue", google: "red", microsoft: "purple", meta: "turquoise" });
+const builtinGlyph = Object.freeze({ standard: "S", goreecloud: "G", google: "G", microsoft: "M", meta: "∞" });
 const iconGlyph = Object.freeze({ briefcase: "▣", cart: "⌑", chill: "✧", circle: "●", dollar: "$", fence: "╫", fingerprint: "◎", food: "◒", fruit: "◉", gift: "◆", pet: "◇", tree: "⌁", vacation: "✦" });
 const iconLabel = Object.freeze({ briefcase: "Briefcase", cart: "Shopping", chill: "Chill", circle: "Circle", dollar: "Finance", fence: "Boundary", fingerprint: "Fingerprint", food: "Food", fruit: "Fruit", gift: "Gift", pet: "Pet", tree: "Nature", vacation: "Travel" });
 
