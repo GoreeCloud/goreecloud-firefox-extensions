@@ -1,39 +1,27 @@
 # GoreeCloud Webspaces — Features
 
-## Implemented in the 0.1.4 source candidate
+## Implemented in the 0.1.5 source candidate
 
 - Built-in GoreeCloud, Google, Microsoft, and Meta Webspaces.
-- Firefox contextual-identity provisioning.
-- GoreeCloud root/subdomain and provider routing.
-- Deterministic routing with reason codes.
-- Explicit user assignments and exceptions.
-- Local versioned configuration persistence.
-- GoreeCloud Webspaces toolbar popup and management page.
-- Current-Webspace identification and routing-reason display.
-- Open-new-tab-in-Webspace actions.
-- Routing pause/resume.
-- “Always open this site in” assignment.
-- Custom Webspace creation.
-- Explicit assignment review/removal.
-- Race-hardened destination-tab staging at `about:blank` before routed navigation.
-- Source-preserving failure behavior when destination navigation setup fails.
-- GLAZE UI V1.3 visual adoption layer for popup and settings surfaces.
-- First-party Webspaces SVG identity mark registered with Firefox and used in product chrome.
-- Distinct glyph + accent identity treatment for built-in and custom Webspaces.
-- Compact two-column Glaze launcher in the popup.
-- Routing, Webspace, and explicit-assignment summary capsules in the manager.
-- Collapsible Firefox isolation boundary explanation to reduce persistent visual noise.
-- System light/dark presentation plus Reduced Motion, Reduced Transparency, missing-blur, and Forced Colors fallbacks.
-- Routing, management, migration, identity, and Glaze-adoption source tests.
+- Deterministic provider routing, explicit assignments, exceptions, and reason codes.
+- **Why this Webspace?** candidate/priority explanation and local routing-rule tester.
+- Firefox context menus for Open Link in Webspace, Move Tab to Webspace, Always Open This Site In, and Remove Webspace Assignment.
+- Persistent and temporary custom Webspaces.
+- Temporary **Close & Forget** with tab closure before contextual-identity removal.
+- Custom rename, description, color/icon editing; built-in appearance editing.
+- Duplicate, lock/unlock, reset, and custom persistent deletion.
+- Duplicate creates a fresh identity and copies explicit rules disabled by default.
+- Searchable assignment manager with domain/exact scope, add/edit/remove, enable/disable, destination changes, duplicate validation, and conflict reporting.
+- Per-Webspace and total managed-tab counts without persistent browsing history.
+- Portable local JSON import/export excluding authenticated session state.
+- Firefox-supported contextual-identity appearance discovery with compatibility fallbacks.
+- Race-hardened tab handoff and source-preserving failure behavior.
+- GLAZE UI V1.3 local visual layer with first-party identity mark, system dark appearance, visible focus, Reduced Motion, Reduced Transparency, missing-blur, and Forced Colors fallbacks.
 
-## Glaze UI boundary
+## Boundaries
 
-GLAZE UI V1.3 / 1.3.0 is the current shared Stable consumer target in the canonical Glaze repository. Webspaces adopts its current visual direction locally, but full downstream conformance and production acceptance are not claimed by this source candidate.
-
-## Firefox platform boundary
-
-Contextual identities are browser-level objects. Other container-management interfaces may display them, and another extension with automatic routing can conflict if it targets the same sites.
+Close & Forget does not claim complete erasure beyond what Firefox confirms through contextual-identity APIs. Import/export is configuration-only and excludes cookies, login sessions, credentials, and browsing history. Managed-tab counts are local status, not analytics.
 
 ## Planned
 
-Context menus, richer conflict resolution, temporary Webspaces, Close & Forget, reset/delete flows, import/export, routing history, statistics, managed policy, synchronization, broader GoreeCloud platform integrations, and full rendered/accessibility Glaze consumer acceptance remain planned unless separately evidenced in source and validation.
+Timed routing pauses, richer wildcard/domain-group routing, bounded local routing history/statistics, keyboard-shortcut expansion, managed enterprise policy, synchronization/recovery adapters, broader GoreeCloud platform integrations, Firefox Android acceptance, and full rendered/accessibility Glaze consumer acceptance remain planned.

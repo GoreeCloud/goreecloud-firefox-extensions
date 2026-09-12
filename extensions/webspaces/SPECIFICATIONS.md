@@ -2,56 +2,34 @@
 
 ## Status
 
-This file describes the current source-candidate implementation slice only. The authoritative broader product specification remains the GoreeCloud Drive record `Project Specification — Webspaces.docx`.
+This file describes the current **0.1.5 source-candidate** implementation slice. The authoritative broader product specification remains the GoreeCloud Drive record `Project Specification — Webspaces.docx`.
 
 ## Current requirements
 
 1. Firefox contextual identities provide browser-state separation; **Webspace** remains the GoreeCloud product abstraction.
 2. Built-in Webspaces are GoreeCloud, Google, Microsoft, and Meta.
-3. GoreeCloud Webspaces provides its own toolbar and management interface.
-4. `goreecloud.com` and supported provider domains route deterministically to the intended Webspace unless an explicit higher-priority user rule applies.
-5. Migration must establish the destination contextual identity before starting the requested website navigation.
-6. A destination tab must be marked as an internal routing transition before the requested URL is applied to it.
-7. Destination navigation setup must succeed before the source tab is removed.
-8. If destination navigation setup fails, the source tab must remain available and the incomplete replacement should be cleaned up where possible.
-9. If source cleanup fails after the destination is established, the destination must be retained rather than risking navigation loss.
-10. Configuration is local-first and versioned.
-11. Webspaces popup and management surfaces target the current consumer-eligible **GLAZE UI V1.3 / 1.3.0** design direction through local assets only.
-12. Glaze material must remain bounded: neutral glass is interaction chrome; durable reading/control surfaces remain solid or near-solid.
-13. Webspace color is an identity accent and must not be the sole carrier of identity or important state.
-14. Webspaces must use a first-party local product identity mark rather than depending on another container extension's artwork.
-15. Built-in and custom Webspaces must retain non-color identity cues in addition to bounded accent color.
-16. Webspaces UI must preserve visible focus and degraded presentation for Reduced Motion, Reduced Transparency, missing backdrop blur, Forced Colors, and system dark appearance.
-17. The source must not claim full Glaze consumer conformance until rendered Firefox and applicable accessibility acceptance evidence exists.
-18. Platform-system integrations must not be claimed until separately implemented and verified.
-
-## Compatibility boundary
-
-Firefox contextual identities are browser-level and are not private to GoreeCloud Webspaces. Another extension can enumerate the same identities. If two extensions automatically route the same site, competing routing policies can cause repeated reopening or other unstable behavior; GoreeCloud Webspaces does not request broad extension-management authority merely to inspect or disable another extension.
+3. Routing is deterministic and explainable, including selected rule, reason, priority, and matching candidates where available.
+4. Tab migration establishes the destination contextual identity before starting the requested site navigation; destination setup must succeed before source removal.
+5. Context-menu one-time Open/Move actions use the same race-safe transition model.
+6. Configuration is local-first and versioned.
+7. Custom Webspaces may be persistent or temporary. Built-ins cannot be deleted.
+8. Close & Forget is limited to temporary Webspaces in this slice, closes their managed tabs before contextual-identity removal, and must not claim complete browser-data deletion beyond Firefox evidence.
+9. Duplicate creates a fresh identity rather than copying authenticated site state. Copied explicit assignments are disabled by default.
+10. Reset creates a fresh replacement identity before retiring the current identity and performs best-effort rollback if retirement fails.
+11. Lock state blocks destructive configuration and assignment mutation involving the protected Webspace while still allowing unlock.
+12. Assignment management supports search, exact/domain scope, add/edit/remove, enable/disable, destination editing, duplicate-scope validation, and conflict reporting.
+13. Portable export excludes `cookieStoreId` values, temporary Webspaces, authentication cookies, active login sessions, passwords, credentials, and browsing history.
+14. Import validates the GoreeCloud Webspaces portable format, caps imported object counts, creates fresh custom identities, and skips conflicting/unavailable assignments rather than silently replacing local routes.
+15. Per-Webspace activity in this slice is limited to local open-tab counts and is not browsing-history telemetry.
+16. Firefox-supported contextual identity colors/icons may be discovered at runtime with compatibility fallbacks.
+17. The extension uses `menus` for context-menu features and does not add broad host permissions for routing.
+18. Popup and management surfaces target GLAZE UI V1.3 / 1.3.0 through local assets only, preserve non-color identity cues, visible focus, reduced-motion/transparency and Forced Colors behavior.
+19. Platform integrations must not be claimed until separately implemented and verified.
 
 ## Current exclusions
 
-- Context-menu actions.
-- Temporary Webspaces and Close & Forget.
-- Custom Webspace deletion/reset flows.
-- Full conflict-resolution UI.
-- Routing history/statistics UI.
-- Sync, backup, Identity, Privacy Shield, Wardveil, Manager, Mesh, or Everkeep adapters.
-- Managed enterprise policy.
-- Firefox Android acceptance.
-- Full Glaze UI V1.3 consumer conformance/production acceptance.
-- Mozilla signing and Stable release acceptance.
+Complete browsing-data erasure verification for Close & Forget; persistent routing-history storage; timed routing pause modes; advanced wildcard/domain-group routing; sync/recovery/Identity/Privacy Shield/Wardveil/Manager/Mesh/Everkeep adapters; managed enterprise policy; Firefox Android acceptance; full Glaze production acceptance; Mozilla signing; and Stable release acceptance remain outside this slice.
 
-## Acceptance criteria for this slice
+## Acceptance criteria
 
-- Repository validation passes.
-- Routing, management, tab-migration, identity, and Glaze-adoption source tests pass.
-- Manifest and both first-party UI surfaces use the local `icons/webspaces.svg` product identity mark.
-- Popup and options surfaces declare `data-glaze-version="1.3"` and load only local consumer UI assets.
-- The Glaze adoption layer contains Reduced Motion, Reduced Transparency, no-backdrop-filter, and Forced Colors fallbacks.
-- Webspace identity remains understandable without relying on color alone.
-- The migration test proves `about:blank` destination creation occurs before applying the requested website URL.
-- The migration test proves destination setup failure does not remove the source tab.
-- Explicit user assignments override provider mappings.
-- Explicit exceptions override user/provider routing.
-- Paused routing returns normal browsing behavior.
+Repository validation and all Webspaces tests must pass. Manifest permissions must be exactly `activeTab`, `contextualIdentities`, `cookies`, `menus`, `storage`, and `webNavigation`, with no broad host permissions. Tests must cover routing explanation, migration safety, context menus, lifecycle ordering/rollback, management validation, portability exclusions, first-party UI controls, identity, and Glaze adoption.

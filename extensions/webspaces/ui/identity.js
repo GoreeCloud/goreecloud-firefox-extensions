@@ -1,63 +1,22 @@
 export const colorMap = Object.freeze({
   blue: "#3478f6",
-  cyan: "#1c8a8d",
-  turquoise: "#1c8a8d",
-  gray: "#6f7887",
-  toolbar: "#6f7887",
+  cyan: "#1a8fb8",
+  gray: "#6b7280",
   green: "#2f9e63",
-  yellow: "#d9a35f",
   orange: "#c57a25",
-  red: "#c63b32",
   pink: "#b95b8b",
   purple: "#7657f6",
-  violet: "#6849df"
+  red: "#c63b32",
+  violet: "#6d5bd0",
+  yellow: "#d9a35f",
+  turquoise: "#1c8a8d",
+  toolbar: "#5b6b82"
 });
 
-const builtinColor = Object.freeze({
-  goreecloud: "blue",
-  google: "red",
-  microsoft: "purple",
-  meta: "cyan"
-});
-
-const builtinGlyph = Object.freeze({
-  goreecloud: "G",
-  google: "G",
-  microsoft: "M",
-  meta: "∞"
-});
-
-const iconGlyph = Object.freeze({
-  circle: "●",
-  fingerprint: "◎",
-  briefcase: "▣",
-  dollar: "$",
-  cart: "⌑",
-  vacation: "✦",
-  gift: "◆",
-  food: "◒",
-  pet: "◇",
-  tree: "⌁",
-  chill: "❄",
-  fence: "⌗",
-  fruit: "◉"
-});
-
-const iconLabel = Object.freeze({
-  circle: "Circle",
-  fingerprint: "Fingerprint",
-  briefcase: "Briefcase",
-  dollar: "Finance",
-  cart: "Shopping",
-  vacation: "Travel",
-  gift: "Gift",
-  food: "Food",
-  pet: "Pet",
-  tree: "Nature",
-  chill: "Chill",
-  fence: "Fence",
-  fruit: "Fruit"
-});
+const builtinColor = Object.freeze({ goreecloud: "blue", google: "red", microsoft: "purple", meta: "turquoise" });
+const builtinGlyph = Object.freeze({ goreecloud: "G", google: "G", microsoft: "M", meta: "∞" });
+const iconGlyph = Object.freeze({ briefcase: "▣", cart: "⌑", chill: "✧", circle: "●", dollar: "$", fence: "╫", fingerprint: "◎", food: "◒", fruit: "◉", gift: "◆", pet: "◇", tree: "⌁", vacation: "✦" });
+const iconLabel = Object.freeze({ briefcase: "Briefcase", cart: "Shopping", chill: "Chill", circle: "Circle", dollar: "Finance", fence: "Boundary", fingerprint: "Fingerprint", food: "Food", fruit: "Fruit", gift: "Gift", pet: "Pet", tree: "Nature", vacation: "Travel" });
 
 export function accentFor(webspace) {
   const key = webspace?.color ?? builtinColor[webspace?.id] ?? "blue";

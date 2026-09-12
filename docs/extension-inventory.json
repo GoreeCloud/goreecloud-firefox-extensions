@@ -7,6 +7,6 @@
     {"slug":"redirector","name":"GoreeCloud Redirector","directory":"extensions/redirector","gecko_id":"redirector@goreecloud.com","source_version":"0.2.1","source_state":"canonical-source","accepted_stable_version":"0.2.0","legacy_repository":"GoreeCloud/goreecloud-redirector"},
     {"slug":"source-resync","name":"GoreeCloud Source Resync","directory":"extensions/source-resync","gecko_id":"source-resync@goreecloud.com","source_version":"1.1.2","source_state":"canonical-source","accepted_stable_version":null,"legacy_repository":"GoreeCloud/goreecloud-source-resync"},
     {"slug":"privacy-shield","name":"GoreeCloud Privacy Shield","directory":"extensions/privacy-shield","gecko_id":"privacy-shield@goreecloud.com","source_version":"0.2.0","source_state":"stable","accepted_stable_version":"0.2.0","legacy_repository":null,"broad_host_permission_review":"extensions/privacy-shield/BROAD_HOST_PERMISSION_REVIEW.md"},
-    {"slug":"webspaces","name":"GoreeCloud Webspaces","directory":"extensions/webspaces","gecko_id":"webspaces@goreecloud.com","source_version":"0.1.4","source_state":"source-candidate","accepted_stable_version":null,"legacy_repository":null}
+    {"slug":"webspaces","name":"GoreeCloud Webspaces","directory":"extensions/webspaces","gecko_id":"webspaces@goreecloud.com","source_version":"0.1.5","source_state":"source-candidate","accepted_stable_version":null,"legacy_repository":null}
   ]
 }

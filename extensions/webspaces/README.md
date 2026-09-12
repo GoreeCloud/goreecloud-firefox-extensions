@@ -4,62 +4,43 @@
 **Component path:** `extensions/webspaces/`  
 **Source lifecycle:** Source candidate / Active Development  
 **Firefox add-on ID:** `webspaces@goreecloud.com`  
-**Source version:** `0.1.4`
+**Source version:** `0.1.5`
 
 GoreeCloud Webspaces is a Firefox extension for isolated browsing environments, deterministic website routing, and multi-account separation. Firefox contextual identities are the browser isolation mechanism; GoreeCloud Webspaces is the product, management surface, routing authority, and user-facing abstraction.
 
 ## Implemented source-candidate capabilities
 
-This source candidate currently provides:
+0.1.5 provides built-in GoreeCloud, Google, Microsoft, and Meta Webspaces; deterministic provider/user/exception routing; race-hardened tab migration; first-party Glaze UI popup and manager; explainable routing; context-menu Open Link, Move Tab, Always Open This Site In, and Remove Assignment actions; persistent and temporary custom Webspaces; temporary Close & Forget; appearance/description editing; duplicate, lock/unlock, reset, and custom deletion; searchable/editable site assignments; local conflict detection and rule testing; local managed-tab counts; and portable JSON configuration import/export.
 
-- Built-in Webspace provisioning for GoreeCloud, Google, Microsoft, and Meta.
-- Local-first versioned configuration.
-- Deterministic provider, user-assignment, and exception routing.
-- GoreeCloud Webspaces toolbar and management UI.
-- Custom Webspace creation and explicit domain assignment management.
-- Routing pause/resume and routing-reason display.
-- Race-hardened tab migration that establishes the destination contextual identity before starting routed website navigation.
-- Failure-safe migration that retains the original tab when destination navigation setup fails.
-- Consumer-local **GLAZE UI V1.3 — Adaptive Resonance** visual adoption for the popup and management page.
-- First-party GoreeCloud Webspaces identity mark used by Firefox and Webspaces UI.
-- Distinct non-color Webspace glyphs plus bounded Webspace accent color.
-- Compact Glaze launcher cards, status capsules, routing/assignment summaries, and a disclosure-based Firefox isolation explanation.
-- System dark appearance, visible focus, Reduced Motion, Reduced Transparency, Forced Colors, and no remote UI assets.
-- Routing, management, tab-migration, identity, and Glaze-adoption source tests plus source validation.
+Duplicating a Webspace creates a fresh isolated identity. Copied explicit assignments are disabled by default so duplication does not silently create competing active routes. Reset creates a replacement Firefox contextual identity before retiring the old identity.
+
+## Close & Forget boundary
+
+Close & Forget closes tabs associated with a temporary Webspace and asks Firefox to remove that contextual identity. It does not claim verified deletion of every cache entry, browser artifact, network record, or other state outside what Firefox's contextual-identity APIs establish. Webspaces does not request `browsingData` merely to make a broader deletion claim.
+
+## Portability boundary
+
+Normal exports contain configuration rather than authenticated browsing state. Exports exclude Firefox `cookieStoreId` values, temporary Webspaces, authentication cookies, active login sessions, passwords, credentials, and browsing history. Imports create fresh Firefox identities for imported custom Webspaces.
 
 ## Glaze UI boundary
 
-The current canonical Glaze source authority identifies GLAZE UI V1.3 / `1.3.0` as the Official Stable consumer target. Webspaces 0.1.4 maps its Firefox surfaces to that visual and accessibility direction through local consumer assets.
-
-This source candidate does **not** claim full Glaze UI V1.3 consumer conformance or production acceptance. Rendered Firefox optical review, accessibility review, and broader product acceptance remain separate evidence gates.
+GLAZE UI V1.3 / `1.3.0` remains the shared Stable consumer target. Webspaces maps its Firefox surfaces to that direction through local assets. This source candidate does not claim full downstream Glaze conformance or production acceptance without rendered/accessibility acceptance evidence.
 
 ## Firefox contextual-identity boundary
 
-Firefox contextual identities are browser-level primitives. Firefox itself and other container-management extensions can therefore enumerate identities created by GoreeCloud Webspaces. Firefox does not provide a private per-extension container namespace.
-
-Two extensions that automatically route the same sites can also conflict. GoreeCloud Webspaces does not request broad extension-management authority merely to inspect or disable another extension.
+Firefox contextual identities are browser-level primitives and are not private to one extension. Webspaces remains the GoreeCloud product and configuration authority for its Webspace model, but Firefox owns the underlying contextual identities.
 
 ## Development validation
-
-From the repository root:
 
 ```bash
 python extensions/webspaces/scripts/validate.py
 node --experimental-default-type=module --test extensions/webspaces/tests/*.test.js
 ```
 
-Repository-wide validation and deterministic packaging are handled by the shared Firefox-extension tooling.
-
-## Development loading
-
-Open `about:debugging` in Firefox, choose **This Firefox**, select **Load Temporary Add-on**, and choose `extensions/webspaces/manifest.json` or the generated unsigned XPI candidate.
-
 ## Security and privacy boundary
 
-Webspaces separates Firefox-supported contextual-identity state. It does not by itself provide a VPN, separate IP addresses, process isolation, malware sandboxing, anonymity, fingerprinting resistance, or complete tracking prevention.
-
-No Wardveil Security, Privacy Shield, Everkeep, GoreeCloud Mesh, GoreeCloud Identity, or GoreeCloud Manager runtime integration is claimed by this source candidate.
+Webspaces does not by itself provide a VPN, separate IP addresses, operating-system process isolation, malware sandboxing, anonymity, fingerprinting resistance, or complete tracking prevention. No Wardveil Security, Privacy Shield, Everkeep, GoreeCloud Mesh, GoreeCloud Identity, or GoreeCloud Manager runtime integration is claimed by this source candidate.
 
 ## Authoritative product specification
 
-The broader product requirements are maintained in the canonical GoreeCloud Drive record **Project Specification — Webspaces.docx**.
+The broader product requirements remain in the canonical GoreeCloud Drive record **Project Specification — Webspaces.docx**.
