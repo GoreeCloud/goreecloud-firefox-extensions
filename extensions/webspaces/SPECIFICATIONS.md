@@ -16,7 +16,12 @@ This file describes the current source-candidate implementation slice only. The 
 8. If destination navigation setup fails, the source tab must remain available and the incomplete replacement should be cleaned up where possible.
 9. If source cleanup fails after the destination is established, the destination must be retained rather than risking navigation loss.
 10. Configuration is local-first and versioned.
-11. Platform-system integrations must not be claimed until separately implemented and verified.
+11. Webspaces popup and management surfaces target the current consumer-eligible **GLAZE UI V1.3 / 1.3.0** design direction through local assets only.
+12. Glaze material must remain bounded: neutral glass is interaction chrome; durable reading/control surfaces remain solid or near-solid.
+13. Webspace color is an identity accent and must not be the sole carrier of identity or important state.
+14. Webspaces UI must preserve visible focus and degraded presentation for Reduced Motion, Reduced Transparency, missing backdrop blur, Forced Colors, and system dark appearance.
+15. The source must not claim full Glaze consumer conformance until rendered Firefox and applicable accessibility acceptance evidence exists.
+16. Platform-system integrations must not be claimed until separately implemented and verified.
 
 ## Compatibility boundary
 
@@ -32,12 +37,15 @@ Firefox contextual identities are browser-level and are not private to GoreeClou
 - Sync, backup, Identity, Privacy Shield, Wardveil, Manager, Mesh, or Everkeep adapters.
 - Managed enterprise policy.
 - Firefox Android acceptance.
+- Full Glaze UI V1.3 consumer conformance/production acceptance.
 - Mozilla signing and Stable release acceptance.
 
 ## Acceptance criteria for this slice
 
 - Repository validation passes.
-- Routing, management, and tab-migration unit tests pass.
+- Routing, management, tab-migration, and Glaze-adoption source tests pass.
+- Popup and options surfaces declare `data-glaze-version="1.3"` and load only local consumer UI assets.
+- The Glaze adoption layer contains Reduced Motion, Reduced Transparency, no-backdrop-filter, and Forced Colors fallbacks.
 - The migration test proves `about:blank` destination creation occurs before applying the requested website URL.
 - The migration test proves destination setup failure does not remove the source tab.
 - Explicit user assignments override provider mappings.

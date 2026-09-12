@@ -13,7 +13,7 @@ def main() -> None:
         fail("Manifest V3 is required")
     if manifest.get("name") != "GoreeCloud Webspaces":
         fail("unexpected extension name")
-    if manifest.get("version") != "0.1.2":
+    if manifest.get("version") != "0.1.3":
         fail("source version must remain synchronized with canonical inventory")
     gecko_id = manifest.get("browser_specific_settings", {}).get("gecko", {}).get("id")
     if gecko_id != "webspaces@goreecloud.com":
@@ -50,6 +50,7 @@ def main() -> None:
         "src/routing.js",
         "src/storage.js",
         "src/tab-migration.js",
+        "ui/glaze-webspaces.css",
         "ui/popup.html",
         "ui/popup.css",
         "ui/popup.js",
@@ -59,12 +60,20 @@ def main() -> None:
         "tests/routing.test.js",
         "tests/management.test.js",
         "tests/tab-migration.test.js",
+        "tests/glaze-ui.test.js",
     ]
     missing = [path for path in required_files if not (ROOT / path).is_file()]
     if missing:
         fail(f"missing required source files: {', '.join(missing)}")
 
-    print("Validated GoreeCloud Webspaces 0.1.2 source-candidate routing hardening.")
+    for relative in ["ui/popup.html", "ui/options.html"]:
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        if 'data-glaze-version="1.3"' not in text:
+            fail(f"{relative} must declare the Glaze UI V1.3 adoption target")
+        if "glaze-webspaces.css" not in text:
+            fail(f"{relative} must load the local Webspaces Glaze adoption stylesheet")
+
+    print("Validated GoreeCloud Webspaces 0.1.3 source-candidate Glaze UI refresh.")
 
 if __name__ == "__main__":
     main()

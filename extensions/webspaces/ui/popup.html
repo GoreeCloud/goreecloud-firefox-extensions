@@ -1,46 +1,79 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-glaze-version="1.3">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>GoreeCloud Webspaces</title>
+  <link rel="stylesheet" href="glaze-webspaces.css">
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <header>
-    <strong>GoreeCloud Webspaces</strong>
-    <span id="routing-badge" class="badge">Routing</span>
-  </header>
+  <main class="popup-shell glz-glass">
+    <header class="product-header">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true">G</div>
+        <div class="brand-copy">
+          <strong>Webspaces</strong>
+          <span>GoreeCloud</span>
+        </div>
+      </div>
+      <span id="routing-badge" class="glz-capsule routing-badge" data-routing-state="on">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>Routing on</span>
+      </span>
+    </header>
 
-  <section class="current">
-    <div class="eyebrow">Current Webspace</div>
-    <div id="current-webspace" class="headline">Loading…</div>
-    <div id="current-site" class="muted"></div>
-    <div id="routing-reason" class="reason"></div>
-  </section>
+    <section id="current-card" class="current-card glz-surface">
+      <div class="glz-kicker">Current Webspace</div>
+      <div class="current-identity">
+        <div id="current-emblem" class="space-emblem" aria-hidden="true">W</div>
+        <div class="current-copy">
+          <div id="current-webspace" class="current-name">Loading…</div>
+          <div id="current-site" class="current-site glz-muted"></div>
+        </div>
+      </div>
+      <div id="routing-reason" class="routing-reason"></div>
+    </section>
 
-  <label class="toggle-row">
-    <input id="routing-enabled" type="checkbox">
-    <span>Automatic routing</span>
-  </label>
+    <label class="routing-control glz-surface">
+      <span class="routing-copy">
+        <strong>Automatic routing</strong>
+        <span>Keep assigned sites in their Webspaces</span>
+      </span>
+      <span class="glz-switch">
+        <input id="routing-enabled" type="checkbox" aria-label="Automatic routing">
+        <span class="glz-switch-track" aria-hidden="true"></span>
+      </span>
+    </label>
 
-  <section>
-    <div class="section-title">Open a Webspace</div>
-    <div id="webspace-list" class="webspace-list"></div>
-  </section>
+    <section class="popup-section">
+      <div class="section-heading">
+        <div>
+          <div class="glz-kicker">Launcher</div>
+          <h2>Open a Webspace</h2>
+        </div>
+      </div>
+      <div id="webspace-list" class="webspace-list"></div>
+    </section>
 
-  <section id="assignment-section" hidden>
-    <div class="section-title">Always open this site in</div>
-    <div class="assign-row">
-      <select id="assignment-target"></select>
-      <button id="assign-site">Assign</button>
-    </div>
-    <div id="assignment-status" class="muted"></div>
-  </section>
+    <section id="assignment-section" class="popup-section" hidden>
+      <div class="section-heading">
+        <div>
+          <div class="glz-kicker">Site assignment</div>
+          <h2>Always open this site in</h2>
+        </div>
+      </div>
+      <div class="assign-row">
+        <select id="assignment-target" class="glz-select" aria-label="Webspace assignment"></select>
+        <button id="assign-site" class="glz-button primary" type="button">Assign</button>
+      </div>
+      <div id="assignment-status" class="assignment-status glz-muted" role="status"></div>
+    </section>
 
-  <footer>
-    <button id="manage" class="secondary">Manage Webspaces</button>
-  </footer>
+    <footer>
+      <button id="manage" class="glz-button full" type="button">Manage Webspaces</button>
+    </footer>
+  </main>
 
   <script type="module" src="popup.js"></script>
 </body>

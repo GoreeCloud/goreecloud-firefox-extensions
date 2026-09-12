@@ -13,11 +13,43 @@ const reasonLabels = {
   "unsupported-or-invalid-url": "This page is not eligible for website routing"
 };
 
+const colorMap = {
+  blue: "#3478f6",
+  turquoise: "#1c8a8d",
+  green: "#2f9e63",
+  yellow: "#d9a35f",
+  orange: "#c57a25",
+  red: "#c63b32",
+  pink: "#b95b8b",
+  purple: "#7657f6"
+};
+
+const builtinColor = {
+  goreecloud: "blue",
+  google: "red",
+  microsoft: "purple",
+  meta: "turquoise"
+};
+
 function sortedWebspaces(config) {
   return Object.values(config.webspaces ?? {}).sort((a, b) => {
     if (a.builtIn !== b.builtIn) return a.builtIn ? -1 : 1;
     return a.name.localeCompare(b.name);
   });
+}
+
+function accentFor(webspace) {
+  const key = webspace?.color ?? builtinColor[webspace?.id] ?? "blue";
+  return colorMap[key] ?? colorMap.blue;
+}
+
+function glyphFor(webspace) {
+  const name = webspace?.name?.trim() || "W";
+  return name.slice(0, 1).toUpperCase();
+}
+
+function applyAccent(element, webspace) {
+  element.style.setProperty("--space-accent", accentFor(webspace));
 }
 
 async function send(type, payload = {}) {
@@ -32,6 +64,12 @@ async function render() {
   const hostname = hostnameFromUrl(tab?.url ?? "");
   const decision = evaluateRouting(tab?.url ?? "", config);
 
+  const currentCard = document.querySelector("#current-card");
+  const currentEmblem = document.querySelector("#current-emblem");
+  applyAccent(currentCard, current);
+  applyAccent(currentEmblem, current);
+  currentEmblem.textContent = glyphFor(current);
+
   document.querySelector("#current-webspace").textContent = current?.name ?? "Normal Firefox";
   document.querySelector("#current-site").textContent = hostname ?? "Browser page";
 
@@ -41,24 +79,40 @@ async function render() {
     routedTarget ? `Routing: ${routedTarget} — ${reason}` : reason;
 
   const toggle = document.querySelector("#routing-enabled");
-  toggle.checked = config.routingEnabled !== false;
-  document.querySelector("#routing-badge").textContent = toggle.checked ? "Routing on" : "Routing paused";
+  const enabled = config.routingEnabled !== false;
+  toggle.checked = enabled;
+  const badge = document.querySelector("#routing-badge");
+  badge.dataset.routingState = enabled ? "on" : "paused";
+  badge.querySelector("span:last-child").textContent = enabled ? "Routing on" : "Routing paused";
 
   const list = document.querySelector("#webspace-list");
   list.replaceChildren();
   for (const webspace of webspaces) {
     const row = document.createElement("div");
     row.className = "webspace";
+    applyAccent(row, webspace);
+
+    const identity = document.createElement("div");
+    identity.className = "space-identity";
+
+    const emblem = document.createElement("span");
+    emblem.className = "space-emblem";
+    emblem.setAttribute("aria-hidden", "true");
+    emblem.textContent = glyphFor(webspace);
+    applyAccent(emblem, webspace);
 
     const label = document.createElement("span");
+    label.className = "space-name";
     label.textContent = webspace.name;
 
     const button = document.createElement("button");
     button.type = "button";
+    button.className = "glz-button";
     button.textContent = "Open";
     button.addEventListener("click", () => send("webspaces:open", { webspaceId: webspace.id }));
 
-    row.append(label, button);
+    identity.append(emblem, label);
+    row.append(identity, button);
     list.append(row);
   }
 
