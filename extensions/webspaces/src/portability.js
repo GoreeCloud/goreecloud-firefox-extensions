@@ -1,3 +1,5 @@
+import { STANDARD_WEBSPACE_ID } from "./constants.js";
+
 export const PORTABLE_FORMAT = "goreecloud-webspaces";
 export const PORTABLE_FORMAT_VERSION = 1;
 
@@ -23,8 +25,8 @@ export function exportPortableConfig(config) {
     formatVersion: PORTABLE_FORMAT_VERSION,
     settings: {
       routingEnabled: config.routingEnabled !== false,
-      defaultBehavior: config.defaultBehavior ?? "normal",
-      defaultWebspaceId: persistentIds.has(config.defaultWebspaceId) ? config.defaultWebspaceId : null
+      defaultBehavior: "webspace",
+      defaultWebspaceId: STANDARD_WEBSPACE_ID
     },
     webspaces: Object.values(config.webspaces ?? {})
       .filter((webspace) => webspace.temporary !== true)
@@ -56,5 +58,13 @@ export function validatePortableConfig(input) {
   if (input.webspaces.length > 100) throw new Error("Import contains too many Webspaces.");
   if (input.assignments.length > 5000) throw new Error("Import contains too many assignments.");
   if (input.exceptions.length > 1000) throw new Error("Import contains too many exceptions.");
-  return input;
+
+  return {
+    ...input,
+    settings: {
+      ...(input.settings ?? {}),
+      defaultBehavior: "webspace",
+      defaultWebspaceId: STANDARD_WEBSPACE_ID
+    }
+  };
 }
