@@ -3,7 +3,8 @@ export const COMMAND_WEBSPACE_TARGETS = Object.freeze({
   "open-goreecloud-webspace": "goreecloud",
   "open-google-webspace": "google",
   "open-microsoft-webspace": "microsoft",
-  "open-meta-webspace": "meta"
+  "open-meta-webspace": "meta",
+  "open-proton-webspace": "proton"
 });
 
 export const WEBSPACES_COMMANDS = Object.freeze([

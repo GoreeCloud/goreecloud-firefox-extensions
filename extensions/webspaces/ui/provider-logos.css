@@ -1,0 +1,31 @@
+.space-emblem[data-provider-logo] {
+  overflow: hidden;
+}
+
+.space-emblem .provider-logo {
+  display: block;
+  inline-size: 24px;
+  block-size: 24px;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.space-emblem[data-provider-logo="standard"] .provider-logo,
+.space-emblem[data-provider-logo="goreecloud"] .provider-logo {
+  inline-size: 27px;
+  block-size: 27px;
+  border-radius: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .space-emblem .provider-logo[data-monochrome="true"] {
+    filter: invert(1);
+  }
+}
+
+@media (forced-colors: active) {
+  .space-emblem .provider-logo[data-monochrome="true"] {
+    filter: none;
+  }
+}

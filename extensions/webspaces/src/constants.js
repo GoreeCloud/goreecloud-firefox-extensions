@@ -12,7 +12,8 @@ export const BUILTIN_WEBSPACES = Object.freeze([
   { id: "goreecloud", name: "GoreeCloud", color: "blue", icon: "fingerprint" },
   { id: "google", name: "Google", color: "red", icon: "circle" },
   { id: "microsoft", name: "Microsoft", color: "purple", icon: "briefcase" },
-  { id: "meta", name: "Meta", color: "turquoise", icon: "circle" }
+  { id: "meta", name: "Meta", color: "turquoise", icon: "circle" },
+  { id: "proton", name: "Proton", color: "purple", icon: "circle", description: "Built-in Proton identity for Proton Mail, Drive, Calendar, Pass, VPN, and related Proton services" }
 ]);
 
 export const RULE_PRIORITY = Object.freeze({

@@ -5,6 +5,7 @@ const COMMAND_LABELS = Object.freeze({
   "open-google-webspace": "Open Google Webspace",
   "open-microsoft-webspace": "Open Microsoft Webspace",
   "open-meta-webspace": "Open Meta Webspace",
+  "open-proton-webspace": "Open Proton Webspace",
   "toggle-routing-pause": "Pause or resume routing",
   "open-webspaces-manager": "Open Webspaces manager"
 });

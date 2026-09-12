@@ -21,5 +21,9 @@ export const PROVIDER_RULES = Object.freeze([
   { id: "meta-messenger", webspaceId: "meta", kind: "domain", value: "messenger.com", source: "provider" },
   { id: "meta-whatsapp", webspaceId: "meta", kind: "domain", value: "whatsapp.com", source: "provider" },
   { id: "meta-root", webspaceId: "meta", kind: "domain", value: "meta.com", source: "provider" },
-  { id: "meta-oculus", webspaceId: "meta", kind: "domain", value: "oculus.com", source: "provider" }
+  { id: "meta-oculus", webspaceId: "meta", kind: "domain", value: "oculus.com", source: "provider" },
+
+  { id: "proton-root", webspaceId: "proton", kind: "domain", value: "proton.me", source: "provider" },
+  { id: "proton-mail-legacy", webspaceId: "proton", kind: "domain", value: "protonmail.com", source: "provider" },
+  { id: "proton-vpn", webspaceId: "proton", kind: "domain", value: "protonvpn.com", source: "provider" }
 ]);
