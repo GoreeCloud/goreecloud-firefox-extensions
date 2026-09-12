@@ -2,7 +2,7 @@
 
 ## Current source behavior
 
-GoreeCloud Webspaces 0.1.9 stores configuration in Firefox local extension storage and does not require a GoreeCloud account or remote service. Routing evaluates top-level HTTP(S) URLs locally. The implementation does not add advertising telemetry, remote browsing-history collection, cloud synchronization, or server-side routing decisions.
+GoreeCloud Webspaces 0.1.10 stores configuration in Firefox local extension storage and does not require a GoreeCloud account or remote service. Routing evaluates top-level HTTP(S) URLs locally. The implementation does not add advertising telemetry, remote browsing-history collection, cloud synchronization, or server-side routing decisions.
 
 The manager may count currently open tabs associated with GoreeCloud-managed contextual identities. Those counts are local status and are not persisted as browsing history by this implementation.
 
@@ -13,6 +13,12 @@ Every GoreeCloud-managed Webspace is required to use its own Firefox contextual 
 Firefox contextual identities keep cookies in separate cookie stores. Firefox's container architecture also partitions supported site state through contextual identity/origin attributes, including storage such as localStorage and IndexedDB and cache state where Firefox supports that partitioning. GoreeCloud Webspaces does not broaden those Firefox guarantees.
 
 Browser-global information that Firefox does not scope to contextual identities is outside this boundary. Webspaces must not imply that container use alone creates independent browser history, bookmarks, saved-password databases, IP addresses, or operating-system sandboxes.
+
+## Isolation Health
+
+The 0.1.10 manager can locally compare the persisted Webspace map with Firefox's current contextual identities. It reports whether each managed Webspace has a present, unique Firefox cookie store and detects missing or shared mappings.
+
+Isolation Health does not enumerate website cookie contents, read login values, inspect browsing history, or transmit the result to a GoreeCloud service. The displayed health state is diagnostic evidence about the Webspace-to-contextual-identity mapping only.
 
 ## Standard Webspace
 
@@ -26,7 +32,7 @@ Portable exports may contain persistent Webspace definitions, appearance, lock s
 
 ## Close & Forget boundary
 
-Close & Forget closes tabs Firefox reports as using the temporary Webspace and requests removal of its contextual identity. 0.1.9 does not request broad `browsingData` permission and does not claim verified deletion of every cache, artifact, network record, or browser datum outside the state Firefox removes with that contextual identity.
+Close & Forget closes tabs Firefox reports as using the temporary Webspace and requests removal of its contextual identity. 0.1.10 does not request broad `browsingData` permission and does not claim verified deletion of every cache, artifact, network record, or browser datum outside the state Firefox removes with that contextual identity.
 
 ## Browser-state boundary
 
