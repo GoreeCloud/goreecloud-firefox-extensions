@@ -32,6 +32,10 @@ jobs:
         run: python shared/scripts/validate_repository.py
       - name: Validate Bookmarks source contract
         run: python extensions/bookmarks/scripts/validate.py
+      - name: Validate Webspaces source contract
+        run: python extensions/webspaces/scripts/validate.py
+      - name: Test Webspaces routing core
+        run: node --experimental-default-type=module --test extensions/webspaces/tests/routing.test.js
       - name: Validate Privacy Shield source contract
         run: python extensions/privacy-shield/scripts/validate.py
       - name: Validate Privacy Shield target acceptance source contract
@@ -77,6 +81,7 @@ jobs:
           python shared/scripts/package_extension.py redirector
           python shared/scripts/package_extension.py source-resync
           python shared/scripts/package_extension.py privacy-shield
+          python shared/scripts/package_extension.py webspaces
       - name: Verify package archives
         shell: bash
         run: |

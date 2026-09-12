@@ -1,0 +1,27 @@
+export const CONFIG_SCHEMA_VERSION = 1;
+
+export const BUILTIN_WEBSPACES = Object.freeze([
+  { id: "goreecloud", name: "GoreeCloud", color: "blue", icon: "fingerprint" },
+  { id: "google", name: "Google", color: "red", icon: "circle" },
+  { id: "microsoft", name: "Microsoft", color: "purple", icon: "briefcase" },
+  { id: "meta", name: "Meta", color: "turquoise", icon: "circle" }
+]);
+
+export const RULE_PRIORITY = Object.freeze({
+  USER_EXCEPTION: 700,
+  USER_ASSIGNMENT: 600,
+  EXACT_HOSTNAME: 500,
+  SUBDOMAIN: 400,
+  PROVIDER: 300,
+  GOREECLOUD_BUILTIN: 200,
+  DEFAULT: 0
+});
+
+export const DEFAULT_CONFIG = Object.freeze({
+  schemaVersion: CONFIG_SCHEMA_VERSION,
+  routingEnabled: true,
+  defaultBehavior: "normal",
+  webspaces: {},
+  userRules: [],
+  exceptions: []
+});

@@ -25,7 +25,8 @@ extensions/
 ├── download-manager/
 ├── privacy-shield/
 ├── redirector/
-└── source-resync/
+├── source-resync/
+└── webspaces/
 
 docs/
 ├── extension-inventory.json
@@ -47,6 +48,7 @@ shared/
 | GoreeCloud Privacy Shield | `extensions/privacy-shield/` | `privacy-shield@goreecloud.com` | Stable 0.2.0 accepted for Mozilla unlisted/self-distribution | None |
 | GoreeCloud Redirector | `extensions/redirector/` | `redirector@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-redirector` |
 | GoreeCloud Source Resync | `extensions/source-resync/` | `source-resync@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-source-resync` |
+| GoreeCloud Webspaces | `extensions/webspaces/` | `webspaces@goreecloud.com` | Source candidate 0.1.0; not Stable | None |
 
 Machine-readable inventory lives in [`docs/extension-inventory.json`](docs/extension-inventory.json). Inventory schema v2 records each checked-in manifest version and source lifecycle state separately from independently accepted Mozilla-signed Stable versions, preventing a newer source candidate from silently inheriting older release status.
 
