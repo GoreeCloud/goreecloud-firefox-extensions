@@ -1,5 +1,6 @@
 const COMMAND_LABELS = Object.freeze({
   "open-webspaces-launcher": "Open Webspaces launcher",
+  "open-standard-webspace": "Open Standard Webspace",
   "open-goreecloud-webspace": "Open GoreeCloud Webspace",
   "open-google-webspace": "Open Google Webspace",
   "open-microsoft-webspace": "Open Microsoft Webspace",
