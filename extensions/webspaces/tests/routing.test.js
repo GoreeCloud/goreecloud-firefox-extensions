@@ -36,6 +36,9 @@ test("routes major provider domains", () => {
   assert.equal(evaluateRouting("https://youtube.com/watch?v=x", baseConfig).webspaceId, "google");
   assert.equal(evaluateRouting("https://outlook.com/mail", baseConfig).webspaceId, "microsoft");
   assert.equal(evaluateRouting("https://instagram.com", baseConfig).webspaceId, "meta");
+  assert.equal(evaluateRouting("https://mail.proton.me/u/0/inbox", baseConfig).webspaceId, "proton");
+  assert.equal(evaluateRouting("https://drive.proton.me/", baseConfig).webspaceId, "proton");
+  assert.equal(evaluateRouting("https://protonvpn.com/", baseConfig).webspaceId, "proton");
 });
 
 test("explicit user assignment overrides provider routing", () => {

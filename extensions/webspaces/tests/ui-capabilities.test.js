@@ -11,6 +11,7 @@ const popupJs = read("ui/popup.js");
 const options = read("ui/options.html");
 const optionsJs = read("ui/options.js");
 const routingSettings = read("ui/routing-settings-ui.js");
+const providerLogos = read("ui/provider-logos.js");
 const isolationHealthUi = read("ui/isolation-health-ui.js");
 const isolationHealthBackground = read("src/isolation-health-background.js");
 const mainBackground = read("src/background.js");
@@ -51,6 +52,16 @@ test("manager presents Standard as fixed unassigned-site destination", () => {
   assert.match(routingSettings, /Standard Webspace/);
   assert.match(routingSettings, /without a more specific rule open in the isolated Standard Webspace/);
   assert.doesNotMatch(routingSettings, /id=\\"default-behavior\\"/);
+});
+
+test("built-in provider identities use local logo assets on popup and manager surfaces", () => {
+  for (const html of [popup, options]) {
+    assert.match(html, /provider-logos\.css/);
+    assert.match(html, /provider-logos\.js/);
+  }
+  for (const id of ["standard", "goreecloud", "google", "microsoft", "meta", "proton"]) {
+    assert.match(providerLogos, new RegExp(`${id}.*icons/providers/${id}\\.svg`));
+  }
 });
 
 test("Isolation Health uses a dedicated runtime-message namespace", () => {

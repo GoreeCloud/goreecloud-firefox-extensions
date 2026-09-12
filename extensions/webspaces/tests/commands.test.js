@@ -8,7 +8,8 @@ test("built-in Webspace commands resolve to canonical Webspace IDs", () => {
     "open-goreecloud-webspace":"goreecloud",
     "open-google-webspace":"google",
     "open-microsoft-webspace":"microsoft",
-    "open-meta-webspace":"meta"
+    "open-meta-webspace":"meta",
+    "open-proton-webspace":"proton"
   })) {
     assert.deepEqual(resolveWebspacesCommand(command), { type:"open-webspace", webspaceId:id });
   }
