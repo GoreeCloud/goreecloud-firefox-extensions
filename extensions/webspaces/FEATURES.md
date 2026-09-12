@@ -1,31 +1,27 @@
 # GoreeCloud Webspaces — Features
 
-## Implemented in the 0.1.1 source candidate
+## Implemented in the 0.1.2 source candidate
 
-- Built-in Webspace definitions.
-- Built-in Webspace provisioning through Firefox contextual identities.
-- GoreeCloud root/subdomain routing.
-- Initial Google, Microsoft, and Meta provider mappings.
-- Deterministic rule evaluation with reason codes.
-- User-rule and exception data hooks.
+- Built-in GoreeCloud, Google, Microsoft, and Meta Webspaces.
+- Firefox contextual-identity provisioning.
+- GoreeCloud root/subdomain and provider routing.
+- Deterministic routing with reason codes.
+- Explicit user assignments and exceptions.
 - Local versioned configuration persistence.
-- Top-level navigation rerouting.
-- Replacement-before-removal tab movement safety.
-- Basic reroute loop suppression.
-- GoreeCloud Webspaces toolbar popup.
-- Current-Webspace identification.
-- Routing-reason display.
+- GoreeCloud Webspaces toolbar popup and management page.
+- Current-Webspace identification and routing-reason display.
 - Open-new-tab-in-Webspace actions.
 - Routing pause/resume.
-- “Always open this site in” assignment from the popup.
-- GoreeCloud Webspaces management page.
+- “Always open this site in” assignment.
 - Custom Webspace creation.
 - Explicit assignment review/removal.
-- Routing and management unit tests.
+- Race-hardened destination-tab staging at `about:blank` before routed navigation.
+- Source-preserving failure behavior when destination navigation setup fails.
+- Routing, management, and migration unit tests.
 
 ## Firefox platform boundary
 
-The underlying contextual identities are Firefox browser-level objects. Other container-management interfaces may display them. GoreeCloud Webspaces owns the Webspace model and management experience but does not claim a Firefox-private container namespace that the platform does not provide.
+Contextual identities are browser-level objects. Other container-management interfaces may display them, and another extension with automatic routing can conflict if it targets the same sites.
 
 ## Planned
 

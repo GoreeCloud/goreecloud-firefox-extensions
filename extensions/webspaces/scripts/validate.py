@@ -13,7 +13,7 @@ def main() -> None:
         fail("Manifest V3 is required")
     if manifest.get("name") != "GoreeCloud Webspaces":
         fail("unexpected extension name")
-    if manifest.get("version") != "0.1.1":
+    if manifest.get("version") != "0.1.2":
         fail("source version must remain synchronized with canonical inventory")
     gecko_id = manifest.get("browser_specific_settings", {}).get("gecko", {}).get("id")
     if gecko_id != "webspaces@goreecloud.com":
@@ -49,6 +49,7 @@ def main() -> None:
         "src/provider-rules.js",
         "src/routing.js",
         "src/storage.js",
+        "src/tab-migration.js",
         "ui/popup.html",
         "ui/popup.css",
         "ui/popup.js",
@@ -57,12 +58,13 @@ def main() -> None:
         "ui/options.js",
         "tests/routing.test.js",
         "tests/management.test.js",
+        "tests/tab-migration.test.js",
     ]
     missing = [path for path in required_files if not (ROOT / path).is_file()]
     if missing:
         fail(f"missing required source files: {', '.join(missing)}")
 
-    print("Validated GoreeCloud Webspaces 0.1.1 source-candidate management slice.")
+    print("Validated GoreeCloud Webspaces 0.1.2 source-candidate routing hardening.")
 
 if __name__ == "__main__":
     main()

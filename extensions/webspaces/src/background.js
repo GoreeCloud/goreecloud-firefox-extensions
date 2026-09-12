@@ -2,27 +2,22 @@ import { ensureBuiltinWebspaces } from "./containers.js";
 import { evaluateRouting } from "./routing.js";
 import { loadConfig, saveConfig } from "./storage.js";
 import { upsertDomainAssignment, validateWebspaceInput } from "./management.js";
+import { migrateTab } from "./tab-migration.js";
 
-const inFlight = new Map();
-const REROUTE_TTL_MS = 8000;
+const transitionTabs = new Map();
+const TRANSITION_TTL_MS = 10000;
 let config = null;
 
-function navigationKey(tabId, url) {
-  return `${tabId}:${url}`;
+function markTransition(tabId) {
+  transitionTabs.set(tabId, Date.now() + TRANSITION_TTL_MS);
+  setTimeout(() => transitionTabs.delete(tabId), TRANSITION_TTL_MS + 100);
 }
 
-function markInFlight(tabId, url) {
-  const key = navigationKey(tabId, url);
-  inFlight.set(key, Date.now() + REROUTE_TTL_MS);
-  setTimeout(() => inFlight.delete(key), REROUTE_TTL_MS + 100);
-}
-
-function isInFlight(tabId, url) {
-  const key = navigationKey(tabId, url);
-  const expires = inFlight.get(key);
+function isTransitioning(tabId) {
+  const expires = transitionTabs.get(tabId);
   if (!expires) return false;
   if (expires < Date.now()) {
-    inFlight.delete(key);
+    transitionTabs.delete(tabId);
     return false;
   }
   return true;
@@ -46,26 +41,8 @@ async function persist(next) {
   return config;
 }
 
-async function reroute(details, targetCookieStoreId) {
-  const source = await browser.tabs.get(details.tabId);
-  if (source.cookieStoreId === targetCookieStoreId) return;
-
-  markInFlight(source.id, details.url);
-  const replacement = await browser.tabs.create({
-    url: details.url,
-    cookieStoreId: targetCookieStoreId,
-    windowId: source.windowId,
-    index: source.index,
-    active: source.active,
-    pinned: source.pinned
-  });
-  markInFlight(replacement.id, details.url);
-
-  await browser.tabs.remove(source.id);
-}
-
 async function handleBeforeNavigate(details) {
-  if (details.frameId !== 0 || isInFlight(details.tabId, details.url)) return;
+  if (details.frameId !== 0 || isTransitioning(details.tabId)) return;
   const current = await readyConfig();
 
   const decision = evaluateRouting(details.url, current);
@@ -78,7 +55,12 @@ async function handleBeforeNavigate(details) {
   }
 
   try {
-    await reroute(details, target.cookieStoreId);
+    await migrateTab(browser, {
+      sourceTabId: details.tabId,
+      url: details.url,
+      targetCookieStoreId: target.cookieStoreId,
+      onTransition: markTransition
+    });
   } catch (error) {
     console.error("GoreeCloud Webspaces: reroute failed", error);
   }
@@ -119,7 +101,7 @@ async function handleMessage(message) {
       const webspace = current.webspaces?.[message.webspaceId];
       if (!webspace?.cookieStoreId) throw new Error("Unknown or unavailable Webspace.");
       await browser.tabs.create({
-        url: message.url || "about:blank",
+        url: "about:blank",
         cookieStoreId: webspace.cookieStoreId
       });
       return { ok: true };
@@ -166,6 +148,8 @@ browser.runtime.onMessage.addListener((message) => {
   if (!message?.type?.startsWith("webspaces:")) return undefined;
   return handleMessage(message);
 });
+
+browser.tabs.onRemoved.addListener((tabId) => transitionTabs.delete(tabId));
 
 browser.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === "local" && changes.webspacesConfig?.newValue) {
