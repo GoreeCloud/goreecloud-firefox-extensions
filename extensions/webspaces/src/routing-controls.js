@@ -1,3 +1,5 @@
+import { STANDARD_WEBSPACE_ID } from "./constants.js";
+
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
 const THIRTY_MINUTES_MS = 30 * 60 * 1000;
 
@@ -97,20 +99,14 @@ export function clearRestartPause(config) {
   return next;
 }
 
-export function setDefaultBehavior(config, behavior, webspaceId = null) {
-  const next = clone(config);
-  if (behavior === "normal") {
-    next.defaultBehavior = "normal";
-    delete next.defaultWebspaceId;
-    return next;
+export function setDefaultBehavior(config, behavior, webspaceId = STANDARD_WEBSPACE_ID) {
+  if (behavior !== "webspace" || webspaceId !== STANDARD_WEBSPACE_ID) {
+    throw new Error("Standard is the fixed fallback Webspace for unassigned websites.");
   }
-
-  if (behavior !== "webspace") throw new Error("Unsupported default browsing behavior.");
-  const target = next.webspaces?.[webspaceId];
-  if (!target) throw new Error("Choose an available default Webspace.");
-  if (target.temporary === true) throw new Error("Temporary Webspaces cannot be the default browsing Webspace.");
-
+  const next = clone(config);
+  const target = next.webspaces?.[STANDARD_WEBSPACE_ID];
+  if (!target) throw new Error("The Standard Webspace is unavailable.");
   next.defaultBehavior = "webspace";
-  next.defaultWebspaceId = target.id;
+  next.defaultWebspaceId = STANDARD_WEBSPACE_ID;
   return next;
 }
