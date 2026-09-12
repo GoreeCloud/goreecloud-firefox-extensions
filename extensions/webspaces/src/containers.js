@@ -13,20 +13,19 @@ export async function ensureBuiltinWebspaces(config) {
   for (const definition of BUILTIN_WEBSPACES) {
     const existingRecord = next.webspaces[definition.id];
     if (existingRecord?.cookieStoreId && available.has(existingRecord.cookieStoreId)) {
+      const context = available.get(existingRecord.cookieStoreId);
       next.webspaces[definition.id] = {
         ...existingRecord,
         id: definition.id,
         name: definition.name,
-        color: existingRecord.color ?? definition.color,
-        icon: existingRecord.icon ?? definition.icon,
-        builtIn: true
+        color: context?.color ?? existingRecord.color ?? definition.color,
+        icon: context?.icon ?? existingRecord.icon ?? definition.icon,
+        builtIn: true,
+        temporary: false
       };
       continue;
     }
 
-    // Never claim an unrelated user-created Firefox identity merely because
-    // it has the same display name. Durable ownership comes from our stored
-    // Webspace -> cookieStoreId mapping.
     const context = await browser.contextualIdentities.create({
       name: definition.name,
       color: definition.color,
@@ -37,9 +36,12 @@ export async function ensureBuiltinWebspaces(config) {
     next.webspaces[definition.id] = {
       id: definition.id,
       name: definition.name,
-      color: definition.color,
-      icon: definition.icon,
+      color: context.color ?? definition.color,
+      icon: context.icon ?? definition.icon,
+      description: "",
       builtIn: true,
+      temporary: false,
+      locked: existingRecord?.locked === true,
       cookieStoreId: context.cookieStoreId
     };
   }
