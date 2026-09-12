@@ -2,6 +2,8 @@ function send(type, payload = {}) {
   return browser.runtime.sendMessage({ type, ...payload });
 }
 
+const ISOLATION_HEALTH_MESSAGE = "webspaces-health:get-isolation-health";
+
 function plural(count, singular, pluralValue = `${singular}s`) {
   return `${count} ${count === 1 ? singular : pluralValue}`;
 }
@@ -61,7 +63,7 @@ async function refreshIsolationHealth() {
     // Ensure the main Webspaces background has provisioned built-ins before
     // inspecting the persisted identity map.
     await send("webspaces:get-state");
-    const health = await send("webspaces:get-isolation-health");
+    const health = await send(ISOLATION_HEALTH_MESSAGE);
 
     panel.dataset.state = health.healthy ? "healthy" : "issue";
     summary.dataset.state = health.healthy ? "ok" : "warning";
