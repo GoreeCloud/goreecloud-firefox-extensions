@@ -6,6 +6,14 @@ GoreeCloud Webspaces 0.1.9 stores configuration in Firefox local extension stora
 
 The manager may count currently open tabs associated with GoreeCloud-managed contextual identities. Those counts are local status and are not persisted as browsing history by this implementation.
 
+## Per-Webspace browser-state separation
+
+Every GoreeCloud-managed Webspace is required to use its own Firefox contextual identity and unique `cookieStoreId`. Two Webspaces are not permitted to intentionally share the same Firefox cookie store. If persisted configuration would map two Webspaces to one cookie store, Webspaces treats that as an isolation-integrity failure rather than continuing with silently shared authenticated state.
+
+Firefox contextual identities keep cookies in separate cookie stores. Firefox's container architecture also partitions supported site state through contextual identity/origin attributes, including storage such as localStorage and IndexedDB and cache state where Firefox supports that partitioning. GoreeCloud Webspaces does not broaden those Firefox guarantees.
+
+Browser-global information that Firefox does not scope to contextual identities is outside this boundary. Webspaces must not imply that container use alone creates independent browser history, bookmarks, saved-password databases, IP addresses, or operating-system sandboxes.
+
 ## Standard Webspace
 
 The built-in **Standard** Webspace is the default isolated destination for ordinary external HTTP(S) websites that do not match a more specific assignment or provider rule while automatic routing is active. Standard uses Firefox contextual-identity separation; it does not create a VPN, separate network identity, anonymity, fingerprinting resistance, or operating-system sandbox.
