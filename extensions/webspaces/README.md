@@ -4,17 +4,19 @@
 **Component path:** `extensions/webspaces/`  
 **Source lifecycle:** Source candidate / Active Development  
 **Firefox add-on ID:** `webspaces@goreecloud.com`  
-**Source version:** `0.1.9`
+**Source version:** `0.1.10`
 
 GoreeCloud Webspaces is a Firefox extension for isolated browsing environments, deterministic website routing, and multi-account separation. Firefox contextual identities are the browser isolation mechanism; GoreeCloud Webspaces is the product, management surface, routing authority, and user-facing abstraction.
 
 ## Implemented source-candidate capabilities
 
-0.1.9 carries the 0.1.8 keyboard/productivity, routing-control, lifecycle, explainability, temporary-Webspace, assignment-management, portability, locking, and Glaze UI work forward and establishes **Standard** as the built-in fallback Webspace for ordinary unassigned browsing.
+0.1.10 carries the 0.1.9 Standard-fallback, keyboard/productivity, routing-control, lifecycle, explainability, temporary-Webspace, assignment-management, portability, locking, Glaze UI, and one-Webspace/one-contextual-identity work forward and adds a first-party **Isolation Health** surface.
 
 - Built-in Webspaces are Standard, GoreeCloud, Google, Microsoft, and Meta.
 - Standard has its own Firefox contextual identity and is the default destination for otherwise-unassigned external HTTP(S) websites while automatic routing is active.
-- Every GoreeCloud-managed Webspace is required to own a distinct Firefox contextual identity and unique `cookieStoreId`; the source now fails closed if two managed Webspaces are mapped to the same Firefox cookie store or if a managed Webspace lacks one.
+- Every GoreeCloud-managed Webspace is required to own a distinct Firefox contextual identity and unique `cookieStoreId`; the source fails closed if two managed Webspaces are mapped to the same Firefox cookie store or if a managed Webspace lacks one.
+- The manager now verifies the current Webspace-to-Firefox-identity map without reading or exposing authentication-cookie contents. It reports managed Webspace count, unique cookie-store count, Firefox identities present, and per-Webspace isolation status.
+- Isolation Health detects missing cookie-store mappings, missing Firefox contextual identities, and accidental shared-store mappings.
 - Explicit user assignments, user exceptions, provider mappings, and higher-priority routing rules continue to supersede Standard according to deterministic precedence.
 - Deliberate routing pauses and explicit exceptions may keep a site outside Standard when their higher-priority semantics apply.
 - `localhost`, loopback addresses, and local-development hosts remain explicit-only and are not automatically swept into Standard.
@@ -34,11 +36,15 @@ Standard does not replace the routing priority system. If a site is assigned to 
 
 ## Per-Webspace isolation invariant
 
-Each managed Webspace must map one-to-one to a distinct Firefox contextual identity. A `cookieStoreId` may belong to only one GoreeCloud Webspace at a time. Standard, GoreeCloud, Google, Microsoft, Meta, every custom persistent Webspace, every duplicated Webspace, and every temporary Webspace therefore use separate Firefox cookie stores.
+Each managed Webspace must map one-to-one to a distinct Firefox contextual identity. A `cookieStoreId` may belong to only one GoreeCloud Webspace at a time. Standard, GoreeCloud, Google, Microsoft, Meta, every custom persistent Webspace, every duplicated Webspace, every imported custom Webspace, and every temporary Webspace therefore use separate Firefox cookie stores.
 
 Firefox contextual identities separate cookies by design and Firefox's container model also partitions supported site state through contextual identity/origin attributes, including storage such as localStorage and IndexedDB and cache state where Firefox supports that partitioning. Webspaces does not claim that browser-global history, bookmarks, saved passwords, or other browser-global state are independently isolated merely because a tab is in a Webspace.
 
 Creating, duplicating, importing, or resetting a Webspace must result in a fresh contextual identity rather than reuse another Webspace's authenticated browser state. If persisted configuration would cause two managed Webspaces to share a cookie store, Webspaces fails closed instead of silently running with a broken isolation boundary.
+
+## Isolation Health boundary
+
+Isolation Health validates the GoreeCloud-managed identity map against Firefox's current contextual identities. It verifies that every managed Webspace references one present contextual identity and that no two managed Webspaces intentionally share a cookie store. The health surface does not enumerate website cookies, inspect login values, or claim isolation for data Firefox treats as browser-global.
 
 ## Keyboard-shortcut boundary
 
