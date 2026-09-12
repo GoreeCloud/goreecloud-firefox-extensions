@@ -36,6 +36,8 @@ This file describes the current **0.1.9 source-candidate** implementation slice.
 28. Users must be able to inspect current shortcut assignments and open Firefox's extension-shortcut settings from the Webspaces manager.
 29. The popup routing-pause controls use a compact disclosure while routing is active and automatically expand when an active pause needs an immediate Resume surface.
 30. Ask-every-time, inherit-current-Webspace, temporary-default behavior, wildcard/domain-group routing, persistent routing history/statistics, and platform integrations must not be claimed until separately implemented and verified.
+31. Every GoreeCloud-managed Webspace must map one-to-one to a distinct Firefox contextual identity and unique `cookieStoreId`. A missing store or duplicate `cookieStoreId` is an isolation-integrity failure; the extension must fail closed rather than silently operate with shared authenticated state.
+32. Isolation claims are limited to Firefox-supported contextual-identity partitioning. Cookies and cookie-backed authentication state must be separated, and supported storage such as localStorage, IndexedDB, and cache state may be separated where Firefox OriginAttributes apply. Browser-global history, bookmarks, saved passwords, and other non-container-scoped browser state must not be represented as isolated merely because a tab belongs to a Webspace.
 
 ## Standard fallback boundary
 
@@ -43,10 +45,16 @@ Standard is a real built-in Firefox contextual identity managed by GoreeCloud We
 
 The implementation intentionally preserves escape cases. A user exception that explicitly selects Normal Firefox remains higher priority than Standard. Routing pauses suppress automatic routing. Local development targets remain explicit-only so `localhost` and loopback traffic are not unexpectedly recreated in another contextual identity before the developer assigns them.
 
+## Per-Webspace isolation boundary
+
+Standard, GoreeCloud, Google, Microsoft, Meta, custom persistent Webspaces, duplicated Webspaces, and temporary Webspaces must each own their own Firefox contextual identity. Webspace creation, duplication, import, and reset workflows must create a fresh contextual identity rather than reuse another Webspace's cookie store.
+
+The product may describe cookie and supported site-storage separation only to the degree provided by Firefox. It must not imply separate browser profiles, separate password stores, separate history databases, separate bookmarks, separate IP addresses, or operating-system sandboxing.
+
 ## Current exclusions
 
 Complete browsing-data erasure verification for Close & Forget; persistent routing-history storage; ask-every-time/inherit-current/temporary default modes; advanced wildcard/domain-group routing; synchronization/recovery/Identity/Privacy Shield/Wardveil/Manager/Mesh/Everkeep adapters; managed enterprise policy; Firefox Android acceptance; full Glaze production acceptance; Mozilla signing; and Stable release acceptance remain outside this slice.
 
 ## Acceptance criteria
 
-Repository validation and all Webspaces tests must pass. Manifest permissions must remain exactly `activeTab`, `contextualIdentities`, `cookies`, `menus`, `storage`, and `webNavigation`, with no broad host permissions. Tests must cover routing explanation, migration safety, context menus, lifecycle ordering/rollback, management validation, portability exclusions, first-party UI controls, semantic hidden states, locked-rule protection, routing pause lifecycle/scope, Standard fallback routing, schema-1-to-schema-2 migration, explicit local-development routing, bulk-assignment safety, keyboard-command mapping including Standard, identity, and Glaze adoption. Manifest commands must be explicit, and shortcut configuration must remain under Firefox/user control.
+Repository validation and all Webspaces tests must pass. Manifest permissions must remain exactly `activeTab`, `contextualIdentities`, `cookies`, `menus`, `storage`, and `webNavigation`, with no broad host permissions. Tests must cover routing explanation, migration safety, context menus, lifecycle ordering/rollback, management validation, portability exclusions, first-party UI controls, semantic hidden states, locked-rule protection, routing pause lifecycle/scope, Standard fallback routing, schema-1-to-schema-2 migration, explicit local-development routing, bulk-assignment safety, keyboard-command mapping including Standard, unique cookie-store isolation, identity, and Glaze adoption. Manifest commands must be explicit, and shortcut configuration must remain under Firefox/user control.
