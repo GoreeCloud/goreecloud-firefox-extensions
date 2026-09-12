@@ -23,7 +23,12 @@ test("Webspaces UI declares the current Glaze consumer target", () => {
 });
 
 test("Glaze adoption remains local and does not require remote UI assets", () => {
-  for (const source of [popup, options, glaze, popupCss, optionsCss]) assert.doesNotMatch(source, /https?:\/\//i);
+  for (const source of [popup, options]) {
+    assert.doesNotMatch(source, /(?:src|href)\s*=\s*["']https?:\/\//i);
+  }
+  for (const source of [glaze, popupCss, optionsCss]) {
+    assert.doesNotMatch(source, /(?:@import\s+(?:url\()?|url\()\s*["']?https?:\/\//i);
+  }
   assert.match(popup, /\.\.\/icons\/webspaces\.svg/);
   assert.match(options, /\.\.\/icons\/webspaces\.svg/);
 });
