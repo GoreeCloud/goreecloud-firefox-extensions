@@ -6,6 +6,7 @@
   <title>GoreeCloud Webspaces</title>
   <link rel="stylesheet" href="glaze-webspaces.css">
   <link rel="stylesheet" href="options.css">
+  <link rel="stylesheet" href="routing-controls.css">
 </head>
 <body>
   <main class="settings-shell">
@@ -20,8 +21,9 @@
     <section class="panel glz-surface"><div class="panel-heading assignment-heading"><div><div class="glz-kicker">Assignments</div><h2>Site routing rules</h2><p>Search, add, edit, disable, or remove explicit rules. Domain scope includes subdomains; exact scope matches only one hostname.</p></div><span id="conflict-summary" class="glz-capsule">No conflicts</span></div><form id="add-assignment" class="assignment-composer"><label class="field"><span>Hostname</span><input id="assignment-hostname" class="glz-input" required placeholder="docs.example.com"></label><label class="field"><span>Scope</span><select id="assignment-kind" class="glz-select"><option value="domain">Domain + subdomains</option><option value="exact">Exact hostname</option></select></label><label class="field"><span>Webspace</span><select id="assignment-webspace" class="glz-select"></select></label><button class="glz-button primary" type="submit">Add rule</button></form><div class="filter-row"><input id="assignment-search" class="glz-input" type="search" placeholder="Search hostname or Webspace" aria-label="Search site assignments"><select id="assignment-filter" class="glz-select" aria-label="Filter site assignments"><option value="all">All rules</option><option value="enabled">Enabled</option><option value="disabled">Disabled</option><option value="conflict">Conflicts</option></select></div><div id="assignment-list" class="assignment-list"></div><div id="no-assignments" class="empty-state"><div class="empty-symbol" aria-hidden="true">↗</div><strong>No explicit assignments yet</strong><span>Add a rule here, or use the Webspaces toolbar on a website to choose “Always open this site in”.</span></div><div id="assignment-status" class="form-status glz-muted" role="status"></div></section>
     <section class="panel glz-surface"><div class="panel-heading"><div><div class="glz-kicker">Explainability</div><h2>Routing rule tester</h2><p>Preview the selected Webspace, matching rule, priority, and competing candidates without opening the site.</p></div></div><form id="routing-tester" class="tester-form"><input id="test-url" class="glz-input" required placeholder="https://mail.google.com/"><button class="glz-button" type="submit">Test routing</button></form><div id="test-result" class="test-result" aria-live="polite"></div></section>
     <section class="panel glz-surface"><div class="panel-heading"><div><div class="glz-kicker">Portability</div><h2>Import and export</h2><p>Move Webspace definitions, appearance, assignments, exceptions, and routing preferences. Authentication cookies and active login sessions are never included.</p></div></div><div class="portability-actions"><button id="export-config" class="glz-button" type="button">Export configuration</button><label class="glz-button file-button">Import configuration<input id="import-config" type="file" accept="application/json,.json" hidden></label></div><div id="portability-status" class="form-status glz-muted" role="status"></div></section>
-    <footer class="settings-footer"><span>GoreeCloud Webspaces 0.1.6 source candidate</span><span>Local-first · Firefox-native isolation · no browsing-history telemetry</span></footer>
+    <footer class="settings-footer"><span>GoreeCloud Webspaces 0.1.7 source candidate</span><span>Local-first · Firefox-native isolation · no browsing-history telemetry</span></footer>
   </main>
   <script type="module" src="options.js"></script>
+  <script type="module" src="routing-settings-ui.js"></script>
 </body>
 </html>

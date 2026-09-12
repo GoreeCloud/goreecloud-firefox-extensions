@@ -1,5 +1,6 @@
 import { PROVIDER_RULES } from "./provider-rules.js";
 import { RULE_PRIORITY } from "./constants.js";
+import { getRoutingPause, pauseAppliesToHostname } from "./routing-controls.js";
 
 export function normalizeHostname(hostname) {
   return hostname.trim().replace(/^\.+|\.+$/g, "").toLowerCase();
@@ -87,16 +88,31 @@ function serializeCandidate(candidateValue, selected = false) {
   };
 }
 
-export function analyzeRouting(rawUrl, config) {
+function pauseDecision(pause) {
+  let reason = "routing-paused";
+  if (pause?.mode === "timed") reason = "routing-paused-timed";
+  if (pause?.mode === "site") reason = "routing-paused-site";
+  if (pause?.mode === "restart") reason = "routing-paused-restart";
+  return {
+    action: "normal",
+    reason,
+    matchedRule: null,
+    webspaceId: null,
+    priority: null,
+    pause
+  };
+}
+
+export function analyzeRouting(rawUrl, config, now = Date.now()) {
   const hostname = hostnameFromUrl(rawUrl);
   if (!hostname) {
     const decision = { action: "normal", reason: "unsupported-or-invalid-url", matchedRule: null, webspaceId: null, priority: null };
     return { hostname: null, decision, candidates: [] };
   }
 
-  if (config.routingEnabled === false) {
-    const decision = { action: "normal", reason: "routing-paused", matchedRule: null, webspaceId: null, priority: null };
-    return { hostname, decision, candidates: [] };
+  const pause = getRoutingPause(config, now);
+  if (pauseAppliesToHostname(pause, hostname)) {
+    return { hostname, decision: pauseDecision(pause), candidates: [] };
   }
 
   const exceptions = exceptionCandidates(hostname, config);
@@ -135,12 +151,15 @@ export function analyzeRouting(rawUrl, config) {
     };
   }
 
-  if (config.defaultBehavior === "webspace" && config.defaultWebspaceId) {
+  const defaultTarget = config.defaultBehavior === "webspace"
+    ? config.webspaces?.[config.defaultWebspaceId]
+    : null;
+  if (defaultTarget?.id) {
     const decision = {
       action: "webspace",
       reason: "default-webspace",
       matchedRule: null,
-      webspaceId: config.defaultWebspaceId,
+      webspaceId: defaultTarget.id,
       priority: RULE_PRIORITY.DEFAULT
     };
     return { hostname, decision, candidates: [] };
@@ -150,6 +169,6 @@ export function analyzeRouting(rawUrl, config) {
   return { hostname, decision, candidates: [] };
 }
 
-export function evaluateRouting(rawUrl, config) {
-  return analyzeRouting(rawUrl, config).decision;
+export function evaluateRouting(rawUrl, config, now = Date.now()) {
+  return analyzeRouting(rawUrl, config, now).decision;
 }

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "GoreeCloud Webspaces",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Isolated Firefox browsing environments with deterministic site routing and multi-account separation.",
   "icons": {
     "48": "icons/webspaces.svg",
@@ -26,7 +26,8 @@
   },
   "background": {
     "scripts": [
-      "src/background.js"
+      "src/background.js",
+      "src/routing-settings-background.js"
     ],
     "type": "module"
   },
