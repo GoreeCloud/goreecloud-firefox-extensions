@@ -29,24 +29,30 @@ function ensureControls() {
   const routingControl = document.querySelector(".routing-control");
   if (!routingControl) return;
 
-  const section = document.createElement("section");
+  const section = document.createElement("details");
   section.id = "routing-pause-controls";
   section.className = "routing-pause-controls glz-surface";
   section.innerHTML = `
-    <div class="pause-copy">
-      <strong>Pause routing</strong>
-      <span id="routing-pause-status" class="glz-muted">Routing active</span>
-    </div>
-    <div class="pause-action-row">
-      <select id="routing-pause-mode" class="glz-select" aria-label="Routing pause duration">
-        <option value="five-minutes">5 minutes</option>
-        <option value="thirty-minutes">30 minutes</option>
-        <option value="site">This site</option>
-        <option value="restart">Until Firefox restarts</option>
-        <option value="indefinite">Indefinitely</option>
-      </select>
-      <button id="pause-routing" class="glz-button compact" type="button">Pause</button>
-      <button id="resume-routing" class="glz-button compact" type="button" hidden>Resume</button>
+    <summary class="routing-pause-summary">
+      <span class="pause-summary-copy">
+        <strong>Routing controls</strong>
+        <span id="routing-pause-status" class="glz-muted">Routing active</span>
+      </span>
+      <span class="pause-disclosure" aria-hidden="true">⌄</span>
+    </summary>
+    <div class="pause-body">
+      <label class="pause-field" for="routing-pause-mode">Pause automatic routing</label>
+      <div class="pause-action-row">
+        <select id="routing-pause-mode" class="glz-select" aria-label="Routing pause duration">
+          <option value="five-minutes">5 minutes</option>
+          <option value="thirty-minutes">30 minutes</option>
+          <option value="site">This site</option>
+          <option value="restart">Until Firefox restarts</option>
+          <option value="indefinite">Indefinitely</option>
+        </select>
+        <button id="pause-routing" class="glz-button compact" type="button">Pause</button>
+        <button id="resume-routing" class="glz-button compact" type="button" hidden>Resume</button>
+      </div>
     </div>
   `;
   routingControl.insertAdjacentElement("afterend", section);
@@ -67,10 +73,22 @@ async function sync() {
   const status = document.querySelector("#routing-pause-status");
   const resume = document.querySelector("#resume-routing");
   const toggle = document.querySelector("#routing-enabled");
+  const controls = document.querySelector("#routing-pause-controls");
 
   if (status) status.textContent = formatPause(pause);
   if (resume) resume.hidden = !pause;
   if (toggle) toggle.checked = state.config.routingEnabled !== false;
+
+  if (controls) {
+    if (pause && !controls.open) {
+      controls.open = true;
+      controls.dataset.autoOpened = "true";
+    } else if (!pause && controls.dataset.autoOpened === "true") {
+      controls.open = false;
+      delete controls.dataset.autoOpened;
+    }
+  }
+
   updateBadge(pause, applies);
 }
 

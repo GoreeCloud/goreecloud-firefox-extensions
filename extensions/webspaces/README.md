@@ -4,31 +4,31 @@
 **Component path:** `extensions/webspaces/`  
 **Source lifecycle:** Source candidate / Active Development  
 **Firefox add-on ID:** `webspaces@goreecloud.com`  
-**Source version:** `0.1.7`
+**Source version:** `0.1.8`
 
 GoreeCloud Webspaces is a Firefox extension for isolated browsing environments, deterministic website routing, and multi-account separation. Firefox contextual identities are the browser isolation mechanism; GoreeCloud Webspaces is the product, management surface, routing authority, and user-facing abstraction.
 
 ## Implemented source-candidate capabilities
 
-0.1.7 carries the verified 0.1.6 routing, lifecycle, explainability, temporary-Webspace, assignment-management, portability, locking, and Glaze UI work forward and adds the next routing-control/productivity slice:
+0.1.8 carries the verified 0.1.7 routing-control, lifecycle, explainability, temporary-Webspace, assignment-management, portability, locking, and Glaze UI work forward and adds a keyboard/productivity refinement slice:
 
-- timed routing pauses for 5 or 30 minutes;
-- routing pause until Firefox restarts;
-- site-only routing pause for the current hostname;
-- indefinite pause/resume with a visible pause state;
-- configurable behavior for unassigned websites: open normally or open in a selected persistent Webspace;
-- bulk assignment of newline/comma/semicolon-separated hostnames or HTTP(S) URLs;
-- explicit user routing for local-development hosts such as `localhost`, `127.0.0.1`, and `[::1]` without automatically assigning them;
-- conflict-safe bulk assignment that will not silently retarget an existing rule owned by another Webspace;
-- locked-Webspace protections preserved for default-behavior changes and bulk assignment.
+- Firefox-registered commands for opening the Webspaces launcher, GoreeCloud, Google, Microsoft, and Meta Webspaces, pausing/resuming routing, and opening the full manager;
+- no hard-coded default key combinations, so shortcut assignment remains under explicit Firefox/user control;
+- a first-party manager panel that shows current shortcut assignments and opens Firefox's Manage Extension Shortcuts interface;
+- a compact Glaze routing-control disclosure in the toolbar popup that stays collapsed while routing is active and automatically expands when a pause is active;
+- the same visible pause state, explicit Resume control, and semantic hidden-state protections from 0.1.7.
 
-The broader implemented slice also includes built-in GoreeCloud, Google, Microsoft, and Meta Webspaces; provider/user/exception routing; race-hardened tab migration; first-party Glaze UI popup and manager; **Why this Webspace?**; context-menu actions; persistent and temporary custom Webspaces; Close & Forget; appearance editing; duplicate, lock/unlock, reset, and custom deletion; searchable/editable site assignments; local conflict detection and rule testing; local managed-tab counts; and portable JSON configuration import/export.
+The broader implemented slice includes deterministic provider/user/exception routing; race-hardened tab migration; timed/site/restart/indefinite routing pauses; selected default Webspace behavior; bulk assignment; explicit local-development routing; first-party Glaze UI popup and manager; **Why this Webspace?**; context-menu actions; persistent and temporary custom Webspaces; Close & Forget; appearance editing; duplicate, lock/unlock, reset, and custom deletion; searchable/editable site assignments; local conflict detection and rule testing; local managed-tab counts; and portable JSON configuration import/export.
+
+## Keyboard-shortcut boundary
+
+Webspaces registers supported commands but does not silently reserve keyboard combinations. Users assign or change shortcuts through Firefox's extension-shortcut settings. The launcher command attempts to open the toolbar popup from the keyboard user gesture and falls back to the full manager if Firefox rejects popup opening in the current window state.
 
 ## Routing-control boundaries
 
 A site-only pause applies to the exact hostname selected by the user and does not automatically cover sibling or parent subdomains. A restart-scoped pause is cleared when Firefox emits its extension startup event. Timed pauses expire by their stored deadline and do not require browsing-history telemetry.
 
-The selected-default behavior implemented in this slice is intentionally limited to **Open normally** or **Open in selected Webspace**. Planned modes such as ask every time, inherit the current Webspace, or use temporary isolation are not claimed as implemented.
+The selected-default behavior remains intentionally limited to **Open normally** or **Open in selected Webspace**. Planned modes such as ask every time, inherit the current Webspace, or use temporary isolation are not claimed as implemented.
 
 Bulk assignment is intentionally conservative: existing assignments to another unlocked Webspace are reported as skipped rather than silently overwritten, and rules owned by a locked Webspace cannot be retargeted.
 
