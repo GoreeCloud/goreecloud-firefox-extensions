@@ -24,7 +24,7 @@ def main() -> None:
     if set(manifest.get("commands",{})) != expected_commands: fail("unexpected Webspaces command registry")
     for command in manifest.get("commands",{}).values():
         if command.get("suggested_key"): fail("0.1.9 must leave shortcut assignment under explicit Firefox/user control")
-    required_files=["README.md","SPECIFICATIONS.md","FEATURES.md","BENEFITS.md","COMPETITIVE-OBJECTIVES.md","SECURITY.md","PRIVACY.md","LICENSE","icons/webspaces.svg","src/background.js","src/constants.js","src/containers.js","src/context-menus.js","src/lifecycle.js","src/management.js","src/portability.js","src/provider-rules.js","src/routing.js","src/routing-controls.js","src/routing-settings-background.js","src/bulk-rules.js","src/commands.js","src/commands-background.js","src/storage.js","src/tab-migration.js","ui/glaze-webspaces.css","ui/identity.js","ui/popup.html","ui/popup.css","ui/popup.js","ui/options.html","ui/options.css","ui/options.js","ui/routing-controls.css","ui/routing-controls-ui.js","ui/routing-settings-ui.js","ui/shortcuts.css","ui/shortcuts-ui.js","tests/routing.test.js","tests/routing-explain.test.js","tests/management.test.js","tests/management-expanded.test.js","tests/tab-migration.test.js","tests/context-menus.test.js","tests/lifecycle.test.js","tests/portability.test.js","tests/glaze-ui.test.js","tests/identity-ui.test.js","tests/ui-capabilities.test.js","tests/locked-assignment-guard.test.js","tests/routing-controls.test.js","tests/commands.test.js","tests/storage-migration.test.js"]
+    required_files=["README.md","SPECIFICATIONS.md","FEATURES.md","BENEFITS.md","COMPETITIVE-OBJECTIVES.md","SECURITY.md","PRIVACY.md","LICENSE","icons/webspaces.svg","src/background.js","src/constants.js","src/containers.js","src/context-menus.js","src/lifecycle.js","src/management.js","src/portability.js","src/provider-rules.js","src/routing.js","src/routing-controls.js","src/routing-settings-background.js","src/bulk-rules.js","src/commands.js","src/commands-background.js","src/storage.js","src/tab-migration.js","ui/glaze-webspaces.css","ui/identity.js","ui/popup.html","ui/popup.css","ui/popup.js","ui/options.html","ui/options.css","ui/options.js","ui/routing-controls.css","ui/routing-controls-ui.js","ui/routing-settings-ui.js","ui/shortcuts.css","ui/shortcuts-ui.js","tests/routing.test.js","tests/routing-explain.test.js","tests/management.test.js","tests/management-expanded.test.js","tests/tab-migration.test.js","tests/context-menus.test.js","tests/lifecycle.test.js","tests/portability.test.js","tests/glaze-ui.test.js","tests/identity-ui.test.js","tests/ui-capabilities.test.js","tests/locked-assignment-guard.test.js","tests/routing-controls.test.js","tests/commands.test.js","tests/storage-migration.test.js","tests/isolation-invariant.test.js"]
     missing=[p for p in required_files if not (ROOT/p).is_file()]
     if missing: fail(f"missing required source files: {', '.join(missing)}")
     for relative in ["ui/popup.html","ui/options.html"]:
@@ -42,16 +42,18 @@ def main() -> None:
     constants=(ROOT/"src/constants.js").read_text(encoding="utf-8")
     routing=(ROOT/"src/routing.js").read_text(encoding="utf-8")
     storage=(ROOT/"src/storage.js").read_text(encoding="utf-8")
+    containers=(ROOT/"src/containers.js").read_text(encoding="utf-8")
     settings_ui=(ROOT/"ui/routing-settings-ui.js").read_text(encoding="utf-8")
     if 'STANDARD_WEBSPACE_ID = "standard"' not in constants or 'name: "Standard"' not in constants: fail("0.1.9 must define the built-in Standard Webspace")
     if 'reason: "standard-fallback"' not in routing: fail("unassigned HTTP(S) routing must use the Standard fallback reason")
     if 'defaultWebspaceId: STANDARD_WEBSPACE_ID' not in storage: fail("configuration migration must normalize the Standard fallback")
     if "Standard Webspace" not in settings_ui: fail("manager must explain the fixed Standard fallback")
+    if "assertDistinctCookieStores" not in containers or "share Firefox cookie store" not in containers: fail("Webspaces must enforce one distinct Firefox cookie store per managed Webspace")
     controls=(ROOT/"ui/routing-controls.css").read_text(encoding="utf-8")
     control_ui=(ROOT/"ui/routing-controls-ui.js").read_text(encoding="utf-8")
     if "[hidden]" not in controls or "display: none !important" not in controls: fail("routing controls must preserve semantic hidden states")
     if 'document.createElement("details")' not in control_ui or "routing-pause-summary" not in control_ui: fail("popup routing controls must use the compact disclosure model")
     shortcuts=(ROOT/"ui/shortcuts-ui.js").read_text(encoding="utf-8")
     if "openShortcutSettings" not in shortcuts or "commands.getAll" not in shortcuts: fail("shortcut manager must use Firefox command APIs")
-    print("Validated GoreeCloud Webspaces 0.1.9 Standard-fallback source candidate.")
+    print("Validated GoreeCloud Webspaces 0.1.9 Standard-fallback and per-Webspace isolation source candidate.")
 if __name__ == "__main__": main()
