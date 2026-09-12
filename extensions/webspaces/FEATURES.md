@@ -1,10 +1,11 @@
 # GoreeCloud Webspaces — Features
 
-## Implemented in the 0.1.9 source candidate
+## Implemented in the 0.1.10 source candidate
 
 - Built-in Standard, GoreeCloud, Google, Microsoft, and Meta Webspaces.
 - **Standard fallback:** ordinary external HTTP(S) websites with no more-specific routing rule open in the isolated Standard Webspace while automatic routing is active.
 - **Per-Webspace storage isolation:** every managed Webspace is required to own a distinct Firefox contextual identity and unique `cookieStoreId`; duplicate or missing cookie-store mappings fail the isolation invariant instead of silently sharing authenticated state.
+- **Isolation Health:** the manager verifies the current GoreeCloud-managed identity map against Firefox contextual identities, reports managed Webspaces, unique cookie stores, identities present, and per-Webspace health, and detects missing/shared mappings without reading cookie contents.
 - Deterministic provider routing, explicit assignments, exceptions, and reason codes; higher-priority user/provider destinations supersede Standard.
 - `localhost`, loopback addresses, and local-development hosts remain explicit-only instead of automatically falling back to Standard.
 - Configuration schema migration from schema 1 to schema 2 normalizes prior fallback settings to Standard while preserving existing Webspaces, assignments, and exceptions.
@@ -30,7 +31,7 @@
 
 ## Boundaries
 
-Standard is the fixed V1 fallback for otherwise-unassigned external HTTP(S) websites, not a universal container for browser-internal or unsupported pages. Explicit exceptions and active routing pauses may deliberately keep navigation outside Standard, and local-development hosts remain explicit-only. Each Webspace's isolation is bounded by Firefox contextual identities: cookies are held in distinct cookie stores, and supported site storage such as localStorage, IndexedDB, and cache state may be partitioned where Firefox OriginAttributes apply. Webspaces does not claim independent history, bookmarks, password stores, IP addresses, browser profiles, or operating-system sandboxes. Webspaces does not reserve keyboard combinations by default; users remain in control of shortcut assignment through Firefox. Site-only pause matches one exact hostname. Bulk assignment does not silently replace an assignment owned by another Webspace. A locked Webspace blocks protected routing changes. Close & Forget does not claim complete erasure beyond what Firefox confirms through contextual-identity APIs. Import/export is configuration-only and excludes cookies, login sessions, credentials, browsing history, and temporary/timed pause state. Managed-tab counts are local status, not analytics.
+Standard is the fixed V1 fallback for otherwise-unassigned external HTTP(S) websites, not a universal container for browser-internal or unsupported pages. Explicit exceptions and active routing pauses may deliberately keep navigation outside Standard, and local-development hosts remain explicit-only. Each Webspace's isolation is bounded by Firefox contextual identities: cookies are held in distinct cookie stores, and supported site storage such as localStorage, IndexedDB, and cache state may be partitioned where Firefox OriginAttributes apply. Isolation Health verifies GoreeCloud's mapping to those Firefox identities but does not enumerate cookie contents or claim independent history, bookmarks, password stores, IP addresses, browser profiles, or operating-system sandboxes. Webspaces does not reserve keyboard combinations by default; users remain in control of shortcut assignment through Firefox. Site-only pause matches one exact hostname. Bulk assignment does not silently replace an assignment owned by another Webspace. A locked Webspace blocks protected routing changes. Close & Forget does not claim complete erasure beyond what Firefox confirms through contextual-identity APIs. Import/export is configuration-only and excludes cookies, login sessions, credentials, browsing history, and temporary/timed pause state. Managed-tab counts are local status, not analytics.
 
 ## Planned
 
