@@ -1,0 +1,65 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: Canvas;
+  color: CanvasText;
+  font: 15px/1.5 system-ui, sans-serif;
+}
+main { max-width: 980px; margin: 0 auto; padding: 32px 22px 64px; }
+h1 { margin: 0; font-size: 30px; }
+h2 { margin-top: 0; }
+header p, .panel p { opacity: .75; }
+.notice, .panel {
+  border: 1px solid color-mix(in srgb, CanvasText 15%, transparent);
+  border-radius: 14px;
+  padding: 18px;
+  margin-top: 18px;
+}
+.notice { background: color-mix(in srgb, AccentColor 8%, Canvas); }
+.toggle-row { display: flex; gap: 10px; align-items: center; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin: 14px 0 22px;
+}
+.card {
+  border: 1px solid color-mix(in srgb, CanvasText 14%, transparent);
+  border-radius: 12px;
+  padding: 14px;
+}
+.card h3 { margin: 0 0 6px; }
+.card .kind, .muted, .status { opacity: .7; font-size: 13px; }
+button, select, input {
+  font: inherit;
+}
+button {
+  border: 1px solid color-mix(in srgb, CanvasText 20%, transparent);
+  border-radius: 9px;
+  padding: 8px 12px;
+  background: ButtonFace;
+  color: ButtonText;
+  cursor: pointer;
+}
+.create-form {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) 150px 150px auto;
+  gap: 10px;
+  align-items: end;
+}
+.create-form h3 { grid-column: 1 / -1; margin-bottom: 0; }
+.create-form label { display: grid; gap: 5px; }
+.create-form input, .create-form select { padding: 8px; }
+.assignment-list { display: grid; gap: 8px; }
+.assignment {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: center;
+  border-bottom: 1px solid color-mix(in srgb, CanvasText 10%, transparent);
+  padding: 9px 0;
+}
+@media (max-width: 720px) {
+  .create-form { grid-template-columns: 1fr; }
+  .assignment { grid-template-columns: 1fr; }
+}

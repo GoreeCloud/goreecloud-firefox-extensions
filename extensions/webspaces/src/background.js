@@ -1,6 +1,7 @@
 import { ensureBuiltinWebspaces } from "./containers.js";
 import { evaluateRouting } from "./routing.js";
 import { loadConfig, saveConfig } from "./storage.js";
+import { upsertDomainAssignment, validateWebspaceInput } from "./management.js";
 
 const inFlight = new Map();
 const REROUTE_TTL_MS = 8000;
@@ -34,6 +35,17 @@ async function initialize() {
   config = ensured;
 }
 
+async function readyConfig() {
+  if (!config) await initialize();
+  return config;
+}
+
+async function persist(next) {
+  await saveConfig(next);
+  config = next;
+  return config;
+}
+
 async function reroute(details, targetCookieStoreId) {
   const source = await browser.tabs.get(details.tabId);
   if (source.cookieStoreId === targetCookieStoreId) return;
@@ -49,18 +61,17 @@ async function reroute(details, targetCookieStoreId) {
   });
   markInFlight(replacement.id, details.url);
 
-  // Remove only after Firefox confirms the replacement tab was created.
   await browser.tabs.remove(source.id);
 }
 
 async function handleBeforeNavigate(details) {
   if (details.frameId !== 0 || isInFlight(details.tabId, details.url)) return;
-  if (!config) await initialize();
+  const current = await readyConfig();
 
-  const decision = evaluateRouting(details.url, config);
+  const decision = evaluateRouting(details.url, current);
   if (decision.action !== "webspace" || !decision.webspaceId) return;
 
-  const target = config.webspaces?.[decision.webspaceId];
+  const target = current.webspaces?.[decision.webspaceId];
   if (!target?.cookieStoreId) {
     console.warn("GoreeCloud Webspaces: routing target is unavailable", decision);
     return;
@@ -69,9 +80,77 @@ async function handleBeforeNavigate(details) {
   try {
     await reroute(details, target.cookieStoreId);
   } catch (error) {
-    // Fail open for ordinary navigation during the first development slice:
-    // never destroy the original tab unless replacement creation succeeded.
     console.error("GoreeCloud Webspaces: reroute failed", error);
+  }
+}
+
+async function createCustomWebspace(input) {
+  const definition = validateWebspaceInput(input);
+  const context = await browser.contextualIdentities.create(definition);
+  const current = await readyConfig();
+  const id = `custom-${crypto.randomUUID()}`;
+  const next = structuredClone(current);
+  next.webspaces[id] = {
+    id,
+    name: definition.name,
+    color: definition.color,
+    icon: definition.icon,
+    builtIn: false,
+    cookieStoreId: context.cookieStoreId
+  };
+  await persist(next);
+  return next.webspaces[id];
+}
+
+async function handleMessage(message) {
+  const current = await readyConfig();
+
+  switch (message.type) {
+    case "webspaces:get-state":
+      return { config: structuredClone(current) };
+
+    case "webspaces:set-routing": {
+      const next = { ...structuredClone(current), routingEnabled: Boolean(message.enabled) };
+      await persist(next);
+      return { config: structuredClone(next) };
+    }
+
+    case "webspaces:open": {
+      const webspace = current.webspaces?.[message.webspaceId];
+      if (!webspace?.cookieStoreId) throw new Error("Unknown or unavailable Webspace.");
+      await browser.tabs.create({
+        url: message.url || "about:blank",
+        cookieStoreId: webspace.cookieStoreId
+      });
+      return { ok: true };
+    }
+
+    case "webspaces:create": {
+      const webspace = await createCustomWebspace(message.webspace);
+      return { webspace, config: structuredClone(config) };
+    }
+
+    case "webspaces:assign-site": {
+      if (!current.webspaces?.[message.webspaceId]) throw new Error("Unknown Webspace.");
+      const next = structuredClone(current);
+      next.userRules = upsertDomainAssignment(
+        next.userRules,
+        message.hostname,
+        message.webspaceId
+      );
+      await persist(next);
+      return { config: structuredClone(next) };
+    }
+
+    case "webspaces:remove-assignment": {
+      const next = structuredClone(current);
+      next.userRules = (next.userRules ?? []).filter((rule) => rule.id !== message.ruleId);
+      await persist(next);
+      return { config: structuredClone(next) };
+    }
+
+    default:
+      throw new Error(`Unknown GoreeCloud Webspaces message: ${message.type}`);
   }
 }
 
@@ -81,6 +160,11 @@ browser.runtime.onInstalled.addListener(() => {
 
 browser.runtime.onStartup.addListener(() => {
   initialize().catch((error) => console.error("GoreeCloud Webspaces startup failed", error));
+});
+
+browser.runtime.onMessage.addListener((message) => {
+  if (!message?.type?.startsWith("webspaces:")) return undefined;
+  return handleMessage(message);
 });
 
 browser.storage.onChanged.addListener((changes, areaName) => {

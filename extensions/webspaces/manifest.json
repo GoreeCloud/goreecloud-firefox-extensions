@@ -1,14 +1,23 @@
 {
   "manifest_version": 3,
   "name": "GoreeCloud Webspaces",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Isolated Firefox browsing environments with deterministic site routing and multi-account separation.",
   "permissions": [
+    "activeTab",
     "contextualIdentities",
     "cookies",
     "storage",
     "webNavigation"
   ],
+  "action": {
+    "default_title": "GoreeCloud Webspaces",
+    "default_popup": "ui/popup.html"
+  },
+  "options_ui": {
+    "page": "ui/options.html",
+    "open_in_tab": true
+  },
   "background": {
     "scripts": [
       "src/background.js"

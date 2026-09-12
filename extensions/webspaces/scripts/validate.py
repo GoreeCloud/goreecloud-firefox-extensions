@@ -4,10 +4,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-
 def fail(message: str) -> None:
     raise SystemExit(f"ERROR: {message}")
-
 
 def main() -> None:
     manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
@@ -15,18 +13,25 @@ def main() -> None:
         fail("Manifest V3 is required")
     if manifest.get("name") != "GoreeCloud Webspaces":
         fail("unexpected extension name")
-    if manifest.get("version") != "0.1.0":
+    if manifest.get("version") != "0.1.1":
         fail("source version must remain synchronized with canonical inventory")
     gecko_id = manifest.get("browser_specific_settings", {}).get("gecko", {}).get("id")
     if gecko_id != "webspaces@goreecloud.com":
         fail("unexpected Firefox add-on ID")
 
-    required_permissions = {"contextualIdentities", "cookies", "storage", "webNavigation"}
+    required_permissions = {"activeTab", "contextualIdentities", "cookies", "storage", "webNavigation"}
     permissions = set(manifest.get("permissions", []))
     if permissions != required_permissions:
         fail(f"unexpected permission set: {sorted(permissions)}")
     if manifest.get("host_permissions"):
-        fail("the current routing foundation must not require broad host permissions")
+        fail("Webspaces must not require broad host permissions for this source candidate")
+
+    action = manifest.get("action", {})
+    if action.get("default_popup") != "ui/popup.html":
+        fail("GoreeCloud Webspaces toolbar popup is required")
+    options = manifest.get("options_ui", {})
+    if options.get("page") != "ui/options.html":
+        fail("GoreeCloud Webspaces management page is required")
 
     required_files = [
         "README.md",
@@ -40,17 +45,24 @@ def main() -> None:
         "src/background.js",
         "src/constants.js",
         "src/containers.js",
+        "src/management.js",
         "src/provider-rules.js",
         "src/routing.js",
         "src/storage.js",
+        "ui/popup.html",
+        "ui/popup.css",
+        "ui/popup.js",
+        "ui/options.html",
+        "ui/options.css",
+        "ui/options.js",
         "tests/routing.test.js",
+        "tests/management.test.js",
     ]
     missing = [path for path in required_files if not (ROOT / path).is_file()]
     if missing:
         fail(f"missing required source files: {', '.join(missing)}")
 
-    print("Validated GoreeCloud Webspaces 0.1.0 source-candidate foundation.")
-
+    print("Validated GoreeCloud Webspaces 0.1.1 source-candidate management slice.")
 
 if __name__ == "__main__":
     main()

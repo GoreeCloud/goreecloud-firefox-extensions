@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GoreeCloud Webspaces</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <strong>GoreeCloud Webspaces</strong>
+    <span id="routing-badge" class="badge">Routing</span>
+  </header>
+
+  <section class="current">
+    <div class="eyebrow">Current Webspace</div>
+    <div id="current-webspace" class="headline">Loading…</div>
+    <div id="current-site" class="muted"></div>
+    <div id="routing-reason" class="reason"></div>
+  </section>
+
+  <label class="toggle-row">
+    <input id="routing-enabled" type="checkbox">
+    <span>Automatic routing</span>
+  </label>
+
+  <section>
+    <div class="section-title">Open a Webspace</div>
+    <div id="webspace-list" class="webspace-list"></div>
+  </section>
+
+  <section id="assignment-section" hidden>
+    <div class="section-title">Always open this site in</div>
+    <div class="assign-row">
+      <select id="assignment-target"></select>
+      <button id="assign-site">Assign</button>
+    </div>
+    <div id="assignment-status" class="muted"></div>
+  </section>
+
+  <footer>
+    <button id="manage" class="secondary">Manage Webspaces</button>
+  </footer>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

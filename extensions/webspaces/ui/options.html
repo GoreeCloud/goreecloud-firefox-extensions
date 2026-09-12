@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GoreeCloud Webspaces</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>GoreeCloud Webspaces</h1>
+        <p>Manage GoreeCloud Webspaces, routing, and site assignments.</p>
+      </div>
+    </header>
+
+    <aside class="notice">
+      Firefox contextual identities are browser-level isolation primitives. They can also appear in Firefox or other container-management interfaces. GoreeCloud Webspaces remains the product and configuration authority for the Webspaces listed here.
+    </aside>
+
+    <section class="panel">
+      <h2>Routing</h2>
+      <label class="toggle-row">
+        <input id="routing-enabled" type="checkbox">
+        <span>Automatically route assigned sites into their Webspaces</span>
+      </label>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading">
+        <div>
+          <h2>Webspaces</h2>
+          <p>Built-in and custom isolated browsing identities managed by GoreeCloud Webspaces.</p>
+        </div>
+      </div>
+      <div id="webspace-grid" class="grid"></div>
+
+      <form id="create-webspace" class="create-form">
+        <h3>Create Webspace</h3>
+        <label>Name <input id="new-name" maxlength="48" required placeholder="Work"></label>
+        <label>Color
+          <select id="new-color">
+            <option>blue</option><option>turquoise</option><option>green</option><option>yellow</option>
+            <option>orange</option><option>red</option><option>pink</option><option>purple</option>
+          </select>
+        </label>
+        <label>Icon
+          <select id="new-icon">
+            <option>circle</option><option>fingerprint</option><option>briefcase</option><option>dollar</option>
+            <option>cart</option><option>vacation</option><option>gift</option><option>food</option>
+            <option>pet</option><option>tree</option>
+          </select>
+        </label>
+        <button type="submit">Create Webspace</button>
+        <span id="create-status" class="status"></span>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Site assignments</h2>
+      <p>Explicit assignments override built-in provider routing.</p>
+      <div id="assignment-list" class="assignment-list"></div>
+      <p id="no-assignments" class="muted">No explicit site assignments yet.</p>
+    </section>
+  </main>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>
