@@ -90,3 +90,10 @@ jobs:
             unzip -t "$package"
             unzip -l "$package"
           done
+      - name: Publish Webspaces unsigned test package
+        uses: actions/upload-artifact@v4
+        with:
+          name: goreecloud-webspaces-${{ github.sha }}
+          path: dist/goreecloud-webspaces-*.xpi
+          if-no-files-found: error
+          retention-days: 14
