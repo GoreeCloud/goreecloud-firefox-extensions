@@ -2,7 +2,7 @@
 
 ## Status
 
-This file describes the current **0.1.12 source-candidate** implementation slice. The authoritative broader product specification remains the GoreeCloud Drive record `Project Specification — Webspaces.docx`.
+This file describes the current **0.1.13 source-candidate** implementation slice. The authoritative broader product specification remains the GoreeCloud Drive record `Project Specification — Webspaces.docx`.
 
 ## Current requirements
 
@@ -12,7 +12,7 @@ This file describes the current **0.1.12 source-candidate** implementation slice
 4. Explicit user assignments, user exceptions, exact/subdomain rules, provider mappings, and the built-in GoreeCloud rule retain deterministic precedence above Standard.
 5. Browser-internal/unsupported URLs, deliberate routing pauses, explicit Normal-Firefox exceptions, and explicit-only local-development hosts may remain outside Standard according to their defined semantics.
 6. `localhost`, loopback addresses, and local-development hostnames may be routed only through explicit user configuration; they must not automatically fall into Standard.
-7. Configuration is local-first and versioned. Schema 2 remains current for 0.1.12 because adding a built-in Webspace does not change the persisted data shape.
+7. Configuration is local-first and versioned. Schema 2 remains current because Proton and current-tab reconciliation do not change the persisted data shape.
 8. Routing is deterministic and explainable, including selected rule, reason, priority, and matching candidates where available.
 9. Tab migration establishes the destination contextual identity before starting requested site navigation; destination setup must succeed before source removal.
 10. Context-menu one-time Open/Move actions use the same race-safe transition model.
@@ -45,6 +45,7 @@ This file describes the current **0.1.12 source-candidate** implementation slice
 37. Provider artwork must not be fetched from remote hosts at runtime. Local marks are presentation assets and must not influence routing, authorization, or contextual-identity ownership.
 38. Proton is a first-class built-in Webspace. The initial deterministic Proton provider registry includes `proton.me`, `protonmail.com`, and `protonvpn.com`; matching subdomains route to Proton unless a higher-priority user rule or exception applies.
 39. Adding Proton must create/reconcile a distinct Firefox contextual identity for Proton rather than reuse another built-in Webspace's `cookieStoreId`.
+40. The popup's **Current Webspace** identity must represent the Firefox contextual identity that actually owns the active tab. It should use the active tab's `cookieStoreId` when Firefox exposes it directly and fall back to Firefox cookie-store tab membership when that tab object does not reliably expose the managed store. A tab that Firefox presents as Standard, Proton, or another managed identity must not be mislabeled as Normal Firefox.
 
 ## Standard fallback boundary
 
@@ -60,7 +61,7 @@ Provider logos are local UI identity aids. They do not imply sponsorship, partne
 
 ## Isolation Health boundary
 
-Live Firefox 155.0.1 evidence for 0.1.11 confirmed the healthy five-built-in mapping before Proton was introduced: five managed Webspaces, five unique cookie stores, five Firefox identities present, and each marked isolated. 0.1.12 must be accepted again with Proton present before the six-Webspace runtime state is treated as verified.
+Live Firefox 155.0.1 evidence for 0.1.12 confirmed the healthy six-built-in mapping after Proton was introduced: six managed Webspaces, six unique cookie stores, six Firefox identities present, and each built-in Webspace marked isolated. The same runtime pass confirmed the local provider marks render and Proton Drive opens inside the Proton Firefox contextual identity. The 0.1.12 popup also exposed a current-identity presentation defect where a Standard-owned tab could be labeled Normal Firefox; 0.1.13 adds current-tab contextual-identity reconciliation to correct that presentation state.
 
 ## Current exclusions
 
@@ -68,4 +69,4 @@ Complete browsing-data erasure verification for Close & Forget; persistent routi
 
 ## Acceptance criteria
 
-Repository validation and all Webspaces tests must pass. Manifest permissions remain exactly `activeTab`, `contextualIdentities`, `cookies`, `menus`, `storage`, and `webNavigation`, with no broad host permissions. Tests cover Proton provider routing, provider-logo asset mapping, built-in command mapping including Proton, deterministic routing, migration safety, context menus, lifecycle ordering/rollback, management validation, portability exclusions, first-party UI controls, semantic hidden states, locked-rule protection, routing pause lifecycle/scope, Standard fallback, explicit local-development routing, bulk-assignment safety, unique cookie-store isolation, Isolation Health, and non-overlapping runtime-message routing. Shortcut configuration remains under Firefox/user control.
+Repository validation and all Webspaces tests must pass. Manifest permissions remain exactly `activeTab`, `contextualIdentities`, `cookies`, `menus`, `storage`, and `webNavigation`, with no broad host permissions. Tests cover Proton provider routing, provider-logo asset mapping, built-in command mapping including Proton, current active-tab Webspace resolution, deterministic routing, migration safety, context menus, lifecycle ordering/rollback, management validation, portability exclusions, first-party UI controls, semantic hidden states, locked-rule protection, routing pause lifecycle/scope, Standard fallback, explicit local-development routing, bulk-assignment safety, unique cookie-store isolation, Isolation Health, and non-overlapping runtime-message routing. Shortcut configuration remains under Firefox/user control.
