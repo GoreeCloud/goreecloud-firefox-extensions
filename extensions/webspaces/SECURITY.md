@@ -1,6 +1,6 @@
 # Security Policy
 
-GoreeCloud Webspaces 0.1.10 is in active development and has no Stable release.
+GoreeCloud Webspaces 0.1.11 is in active development and has no Stable release.
 
 ## Security boundaries
 
@@ -16,7 +16,9 @@ Each GoreeCloud-managed Webspace must own a distinct Firefox contextual identity
 
 Standard, GoreeCloud, Google, Microsoft, Meta, custom persistent Webspaces, duplicated Webspaces, imported custom Webspaces, reset identities, and temporary Webspaces must therefore use independent Firefox contextual identities.
 
-The 0.1.10 manager includes **Isolation Health**, which compares the GoreeCloud-managed Webspace map with Firefox's current contextual identities and reports missing, removed, or shared identity mappings. This diagnostic does not enumerate cookie contents and does not weaken the fail-closed invariant.
+The manager includes **Isolation Health**, which compares the GoreeCloud-managed Webspace map with Firefox's current contextual identities and reports missing, removed, or shared identity mappings. This diagnostic does not enumerate cookie contents and does not weaken the fail-closed invariant.
+
+0.1.11 assigns Isolation Health a dedicated `webspaces-health:*` runtime-message namespace. This prevents the main `webspaces:*` message router from intercepting the health request, a collision observed during 0.1.10 live Firefox acceptance testing.
 
 This isolation applies only to browser state Firefox actually partitions by contextual identity. Cookies are explicitly separated by Firefox contextual identities, and supported site storage such as localStorage, IndexedDB, and cache state may be partitioned through Firefox OriginAttributes. Browser-global history, bookmarks, saved passwords, network identity, and operating-system state are outside this guarantee unless separately implemented and verified.
 
