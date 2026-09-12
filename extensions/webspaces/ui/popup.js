@@ -1,4 +1,5 @@
 import { evaluateRouting, hostnameFromUrl } from "../src/routing.js";
+import { applyAccent, glyphFor } from "./identity.js";
 
 const reasonLabels = {
   "user-exception": "User exception",
@@ -13,43 +14,11 @@ const reasonLabels = {
   "unsupported-or-invalid-url": "This page is not eligible for website routing"
 };
 
-const colorMap = {
-  blue: "#3478f6",
-  turquoise: "#1c8a8d",
-  green: "#2f9e63",
-  yellow: "#d9a35f",
-  orange: "#c57a25",
-  red: "#c63b32",
-  pink: "#b95b8b",
-  purple: "#7657f6"
-};
-
-const builtinColor = {
-  goreecloud: "blue",
-  google: "red",
-  microsoft: "purple",
-  meta: "turquoise"
-};
-
 function sortedWebspaces(config) {
   return Object.values(config.webspaces ?? {}).sort((a, b) => {
     if (a.builtIn !== b.builtIn) return a.builtIn ? -1 : 1;
     return a.name.localeCompare(b.name);
   });
-}
-
-function accentFor(webspace) {
-  const key = webspace?.color ?? builtinColor[webspace?.id] ?? "blue";
-  return colorMap[key] ?? colorMap.blue;
-}
-
-function glyphFor(webspace) {
-  const name = webspace?.name?.trim() || "W";
-  return name.slice(0, 1).toUpperCase();
-}
-
-function applyAccent(element, webspace) {
-  element.style.setProperty("--space-accent", accentFor(webspace));
 }
 
 async function send(type, payload = {}) {
@@ -88,11 +57,13 @@ async function render() {
   const list = document.querySelector("#webspace-list");
   list.replaceChildren();
   for (const webspace of webspaces) {
-    const row = document.createElement("div");
-    row.className = "webspace";
-    applyAccent(row, webspace);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "webspace glz-surface";
+    button.setAttribute("aria-label", `Open ${webspace.name} Webspace`);
+    applyAccent(button, webspace);
 
-    const identity = document.createElement("div");
+    const identity = document.createElement("span");
     identity.className = "space-identity";
 
     const emblem = document.createElement("span");
@@ -105,15 +76,15 @@ async function render() {
     label.className = "space-name";
     label.textContent = webspace.name;
 
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "glz-button";
-    button.textContent = "Open";
-    button.addEventListener("click", () => send("webspaces:open", { webspaceId: webspace.id }));
+    const indicator = document.createElement("span");
+    indicator.className = "space-open-indicator";
+    indicator.setAttribute("aria-hidden", "true");
+    indicator.textContent = "↗";
 
     identity.append(emblem, label);
-    row.append(identity, button);
-    list.append(row);
+    button.append(identity, indicator);
+    button.addEventListener("click", () => send("webspaces:open", { webspaceId: webspace.id }));
+    list.append(button);
   }
 
   const assignmentSection = document.querySelector("#assignment-section");
@@ -140,10 +111,7 @@ document.querySelector("#assign-site").addEventListener("click", async () => {
   if (!hostname) return;
 
   const select = document.querySelector("#assignment-target");
-  await send("webspaces:assign-site", {
-    hostname,
-    webspaceId: select.value
-  });
+  await send("webspaces:assign-site", { hostname, webspaceId: select.value });
   document.querySelector("#assignment-status").textContent = `${hostname} is now assigned.`;
   await render();
 });

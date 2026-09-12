@@ -13,7 +13,7 @@ def main() -> None:
         fail("Manifest V3 is required")
     if manifest.get("name") != "GoreeCloud Webspaces":
         fail("unexpected extension name")
-    if manifest.get("version") != "0.1.3":
+    if manifest.get("version") != "0.1.4":
         fail("source version must remain synchronized with canonical inventory")
     gecko_id = manifest.get("browser_specific_settings", {}).get("gecko", {}).get("id")
     if gecko_id != "webspaces@goreecloud.com":
@@ -29,38 +29,22 @@ def main() -> None:
     action = manifest.get("action", {})
     if action.get("default_popup") != "ui/popup.html":
         fail("GoreeCloud Webspaces toolbar popup is required")
+    if action.get("default_icon") != "icons/webspaces.svg":
+        fail("first-party Webspaces toolbar identity mark is required")
     options = manifest.get("options_ui", {})
     if options.get("page") != "ui/options.html":
         fail("GoreeCloud Webspaces management page is required")
 
     required_files = [
-        "README.md",
-        "SPECIFICATIONS.md",
-        "FEATURES.md",
-        "BENEFITS.md",
-        "COMPETITIVE-OBJECTIVES.md",
-        "SECURITY.md",
-        "PRIVACY.md",
-        "LICENSE",
-        "src/background.js",
-        "src/constants.js",
-        "src/containers.js",
-        "src/management.js",
-        "src/provider-rules.js",
-        "src/routing.js",
-        "src/storage.js",
-        "src/tab-migration.js",
-        "ui/glaze-webspaces.css",
-        "ui/popup.html",
-        "ui/popup.css",
-        "ui/popup.js",
-        "ui/options.html",
-        "ui/options.css",
-        "ui/options.js",
-        "tests/routing.test.js",
-        "tests/management.test.js",
-        "tests/tab-migration.test.js",
-        "tests/glaze-ui.test.js",
+        "README.md", "SPECIFICATIONS.md", "FEATURES.md", "BENEFITS.md",
+        "COMPETITIVE-OBJECTIVES.md", "SECURITY.md", "PRIVACY.md", "LICENSE",
+        "icons/webspaces.svg",
+        "src/background.js", "src/constants.js", "src/containers.js", "src/management.js",
+        "src/provider-rules.js", "src/routing.js", "src/storage.js", "src/tab-migration.js",
+        "ui/glaze-webspaces.css", "ui/identity.js", "ui/popup.html", "ui/popup.css", "ui/popup.js",
+        "ui/options.html", "ui/options.css", "ui/options.js",
+        "tests/routing.test.js", "tests/management.test.js", "tests/tab-migration.test.js",
+        "tests/glaze-ui.test.js", "tests/identity-ui.test.js",
     ]
     missing = [path for path in required_files if not (ROOT / path).is_file()]
     if missing:
@@ -72,8 +56,10 @@ def main() -> None:
             fail(f"{relative} must declare the Glaze UI V1.3 adoption target")
         if "glaze-webspaces.css" not in text:
             fail(f"{relative} must load the local Webspaces Glaze adoption stylesheet")
+        if "../icons/webspaces.svg" not in text:
+            fail(f"{relative} must use the first-party Webspaces identity mark")
 
-    print("Validated GoreeCloud Webspaces 0.1.3 source-candidate Glaze UI refresh.")
+    print("Validated GoreeCloud Webspaces 0.1.4 source-candidate identity and Glaze UI refinement.")
 
 if __name__ == "__main__":
     main()

@@ -4,7 +4,7 @@
 **Component path:** `extensions/webspaces/`  
 **Source lifecycle:** Source candidate / Active Development  
 **Firefox add-on ID:** `webspaces@goreecloud.com`  
-**Source version:** `0.1.3`
+**Source version:** `0.1.4`
 
 GoreeCloud Webspaces is a Firefox extension for isolated browsing environments, deterministic website routing, and multi-account separation. Firefox contextual identities are the browser isolation mechanism; GoreeCloud Webspaces is the product, management surface, routing authority, and user-facing abstraction.
 
@@ -20,12 +20,16 @@ This source candidate currently provides:
 - Routing pause/resume and routing-reason display.
 - Race-hardened tab migration that establishes the destination contextual identity before starting routed website navigation.
 - Failure-safe migration that retains the original tab when destination navigation setup fails.
-- Consumer-local **GLAZE UI V1.3 — Adaptive Resonance** visual adoption for the popup and management page, including neutral frosted material, bounded identity accent color, coordinated geometry, system dark appearance, visible focus, Reduced Motion, Reduced Transparency, Forced Colors, and no remote UI assets.
-- Routing, management, tab-migration, and Glaze-adoption source tests plus source validation.
+- Consumer-local **GLAZE UI V1.3 — Adaptive Resonance** visual adoption for the popup and management page.
+- First-party GoreeCloud Webspaces identity mark used by Firefox and Webspaces UI.
+- Distinct non-color Webspace glyphs plus bounded Webspace accent color.
+- Compact Glaze launcher cards, status capsules, routing/assignment summaries, and a disclosure-based Firefox isolation explanation.
+- System dark appearance, visible focus, Reduced Motion, Reduced Transparency, Forced Colors, and no remote UI assets.
+- Routing, management, tab-migration, identity, and Glaze-adoption source tests plus source validation.
 
 ## Glaze UI boundary
 
-The current canonical Glaze source authority identifies GLAZE UI V1.3 / `1.3.0` as the Official Stable consumer target. Webspaces 0.1.3 maps its Firefox surfaces to that visual and accessibility direction through a local consumer stylesheet.
+The current canonical Glaze source authority identifies GLAZE UI V1.3 / `1.3.0` as the Official Stable consumer target. Webspaces 0.1.4 maps its Firefox surfaces to that visual and accessibility direction through local consumer assets.
 
 This source candidate does **not** claim full Glaze UI V1.3 consumer conformance or production acceptance. Rendered Firefox optical review, accessibility review, and broader product acceptance remain separate evidence gates.
 

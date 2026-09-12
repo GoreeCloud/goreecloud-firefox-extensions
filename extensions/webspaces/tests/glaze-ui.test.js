@@ -13,6 +13,7 @@ const options = read("ui/options.html");
 const glaze = read("ui/glaze-webspaces.css");
 const popupCss = read("ui/popup.css");
 const optionsCss = read("ui/options.css");
+const manifest = JSON.parse(read("manifest.json"));
 
 test("Webspaces UI declares the current Glaze consumer target", () => {
   assert.match(popup, /data-glaze-version="1\.3"/);
@@ -22,9 +23,14 @@ test("Webspaces UI declares the current Glaze consumer target", () => {
 });
 
 test("Glaze adoption remains local and does not require remote UI assets", () => {
-  for (const source of [popup, options, glaze, popupCss, optionsCss]) {
-    assert.doesNotMatch(source, /https?:\/\//i);
-  }
+  for (const source of [popup, options, glaze, popupCss, optionsCss]) assert.doesNotMatch(source, /https?:\/\//i);
+  assert.match(popup, /\.\.\/icons\/webspaces\.svg/);
+  assert.match(options, /\.\.\/icons\/webspaces\.svg/);
+});
+
+test("manifest uses the first-party Webspaces identity mark", () => {
+  assert.equal(manifest.action.default_icon, "icons/webspaces.svg");
+  assert.equal(manifest.icons["48"], "icons/webspaces.svg");
 });
 
 test("Glaze adoption preserves accessibility and degraded presentation fallbacks", () => {

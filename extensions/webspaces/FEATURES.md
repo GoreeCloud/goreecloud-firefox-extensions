@@ -1,6 +1,6 @@
 # GoreeCloud Webspaces — Features
 
-## Implemented in the 0.1.3 source candidate
+## Implemented in the 0.1.4 source candidate
 
 - Built-in GoreeCloud, Google, Microsoft, and Meta Webspaces.
 - Firefox contextual-identity provisioning.
@@ -18,11 +18,13 @@
 - Race-hardened destination-tab staging at `about:blank` before routed navigation.
 - Source-preserving failure behavior when destination navigation setup fails.
 - GLAZE UI V1.3 visual adoption layer for popup and settings surfaces.
-- Neutral frosted Glaze material with solid/near-solid readable inner surfaces.
-- Coordinated 16/24/32 px geometry and capsule status/control treatment.
-- Webspace identity accents that remain redundant with names/glyphs.
+- First-party Webspaces SVG identity mark registered with Firefox and used in product chrome.
+- Distinct glyph + accent identity treatment for built-in and custom Webspaces.
+- Compact two-column Glaze launcher in the popup.
+- Routing, Webspace, and explicit-assignment summary capsules in the manager.
+- Collapsible Firefox isolation boundary explanation to reduce persistent visual noise.
 - System light/dark presentation plus Reduced Motion, Reduced Transparency, missing-blur, and Forced Colors fallbacks.
-- Routing, management, migration, and Glaze-adoption source tests.
+- Routing, management, migration, identity, and Glaze-adoption source tests.
 
 ## Glaze UI boundary
 

@@ -1,20 +1,4 @@
-const colorMap = {
-  blue: "#3478f6",
-  turquoise: "#1c8a8d",
-  green: "#2f9e63",
-  yellow: "#d9a35f",
-  orange: "#c57a25",
-  red: "#c63b32",
-  pink: "#b95b8b",
-  purple: "#7657f6"
-};
-
-const builtinColor = {
-  goreecloud: "blue",
-  google: "red",
-  microsoft: "purple",
-  meta: "turquoise"
-};
+import { applyAccent, glyphFor, iconLabelFor } from "./identity.js";
 
 async function send(type, payload = {}) {
   return browser.runtime.sendMessage({ type, ...payload });
@@ -27,27 +11,24 @@ function sortedWebspaces(config) {
   });
 }
 
-function accentFor(webspace) {
-  const key = webspace?.color ?? builtinColor[webspace?.id] ?? "blue";
-  return colorMap[key] ?? colorMap.blue;
-}
-
-function glyphFor(webspace) {
-  const name = webspace?.name?.trim() || "W";
-  return name.slice(0, 1).toUpperCase();
-}
-
-function applyAccent(element, webspace) {
-  element.style.setProperty("--space-accent", accentFor(webspace));
+function updateSummary(config, webspaces, rules) {
+  const enabled = config.routingEnabled !== false;
+  const routingStatus = document.querySelector("#routing-status");
+  routingStatus.dataset.routingState = enabled ? "on" : "paused";
+  routingStatus.querySelector("span:last-child").textContent = enabled ? "Routing on" : "Routing paused";
+  document.querySelector("#webspace-summary").textContent = `${webspaces.length} ${webspaces.length === 1 ? "Webspace" : "Webspaces"}`;
+  document.querySelector("#assignment-summary").textContent = `${rules.length} ${rules.length === 1 ? "assignment" : "assignments"}`;
 }
 
 async function render() {
   const { config } = await send("webspaces:get-state");
   const webspaces = sortedWebspaces(config);
   const webspaceById = new Map(webspaces.map((item) => [item.id, item]));
+  const rules = (config.userRules ?? []).filter((rule) => rule.kind === "domain");
 
   document.querySelector("#routing-enabled").checked = config.routingEnabled !== false;
   document.querySelector("#webspace-count").textContent = `${webspaces.length} ${webspaces.length === 1 ? "Webspace" : "Webspaces"}`;
+  updateSummary(config, webspaces, rules);
 
   const grid = document.querySelector("#webspace-grid");
   grid.replaceChildren();
@@ -73,7 +54,7 @@ async function render() {
 
     const kind = document.createElement("div");
     kind.className = "kind";
-    kind.textContent = webspace.builtIn ? "Built-in Webspace" : "Custom Webspace";
+    kind.textContent = iconLabelFor(webspace);
 
     copy.append(title, kind);
     header.append(emblem, copy);
@@ -84,7 +65,7 @@ async function render() {
     const open = document.createElement("button");
     open.type = "button";
     open.className = "glz-button";
-    open.textContent = "Open new tab";
+    open.textContent = "Open Webspace ↗";
     open.addEventListener("click", () => send("webspaces:open", { webspaceId: webspace.id }));
 
     actions.append(open);
@@ -94,7 +75,6 @@ async function render() {
 
   const list = document.querySelector("#assignment-list");
   list.replaceChildren();
-  const rules = (config.userRules ?? []).filter((rule) => rule.kind === "domain");
   document.querySelector("#no-assignments").hidden = rules.length > 0;
 
   for (const rule of rules) {

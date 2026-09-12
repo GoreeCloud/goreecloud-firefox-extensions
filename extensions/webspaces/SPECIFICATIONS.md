@@ -19,9 +19,11 @@ This file describes the current source-candidate implementation slice only. The 
 11. Webspaces popup and management surfaces target the current consumer-eligible **GLAZE UI V1.3 / 1.3.0** design direction through local assets only.
 12. Glaze material must remain bounded: neutral glass is interaction chrome; durable reading/control surfaces remain solid or near-solid.
 13. Webspace color is an identity accent and must not be the sole carrier of identity or important state.
-14. Webspaces UI must preserve visible focus and degraded presentation for Reduced Motion, Reduced Transparency, missing backdrop blur, Forced Colors, and system dark appearance.
-15. The source must not claim full Glaze consumer conformance until rendered Firefox and applicable accessibility acceptance evidence exists.
-16. Platform-system integrations must not be claimed until separately implemented and verified.
+14. Webspaces must use a first-party local product identity mark rather than depending on another container extension's artwork.
+15. Built-in and custom Webspaces must retain non-color identity cues in addition to bounded accent color.
+16. Webspaces UI must preserve visible focus and degraded presentation for Reduced Motion, Reduced Transparency, missing backdrop blur, Forced Colors, and system dark appearance.
+17. The source must not claim full Glaze consumer conformance until rendered Firefox and applicable accessibility acceptance evidence exists.
+18. Platform-system integrations must not be claimed until separately implemented and verified.
 
 ## Compatibility boundary
 
@@ -43,9 +45,11 @@ Firefox contextual identities are browser-level and are not private to GoreeClou
 ## Acceptance criteria for this slice
 
 - Repository validation passes.
-- Routing, management, tab-migration, and Glaze-adoption source tests pass.
+- Routing, management, tab-migration, identity, and Glaze-adoption source tests pass.
+- Manifest and both first-party UI surfaces use the local `icons/webspaces.svg` product identity mark.
 - Popup and options surfaces declare `data-glaze-version="1.3"` and load only local consumer UI assets.
 - The Glaze adoption layer contains Reduced Motion, Reduced Transparency, no-backdrop-filter, and Forced Colors fallbacks.
+- Webspace identity remains understandable without relying on color alone.
 - The migration test proves `about:blank` destination creation occurs before applying the requested website URL.
 - The migration test proves destination setup failure does not remove the source tab.
 - Explicit user assignments override provider mappings.
