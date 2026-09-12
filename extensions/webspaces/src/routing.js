@@ -74,46 +74,82 @@ function providerCandidates(hostname) {
     ));
 }
 
-export function evaluateRouting(rawUrl, config) {
+function serializeCandidate(candidateValue, selected = false) {
+  return {
+    id: candidateValue.rule?.id ?? null,
+    kind: candidateValue.rule?.kind ?? null,
+    value: candidateValue.rule?.value ?? null,
+    webspaceId: candidateValue.rule?.webspaceId ?? null,
+    source: candidateValue.rule?.source ?? "user",
+    priority: candidateValue.priority,
+    reason: candidateValue.reason,
+    selected
+  };
+}
+
+export function analyzeRouting(rawUrl, config) {
   const hostname = hostnameFromUrl(rawUrl);
   if (!hostname) {
-    return { action: "normal", reason: "unsupported-or-invalid-url", matchedRule: null, webspaceId: null };
+    const decision = { action: "normal", reason: "unsupported-or-invalid-url", matchedRule: null, webspaceId: null, priority: null };
+    return { hostname: null, decision, candidates: [] };
   }
 
   if (config.routingEnabled === false) {
-    return { action: "normal", reason: "routing-paused", matchedRule: null, webspaceId: null };
+    const decision = { action: "normal", reason: "routing-paused", matchedRule: null, webspaceId: null, priority: null };
+    return { hostname, decision, candidates: [] };
   }
 
-  const exception = chooseBest(exceptionCandidates(hostname, config));
+  const exceptions = exceptionCandidates(hostname, config);
+  const ordinary = [...userRuleCandidates(hostname, config), ...providerCandidates(hostname)];
+  const allCandidates = [...exceptions, ...ordinary];
+
+  const exception = chooseBest(exceptions);
   if (exception) {
-    if (!exception.rule.webspaceId) {
-      return { action: "normal", reason: exception.reason, matchedRule: exception.rule, webspaceId: null };
-    }
-    return { action: "webspace", reason: exception.reason, matchedRule: exception.rule, webspaceId: exception.rule.webspaceId };
+    const decision = exception.rule.webspaceId
+      ? { action: "webspace", reason: exception.reason, matchedRule: exception.rule, webspaceId: exception.rule.webspaceId, priority: exception.priority }
+      : { action: "normal", reason: exception.reason, matchedRule: exception.rule, webspaceId: null, priority: exception.priority };
+    return {
+      hostname,
+      decision,
+      candidates: allCandidates
+        .map((entry) => serializeCandidate(entry, entry.rule.id === exception.rule.id))
+        .sort((a, b) => b.priority - a.priority)
+    };
   }
 
-  const selected = chooseBest([
-    ...userRuleCandidates(hostname, config),
-    ...providerCandidates(hostname)
-  ]);
-
+  const selected = chooseBest(ordinary);
   if (selected) {
-    return {
+    const decision = {
       action: "webspace",
       reason: selected.reason,
       matchedRule: selected.rule,
-      webspaceId: selected.rule.webspaceId
+      webspaceId: selected.rule.webspaceId,
+      priority: selected.priority
+    };
+    return {
+      hostname,
+      decision,
+      candidates: allCandidates
+        .map((entry) => serializeCandidate(entry, entry.rule.id === selected.rule.id))
+        .sort((a, b) => b.priority - a.priority)
     };
   }
 
   if (config.defaultBehavior === "webspace" && config.defaultWebspaceId) {
-    return {
+    const decision = {
       action: "webspace",
       reason: "default-webspace",
       matchedRule: null,
-      webspaceId: config.defaultWebspaceId
+      webspaceId: config.defaultWebspaceId,
+      priority: RULE_PRIORITY.DEFAULT
     };
+    return { hostname, decision, candidates: [] };
   }
 
-  return { action: "normal", reason: "no-matching-rule", matchedRule: null, webspaceId: null };
+  const decision = { action: "normal", reason: "no-matching-rule", matchedRule: null, webspaceId: null, priority: null };
+  return { hostname, decision, candidates: [] };
+}
+
+export function evaluateRouting(rawUrl, config) {
+  return analyzeRouting(rawUrl, config).decision;
 }
