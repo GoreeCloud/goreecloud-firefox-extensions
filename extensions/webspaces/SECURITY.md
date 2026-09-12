@@ -10,6 +10,14 @@ The built-in **Standard** Webspace is a normal Firefox contextual identity used 
 
 The current permission set includes Firefox `menus` for user-invoked context-menu actions but does not add broad host permissions, `management`, or `browsingData` merely to inspect other extensions or overstate cleanup guarantees.
 
+## Isolation integrity
+
+Each GoreeCloud-managed Webspace must own a distinct Firefox contextual identity and unique `cookieStoreId`. A managed Webspace with no cookie store, or two managed Webspaces mapped to the same cookie store, is treated as an isolation-integrity failure. The source fails closed during Webspace initialization rather than silently allowing shared authenticated browser state.
+
+Standard, GoreeCloud, Google, Microsoft, Meta, custom persistent Webspaces, duplicated Webspaces, imported custom Webspaces, reset identities, and temporary Webspaces must therefore use independent Firefox contextual identities.
+
+This isolation applies only to browser state Firefox actually partitions by contextual identity. Cookies are explicitly separated by Firefox contextual identities, and supported site storage such as localStorage, IndexedDB, and cache state may be partitioned through Firefox OriginAttributes. Browser-global history, bookmarks, saved passwords, network identity, and operating-system state are outside this guarantee unless separately implemented and verified.
+
 ## Routing safety
 
 - Explicit user exceptions and assignments retain higher precedence than the Standard fallback.
