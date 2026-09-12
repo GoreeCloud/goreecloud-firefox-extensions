@@ -8,9 +8,13 @@ const reasonLabels = {
   "user-subdomain-rule": "Your subdomain rule",
   "provider-rule": "Built-in provider rule",
   "goreecloud-built-in-rule": "Built-in GoreeCloud rule",
-  "default-webspace": "Default Webspace",
+  "standard-fallback": "Standard fallback for an unassigned website",
+  "standard-webspace-unavailable": "Standard Webspace is unavailable",
+  "local-development-explicit-only": "Local development sites require an explicit assignment",
   "routing-paused": "Automatic routing is paused",
-  "no-matching-rule": "No automatic routing rule matched",
+  "routing-paused-timed": "Automatic routing is temporarily paused",
+  "routing-paused-site": "Automatic routing is paused for this site",
+  "routing-paused-restart": "Automatic routing is paused until Firefox restarts",
   "unsupported-or-invalid-url": "This page is not eligible for website routing"
 };
 
@@ -21,6 +25,8 @@ function sortedWebspaces(config) {
   return Object.values(config.webspaces ?? {}).sort((a, b) => {
     if (a.temporary !== b.temporary) return a.temporary ? 1 : -1;
     if (a.builtIn !== b.builtIn) return a.builtIn ? -1 : 1;
+    if (a.id === "standard" && b.id !== "standard") return -1;
+    if (b.id === "standard" && a.id !== "standard") return 1;
     return a.name.localeCompare(b.name);
   });
 }
