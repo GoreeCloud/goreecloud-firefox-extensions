@@ -4,6 +4,7 @@
 
 - Built-in Standard, GoreeCloud, Google, Microsoft, and Meta Webspaces.
 - **Standard fallback:** ordinary external HTTP(S) websites with no more-specific routing rule open in the isolated Standard Webspace while automatic routing is active.
+- **Per-Webspace storage isolation:** every managed Webspace is required to own a distinct Firefox contextual identity and unique `cookieStoreId`; duplicate or missing cookie-store mappings fail the isolation invariant instead of silently sharing authenticated state.
 - Deterministic provider routing, explicit assignments, exceptions, and reason codes; higher-priority user/provider destinations supersede Standard.
 - `localhost`, loopback addresses, and local-development hosts remain explicit-only instead of automatically falling back to Standard.
 - Configuration schema migration from schema 1 to schema 2 normalizes prior fallback settings to Standard while preserving existing Webspaces, assignments, and exceptions.
@@ -13,6 +14,7 @@
 - Temporary **Close & Forget** with tab closure before contextual-identity removal; the control is hidden outside temporary Webspaces.
 - Custom rename, description, color/icon editing; built-in appearance editing.
 - Duplicate, lock/unlock, reset, and custom persistent deletion.
+- Duplicate, import, custom creation, and reset workflows create fresh Firefox contextual identities rather than reusing another Webspace's cookie store.
 - Locked Webspaces protect their explicit rules against popup/context-menu retargeting.
 - Searchable assignment manager with domain/exact scope, add/edit/remove, enable/disable, destination changes, duplicate validation, and conflict reporting.
 - Timed routing pause for 5 minutes or 30 minutes, site-only pause, restart-scoped pause, indefinite pause, and explicit Resume.
@@ -28,7 +30,7 @@
 
 ## Boundaries
 
-Standard is the fixed V1 fallback for otherwise-unassigned external HTTP(S) websites, not a universal container for browser-internal or unsupported pages. Explicit exceptions and active routing pauses may deliberately keep navigation outside Standard, and local-development hosts remain explicit-only. Webspaces does not reserve keyboard combinations by default; users remain in control of shortcut assignment through Firefox. Site-only pause matches one exact hostname. Bulk assignment does not silently replace an assignment owned by another Webspace. A locked Webspace blocks protected routing changes. Close & Forget does not claim complete erasure beyond what Firefox confirms through contextual-identity APIs. Import/export is configuration-only and excludes cookies, login sessions, credentials, browsing history, and temporary/timed pause state. Managed-tab counts are local status, not analytics.
+Standard is the fixed V1 fallback for otherwise-unassigned external HTTP(S) websites, not a universal container for browser-internal or unsupported pages. Explicit exceptions and active routing pauses may deliberately keep navigation outside Standard, and local-development hosts remain explicit-only. Each Webspace's isolation is bounded by Firefox contextual identities: cookies are held in distinct cookie stores, and supported site storage such as localStorage, IndexedDB, and cache state may be partitioned where Firefox OriginAttributes apply. Webspaces does not claim independent history, bookmarks, password stores, IP addresses, browser profiles, or operating-system sandboxes. Webspaces does not reserve keyboard combinations by default; users remain in control of shortcut assignment through Firefox. Site-only pause matches one exact hostname. Bulk assignment does not silently replace an assignment owned by another Webspace. A locked Webspace blocks protected routing changes. Close & Forget does not claim complete erasure beyond what Firefox confirms through contextual-identity APIs. Import/export is configuration-only and excludes cookies, login sessions, credentials, browsing history, and temporary/timed pause state. Managed-tab counts are local status, not analytics.
 
 ## Planned
 
