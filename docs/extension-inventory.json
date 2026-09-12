@@ -58,7 +58,7 @@
       "name": "GoreeCloud Webspaces",
       "directory": "extensions/webspaces",
       "gecko_id": "webspaces@goreecloud.com",
-      "source_version": "0.1.9",
+      "source_version": "0.1.10",
       "source_state": "source-candidate",
       "accepted_stable_version": null,
       "legacy_repository": null
