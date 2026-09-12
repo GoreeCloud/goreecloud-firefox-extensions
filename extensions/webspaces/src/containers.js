@@ -20,6 +20,7 @@ export async function ensureBuiltinWebspaces(config) {
         name: definition.name,
         color: context?.color ?? existingRecord.color ?? definition.color,
         icon: context?.icon ?? existingRecord.icon ?? definition.icon,
+        description: existingRecord.description ?? definition.description ?? "",
         builtIn: true,
         temporary: false
       };
@@ -38,7 +39,7 @@ export async function ensureBuiltinWebspaces(config) {
       name: definition.name,
       color: context.color ?? definition.color,
       icon: context.icon ?? definition.icon,
-      description: "",
+      description: definition.description ?? "",
       builtIn: true,
       temporary: false,
       locked: existingRecord?.locked === true,
