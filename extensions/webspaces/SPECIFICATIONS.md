@@ -2,7 +2,7 @@
 
 ## Status
 
-This file describes the current **0.1.9 source-candidate** implementation slice. The authoritative broader product specification remains the GoreeCloud Drive record `Project Specification — Webspaces.docx`.
+This file describes the current **0.1.10 source-candidate** implementation slice. The authoritative broader product specification remains the GoreeCloud Drive record `Project Specification — Webspaces.docx`.
 
 ## Current requirements
 
@@ -38,6 +38,8 @@ This file describes the current **0.1.9 source-candidate** implementation slice.
 30. Ask-every-time, inherit-current-Webspace, temporary-default behavior, wildcard/domain-group routing, persistent routing history/statistics, and platform integrations must not be claimed until separately implemented and verified.
 31. Every GoreeCloud-managed Webspace must map one-to-one to a distinct Firefox contextual identity and unique `cookieStoreId`. A missing store or duplicate `cookieStoreId` is an isolation-integrity failure; the extension must fail closed rather than silently operate with shared authenticated state.
 32. Isolation claims are limited to Firefox-supported contextual-identity partitioning. Cookies and cookie-backed authentication state must be separated, and supported storage such as localStorage, IndexedDB, and cache state may be separated where Firefox OriginAttributes apply. Browser-global history, bookmarks, saved passwords, and other non-container-scoped browser state must not be represented as isolated merely because a tab belongs to a Webspace.
+33. The Webspaces manager must expose an **Isolation Health** view that compares the persisted GoreeCloud-managed Webspace map with Firefox's current contextual identities and reports whether every Webspace has a present, unique cookie store. It must detect missing store mappings, removed/missing Firefox identities, and shared-store mappings without enumerating or exposing website cookie contents.
+34. Isolation Health is diagnostic evidence for the Webspace-to-contextual-identity mapping only; it must not be represented as proof of separate IP addresses, separate browser history, separate bookmarks, separate saved-password stores, operating-system isolation, or complete privacy protection.
 
 ## Standard fallback boundary
 
@@ -47,9 +49,13 @@ The implementation intentionally preserves escape cases. A user exception that e
 
 ## Per-Webspace isolation boundary
 
-Standard, GoreeCloud, Google, Microsoft, Meta, custom persistent Webspaces, duplicated Webspaces, and temporary Webspaces must each own their own Firefox contextual identity. Webspace creation, duplication, import, and reset workflows must create a fresh contextual identity rather than reuse another Webspace's cookie store.
+Standard, GoreeCloud, Google, Microsoft, Meta, custom persistent Webspaces, duplicated Webspaces, imported custom Webspaces, reset identities, and temporary Webspaces must each own their own Firefox contextual identity. Webspace creation, duplication, import, and reset workflows must create a fresh contextual identity rather than reuse another Webspace's cookie store.
 
 The product may describe cookie and supported site-storage separation only to the degree provided by Firefox. It must not imply separate browser profiles, separate password stores, separate history databases, separate bookmarks, separate IP addresses, or operating-system sandboxing.
+
+## Isolation Health boundary
+
+Isolation Health verifies the identity mapping GoreeCloud Webspaces itself manages. A healthy result means each managed Webspace references a Firefox contextual identity that currently exists and no two managed Webspaces share the same `cookieStoreId`. It intentionally does not inspect cookie values and is not a substitute for Firefox's own security guarantees or for broader privacy/security systems.
 
 ## Current exclusions
 
@@ -57,4 +63,4 @@ Complete browsing-data erasure verification for Close & Forget; persistent routi
 
 ## Acceptance criteria
 
-Repository validation and all Webspaces tests must pass. Manifest permissions must remain exactly `activeTab`, `contextualIdentities`, `cookies`, `menus`, `storage`, and `webNavigation`, with no broad host permissions. Tests must cover routing explanation, migration safety, context menus, lifecycle ordering/rollback, management validation, portability exclusions, first-party UI controls, semantic hidden states, locked-rule protection, routing pause lifecycle/scope, Standard fallback routing, schema-1-to-schema-2 migration, explicit local-development routing, bulk-assignment safety, keyboard-command mapping including Standard, unique cookie-store isolation, identity, and Glaze adoption. Manifest commands must be explicit, and shortcut configuration must remain under Firefox/user control.
+Repository validation and all Webspaces tests must pass. Manifest permissions must remain exactly `activeTab`, `contextualIdentities`, `cookies`, `menus`, `storage`, and `webNavigation`, with no broad host permissions. Tests must cover routing explanation, migration safety, context menus, lifecycle ordering/rollback, management validation, portability exclusions, first-party UI controls, semantic hidden states, locked-rule protection, routing pause lifecycle/scope, Standard fallback routing, schema-1-to-schema-2 migration, explicit local-development routing, bulk-assignment safety, keyboard-command mapping including Standard, unique cookie-store isolation, isolation-health detection for healthy/shared/missing mappings, identity, and Glaze adoption. Manifest commands must be explicit, and shortcut configuration must remain under Firefox/user control.
