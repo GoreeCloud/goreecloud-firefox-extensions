@@ -1,38 +1,34 @@
 # GoreeCloud Webspaces — Features
 
-## Implemented in the 0.1.11 source candidate
+## Implemented in the 0.1.12 source candidate
 
-- Built-in Standard, GoreeCloud, Google, Microsoft, and Meta Webspaces.
+- Built-in **Standard, GoreeCloud, Google, Microsoft, Meta, and Proton** Webspaces.
+- **Provider logos:** built-in Webspaces use local packaged visual marks in the popup and manager instead of letter/symbol placeholders; fallback glyphs remain available if an asset cannot render.
+- **Dedicated Proton Webspace:** `proton.me`, `protonmail.com`, and `protonvpn.com` route to Proton by default, covering Proton Mail, Drive, Calendar, Pass, VPN, account surfaces, and related Proton services on those domains.
 - **Standard fallback:** ordinary external HTTP(S) websites with no more-specific routing rule open in the isolated Standard Webspace while automatic routing is active.
-- **Per-Webspace storage isolation:** every managed Webspace is required to own a distinct Firefox contextual identity and unique `cookieStoreId`; duplicate or missing cookie-store mappings fail the isolation invariant instead of silently sharing authenticated state.
-- **Isolation Health:** the manager verifies the current GoreeCloud-managed identity map against Firefox contextual identities, reports managed Webspaces, unique cookie stores, identities present, and per-Webspace health, and detects missing/shared mappings without reading cookie contents.
-- **Isolation Health runtime channel:** health requests use the dedicated `webspaces-health:*` namespace so Firefox does not route them into the main `webspaces:*` request handler.
-- Deterministic provider routing, explicit assignments, exceptions, and reason codes; higher-priority user/provider destinations supersede Standard.
+- **Per-Webspace storage isolation:** every managed Webspace owns a distinct Firefox contextual identity and unique `cookieStoreId`; duplicate or missing mappings fail the isolation invariant instead of silently sharing authenticated state.
+- **Isolation Health:** the manager verifies the GoreeCloud-managed identity map against Firefox contextual identities without reading cookie contents. Live 0.1.11 Firefox evidence confirmed the healthy five-Webspace state; 0.1.12 requires re-acceptance after Proton adds the sixth built-in identity.
+- Deterministic provider routing, explicit assignments, exceptions, reason codes, and rule priority.
 - `localhost`, loopback addresses, and local-development hosts remain explicit-only instead of automatically falling back to Standard.
-- Configuration schema migration from schema 1 to schema 2 normalizes prior fallback settings to Standard while preserving existing Webspaces, assignments, and exceptions.
 - **Why this Webspace?** candidate/priority explanation and local routing-rule tester.
 - Firefox context menus for Open Link in Webspace, Move Tab to Webspace, Always Open This Site In, and Remove Webspace Assignment.
-- Persistent and temporary custom Webspaces.
-- Temporary **Close & Forget** with tab closure before contextual-identity removal; the control is hidden outside temporary Webspaces.
-- Custom rename, description, color/icon editing; built-in appearance editing.
-- Duplicate, lock/unlock, reset, and custom persistent deletion.
-- Duplicate, import, custom creation, and reset workflows create fresh Firefox contextual identities rather than reusing another Webspace's cookie store.
-- Locked Webspaces protect their explicit rules against popup/context-menu retargeting.
-- Searchable assignment manager with domain/exact scope, add/edit/remove, enable/disable, destination changes, duplicate validation, and conflict reporting.
-- Timed routing pause for 5 minutes or 30 minutes, site-only pause, restart-scoped pause, indefinite pause, and explicit Resume.
-- Compact popup routing-control disclosure that automatically expands when routing is paused.
+- Persistent and temporary custom Webspaces plus temporary **Close & Forget**.
+- Custom description/color/icon editing, duplicate, lock/unlock, reset, and custom persistent deletion.
+- Locked Webspaces protect explicit rules against popup/context-menu retargeting.
+- Searchable assignment manager with exact/domain scope, add/edit/remove, enable/disable, destination changes, duplicate validation, and conflict reporting.
+- Timed routing pauses, site-only pause, restart-scoped pause, indefinite pause, and explicit Resume.
 - Bulk assignment for hostnames and HTTP(S) URLs with deduplication and conservative conflict handling.
-- Explicit user rules for `localhost`, loopback addresses, and local development hostnames.
-- Firefox keyboard commands for opening the launcher, Standard and the other built-in Webspaces, toggling routing pause, and opening the manager.
-- Firefox-owned shortcut assignment with an in-product view and a direct Manage Firefox shortcuts action.
+- Firefox keyboard commands for the launcher, all six built-in Webspaces, routing pause/resume, and manager; shortcut assignment remains Firefox/user controlled.
 - Per-Webspace and total managed-tab counts without persistent browsing history.
-- Portable local JSON import/export excluding authenticated session state and transient routing-pause state; imported fallback settings normalize to Standard.
+- Portable local JSON import/export excluding authenticated session state and transient routing-pause state.
 - Race-hardened tab handoff and source-preserving failure behavior.
-- GLAZE UI V1.3 local visual layer with first-party identity mark, system dark appearance, visible focus, Reduced Motion, Reduced Transparency, missing-blur, Forced Colors fallbacks, and preserved semantic hidden states.
+- GLAZE UI V1.3 local visual layer with first-party Webspaces identity, provider marks, system dark appearance, visible focus, Reduced Motion, Reduced Transparency, missing-blur, Forced Colors fallbacks, and preserved semantic hidden states.
 
 ## Boundaries
 
-Standard is the fixed V1 fallback for otherwise-unassigned external HTTP(S) websites, not a universal container for browser-internal or unsupported pages. Explicit exceptions and active routing pauses may deliberately keep navigation outside Standard, and local-development hosts remain explicit-only. Each Webspace's isolation is bounded by Firefox contextual identities: cookies are held in distinct cookie stores, and supported site storage such as localStorage, IndexedDB, and cache state may be partitioned where Firefox OriginAttributes apply. Isolation Health verifies GoreeCloud's mapping to those Firefox identities but does not enumerate cookie contents or claim independent history, bookmarks, password stores, IP addresses, browser profiles, or operating-system sandboxes. Webspaces does not reserve keyboard combinations by default; users remain in control of shortcut assignment through Firefox. Site-only pause matches one exact hostname. Bulk assignment does not silently replace an assignment owned by another Webspace. A locked Webspace blocks protected routing changes. Close & Forget does not claim complete erasure beyond what Firefox confirms through contextual-identity APIs. Import/export is configuration-only and excludes cookies, login sessions, credentials, browsing history, and temporary/timed pause state. Managed-tab counts are local status, not analytics.
+Provider marks are local presentation assets only and do not alter routing authority, contextual-identity ownership, or isolation semantics. Third-party marks remain the property of their respective owners and their inclusion does not imply affiliation or endorsement.
+
+Standard is the fixed V1 fallback for otherwise-unassigned external HTTP(S) websites, not a universal container for browser-internal or unsupported pages. Each Webspace's isolation is bounded by Firefox contextual identities. Webspaces does not claim independent browser history, bookmarks, password stores, IP addresses, browser profiles, or operating-system sandboxes. Close & Forget does not claim complete erasure beyond what Firefox confirms. Import/export is configuration-only and excludes cookies, login sessions, credentials, browsing history, and temporary/timed pause state.
 
 ## Planned
 

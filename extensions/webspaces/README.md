@@ -4,76 +4,62 @@
 **Component path:** `extensions/webspaces/`  
 **Source lifecycle:** Source candidate / Active Development  
 **Firefox add-on ID:** `webspaces@goreecloud.com`  
-**Source version:** `0.1.11`
+**Source version:** `0.1.12`
 
 GoreeCloud Webspaces is a Firefox extension for isolated browsing environments, deterministic website routing, and multi-account separation. Firefox contextual identities are the browser isolation mechanism; GoreeCloud Webspaces is the product, management surface, routing authority, and user-facing abstraction.
 
 ## Implemented source-candidate capabilities
 
-0.1.11 carries the 0.1.10 Isolation Health, Standard-fallback, keyboard/productivity, routing-control, lifecycle, explainability, temporary-Webspace, assignment-management, portability, locking, Glaze UI, and one-Webspace/one-contextual-identity work forward and fixes the live Firefox Isolation Health request collision discovered during 0.1.10 acceptance testing.
+0.1.12 carries the verified Standard fallback, per-Webspace isolation, Isolation Health, lifecycle, routing, explainability, assignment-management, portability, keyboard, and Glaze UI work forward while adding local provider branding and a dedicated Proton Webspace.
 
-- Built-in Webspaces are Standard, GoreeCloud, Google, Microsoft, and Meta.
+- Built-in Webspaces are **Standard, GoreeCloud, Google, Microsoft, Meta, and Proton**.
 - Standard has its own Firefox contextual identity and is the default destination for otherwise-unassigned external HTTP(S) websites while automatic routing is active.
+- Proton has its own Firefox contextual identity and routes the Proton ecosystem through the same deterministic provider-routing layer. Initial built-in Proton domains are `proton.me`, `protonmail.com`, and `protonvpn.com`, covering Proton Mail, Drive, Calendar, Pass, VPN, account surfaces, and related Proton services hosted under those domains.
+- Built-in identities use local packaged visual marks in the toolbar popup and manager instead of letter/symbol placeholders. Standard and GoreeCloud use existing first-party GoreeCloud assets; Google, Microsoft, Meta, and Proton use locally packaged provider marks with attribution/licensing recorded in `vendor/THIRD_PARTY_NOTICES.md`.
+- The logo layer is presentation-only. Text names, deterministic Webspace IDs, Firefox contextual identities, and fallback glyphs remain the functional/accessibility identity sources if an image cannot render.
 - Every GoreeCloud-managed Webspace is required to own a distinct Firefox contextual identity and unique `cookieStoreId`; the source fails closed if two managed Webspaces are mapped to the same Firefox cookie store or if a managed Webspace lacks one.
 - The manager verifies the current Webspace-to-Firefox-identity map without reading or exposing authentication-cookie contents. It reports managed Webspace count, unique cookie-store count, Firefox identities present, and per-Webspace isolation status.
-- Isolation Health detects missing cookie-store mappings, missing Firefox contextual identities, and accidental shared-store mappings.
 - Isolation Health uses a dedicated `webspaces-health:*` runtime-message namespace so its background handler does not collide with the main `webspaces:*` message router.
-- Explicit user assignments, user exceptions, provider mappings, and higher-priority routing rules continue to supersede Standard according to deterministic precedence.
-- Deliberate routing pauses and explicit exceptions may keep a site outside Standard when their higher-priority semantics apply.
+- Explicit user assignments, user exceptions, provider mappings, and higher-priority routing rules supersede Standard according to deterministic precedence.
 - `localhost`, loopback addresses, and local-development hosts remain explicit-only and are not automatically swept into Standard.
-- Configuration schema 2 migrates previous schema-1/default-browsing settings to the fixed Standard fallback without discarding existing Webspace definitions, assignments, or exceptions.
-- Portable configuration normalizes the fallback to Standard rather than importing an obsolete Normal-Firefox or arbitrary-global-default mode.
-- Standard appears in the Webspace launcher, management UI, identity treatment, Firefox context-menu destinations, and keyboard-command model like the other persistent built-ins.
-- Firefox-registered commands cover the Webspaces launcher, Standard, GoreeCloud, Google, Microsoft, Meta, routing pause/resume, and the full manager; shortcut assignment remains under explicit Firefox/user control.
-- The compact Glaze routing-control disclosure remains collapsed while routing is active and expands when routing is paused.
+- Configuration schema 2 remains current; adding Proton does not change the stored configuration shape. Startup reconciliation creates the newly required built-in Proton contextual identity when it is absent without reusing another Webspace's cookie store.
+- Firefox-registered commands cover the launcher, Standard, GoreeCloud, Google, Microsoft, Meta, Proton, routing pause/resume, and the manager; shortcut assignment remains under explicit Firefox/user control.
 
-The broader implemented slice includes deterministic provider/user/exception routing; race-hardened tab migration; timed/site/restart/indefinite routing pauses; bulk assignment; explicit local-development routing; first-party Glaze UI popup and manager; **Why this Webspace?**; context-menu actions; persistent and temporary custom Webspaces; Close & Forget; appearance editing; duplicate, lock/unlock, reset, and custom deletion; searchable/editable site assignments; local conflict detection and rule testing; local managed-tab counts; and portable JSON configuration import/export.
+The broader implemented slice includes race-hardened tab migration; 5/30-minute, site, restart-scoped, and indefinite routing pauses; bulk assignment; **Why this Webspace?**; context-menu actions; persistent and temporary custom Webspaces; Close & Forget; appearance editing; duplicate, lock/unlock, reset, and custom deletion; searchable/editable site assignments; local conflict detection and rule testing; managed-tab counts; and portable JSON configuration import/export.
 
 ## Standard fallback boundary
 
-Standard is the V1 fallback for ordinary external HTTP(S) websites that do not match a more specific destination. It is not a claim that every browser page can or should be containerized. Browser-internal pages, unsupported schemes, explicit exceptions, active routing pauses, and explicit-only local-development hosts may remain outside Standard.
+Standard is the V1 fallback for ordinary external HTTP(S) websites that do not match a more specific destination. Browser-internal pages, unsupported schemes, explicit exceptions, active routing pauses, and explicit-only local-development hosts may remain outside Standard.
 
-Standard does not replace the routing priority system. If a site is assigned to Work or recognized as Google, Microsoft, Meta, GoreeCloud, or another higher-priority destination, that specific rule wins. The goal is to eliminate routine unassigned browsing in Normal Firefox while preserving deliberate escape and development cases.
+A more specific assignment or recognized provider destination always wins. Google, Microsoft, Meta, Proton, GoreeCloud, and user-defined routes therefore supersede Standard when they match.
 
 ## Per-Webspace isolation invariant
 
-Each managed Webspace must map one-to-one to a distinct Firefox contextual identity. A `cookieStoreId` may belong to only one GoreeCloud Webspace at a time. Standard, GoreeCloud, Google, Microsoft, Meta, every custom persistent Webspace, every duplicated Webspace, every imported custom Webspace, and every temporary Webspace therefore use separate Firefox cookie stores.
+Each managed Webspace maps one-to-one to a distinct Firefox contextual identity. A `cookieStoreId` may belong to only one GoreeCloud Webspace at a time. Standard, GoreeCloud, Google, Microsoft, Meta, Proton, every custom persistent Webspace, every duplicated Webspace, every imported custom Webspace, and every temporary Webspace therefore use separate Firefox cookie stores.
 
-Firefox contextual identities separate cookies by design and Firefox's container model also partitions supported site state through contextual identity/origin attributes, including storage such as localStorage and IndexedDB and cache state where Firefox supports that partitioning. Webspaces does not claim that browser-global history, bookmarks, saved passwords, or other browser-global state are independently isolated merely because a tab is in a Webspace.
-
-Creating, duplicating, importing, or resetting a Webspace must result in a fresh contextual identity rather than reuse another Webspace's authenticated browser state. If persisted configuration would cause two managed Webspaces to share a cookie store, Webspaces fails closed instead of silently running with a broken isolation boundary.
+Firefox contextual identities separate cookies by design and partition supported site state through contextual identity/origin attributes where Firefox supports that behavior. Webspaces does not claim that browser-global history, bookmarks, saved passwords, IP addresses, or operating-system state are independently isolated merely because a tab is in a Webspace.
 
 ## Isolation Health boundary
 
-Isolation Health validates the GoreeCloud-managed identity map against Firefox's current contextual identities. It verifies that every managed Webspace references one present contextual identity and that no two managed Webspaces intentionally share a cookie store. The health surface does not enumerate website cookies, inspect login values, or claim isolation for data Firefox treats as browser-global.
+Isolation Health validates the GoreeCloud-managed identity map against Firefox's current contextual identities. Live Firefox 155.0.1 acceptance evidence for 0.1.11 confirmed a healthy five-Webspace state with five managed Webspaces, five unique cookie stores, five Firefox identities present, and every listed Webspace marked isolated. 0.1.12 must be re-accepted after Proton creates the sixth built-in identity.
 
-The 0.1.10 live Firefox acceptance attempt showed the Isolation Health UI rendering but failing with `Unknown GoreeCloud Webspaces message: webspaces:get-isolation-health`. 0.1.11 corrects that runtime wiring by moving the health request to the separate `webspaces-health:get-isolation-health` channel. A healthy-state runtime screenshot is still required before Isolation Health is treated as Firefox-accepted behavior.
+## Provider-logo boundary
+
+Provider logos are bundled local assets; Webspaces does not fetch remote artwork at runtime. Provider marks are used only to identify Webspace destinations and do not imply affiliation, sponsorship, or endorsement. Third-party marks remain the property of their respective owners. The provider logo layer never changes routing authority or Firefox cookie-store ownership.
 
 ## Keyboard-shortcut boundary
 
-Webspaces registers supported commands but does not silently reserve keyboard combinations. Users assign or change shortcuts through Firefox's extension-shortcut settings. The launcher command attempts to open the toolbar popup from the keyboard user gesture and falls back to the full manager if Firefox rejects popup opening in the current window state.
+Webspaces registers supported commands but does not silently reserve keyboard combinations. Users assign or change shortcuts through Firefox's extension-shortcut settings.
 
-## Routing-control boundaries
+## Close & Forget and portability boundaries
 
-A site-only pause applies to the exact hostname selected by the user and does not automatically cover sibling or parent subdomains. A restart-scoped pause is cleared when Firefox emits its extension startup event. Timed pauses expire by their stored deadline and do not require browsing-history telemetry.
+Close & Forget is exposed only for a temporary Webspace and requests removal of its Firefox contextual identity after closing its managed tabs. It does not claim deletion of browser-global state beyond Firefox evidence.
 
-Bulk assignment is intentionally conservative: existing assignments to another unlocked Webspace are reported as skipped rather than silently overwritten, and rules owned by a locked Webspace cannot be retargeted.
-
-## Close & Forget boundary
-
-Close & Forget is exposed only while the active tab is actually inside a temporary Webspace. It closes tabs associated with that temporary Webspace and asks Firefox to remove that contextual identity. It does not claim verified deletion of every cache entry, browser artifact, network record, or other state outside what Firefox's contextual-identity APIs establish. Webspaces does not request `browsingData` merely to make a broader deletion claim.
-
-## Portability boundary
-
-Normal exports contain configuration rather than authenticated browsing state. Exports exclude Firefox `cookieStoreId` values, temporary Webspaces, temporary/timed routing-pause state, authentication cookies, active login sessions, passwords, credentials, and browsing history. Imports create fresh Firefox identities for imported custom Webspaces and normalize fallback behavior to Standard.
+Portable exports contain configuration, not authenticated browsing state. Exports exclude `cookieStoreId` values, temporary Webspaces, authentication cookies, active login sessions, credentials, browsing history, and transient routing-pause state. Imports create fresh Firefox identities for imported custom Webspaces.
 
 ## Glaze UI boundary
 
-GLAZE UI V1.3 / `1.3.0` remains the shared Stable consumer target. Webspaces maps its Firefox surfaces to that direction through local assets. This source candidate does not claim full downstream Glaze conformance or production acceptance without rendered/accessibility acceptance evidence.
-
-## Firefox contextual-identity boundary
-
-Firefox contextual identities are browser-level primitives and are not private to one extension. Webspaces remains the GoreeCloud product and configuration authority for its Webspace model, but Firefox owns the underlying contextual identities and the actual browser-state partitioning guarantees.
+GLAZE UI V1.3 / `1.3.0` remains the shared Stable consumer target. Webspaces maps its Firefox surfaces to that direction through local assets and now uses recognizable built-in provider marks while retaining non-color fallback identity cues.
 
 ## Development validation
 
@@ -88,4 +74,4 @@ Webspaces does not by itself provide a VPN, separate IP addresses, operating-sys
 
 ## Authoritative product specification
 
-The broader product requirements remain in the canonical GoreeCloud Drive record **Project Specification — Webspaces.docx**, which defines Standard as the V1 fallback and requires a distinct Firefox cookie store/contextual identity for every GoreeCloud-managed Webspace.
+The broader product requirements remain in the canonical GoreeCloud Drive record **Project Specification — Webspaces.docx**.
