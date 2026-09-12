@@ -2,7 +2,7 @@
 
 ## Current source behavior
 
-GoreeCloud Webspaces 0.1.10 stores configuration in Firefox local extension storage and does not require a GoreeCloud account or remote service. Routing evaluates top-level HTTP(S) URLs locally. The implementation does not add advertising telemetry, remote browsing-history collection, cloud synchronization, or server-side routing decisions.
+GoreeCloud Webspaces 0.1.11 stores configuration in Firefox local extension storage and does not require a GoreeCloud account or remote service. Routing evaluates top-level HTTP(S) URLs locally. The implementation does not add advertising telemetry, remote browsing-history collection, cloud synchronization, or server-side routing decisions.
 
 The manager may count currently open tabs associated with GoreeCloud-managed contextual identities. Those counts are local status and are not persisted as browsing history by this implementation.
 
@@ -16,9 +16,11 @@ Browser-global information that Firefox does not scope to contextual identities 
 
 ## Isolation Health
 
-The 0.1.10 manager can locally compare the persisted Webspace map with Firefox's current contextual identities. It reports whether each managed Webspace has a present, unique Firefox cookie store and detects missing or shared mappings.
+The manager can locally compare the persisted Webspace map with Firefox's current contextual identities. It reports whether each managed Webspace has a present, unique Firefox cookie store and detects missing or shared mappings.
 
 Isolation Health does not enumerate website cookie contents, read login values, inspect browsing history, or transmit the result to a GoreeCloud service. The displayed health state is diagnostic evidence about the Webspace-to-contextual-identity mapping only.
+
+0.1.11 uses a dedicated `webspaces-health:*` runtime-message namespace for this diagnostic request so it does not collide with the main `webspaces:*` background router. The change corrects the 0.1.10 Firefox runtime error without adding new permissions or additional data collection.
 
 ## Standard Webspace
 
@@ -32,7 +34,7 @@ Portable exports may contain persistent Webspace definitions, appearance, lock s
 
 ## Close & Forget boundary
 
-Close & Forget closes tabs Firefox reports as using the temporary Webspace and requests removal of its contextual identity. 0.1.10 does not request broad `browsingData` permission and does not claim verified deletion of every cache, artifact, network record, or browser datum outside the state Firefox removes with that contextual identity.
+Close & Forget closes tabs Firefox reports as using the temporary Webspace and requests removal of its contextual identity. 0.1.11 does not request broad `browsingData` permission and does not claim verified deletion of every cache, artifact, network record, or browser datum outside the state Firefox removes with that contextual identity.
 
 ## Browser-state boundary
 
