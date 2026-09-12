@@ -33,6 +33,11 @@
         </div>
       </div>
       <div id="routing-reason" class="routing-reason"></div>
+      <details id="why-panel" class="why-panel">
+        <summary>Why this Webspace?</summary>
+        <div id="why-details" class="why-details"></div>
+      </details>
+      <button id="close-forget" class="glz-button danger compact" type="button" hidden>Close &amp; Forget</button>
     </section>
 
     <label class="routing-control glz-surface">
@@ -52,21 +57,31 @@
           <div class="glz-kicker">Launcher</div>
           <h2>Open a Webspace</h2>
         </div>
+        <button id="new-temporary" class="glz-button quiet compact" type="button">+ Temporary</button>
       </div>
       <div id="webspace-list" class="webspace-list"></div>
     </section>
 
-    <section id="assignment-section" class="popup-section" hidden>
+    <section id="site-tools" class="popup-section" hidden>
       <div class="section-heading">
         <div>
-          <div class="glz-kicker">Site assignment</div>
-          <h2>Always open this site in</h2>
+          <div class="glz-kicker">Current site</div>
+          <h2>Route or move this tab</h2>
         </div>
       </div>
-      <div class="assign-row">
-        <select id="assignment-target" class="glz-select" aria-label="Webspace assignment"></select>
-        <button id="assign-site" class="glz-button primary" type="button">Assign</button>
+
+      <div class="tool-stack">
+        <div class="assign-row">
+          <select id="assignment-target" class="glz-select" aria-label="Permanent Webspace assignment"></select>
+          <button id="assign-site" class="glz-button primary" type="button">Always</button>
+        </div>
+        <div class="assign-row">
+          <select id="move-target" class="glz-select" aria-label="Move current tab to Webspace"></select>
+          <button id="move-tab" class="glz-button" type="button">Move</button>
+        </div>
       </div>
+
+      <button id="remove-assignment" class="inline-link" type="button" hidden>Remove explicit assignment</button>
       <div id="assignment-status" class="assignment-status glz-muted" role="status"></div>
     </section>
 
