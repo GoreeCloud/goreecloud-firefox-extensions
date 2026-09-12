@@ -50,3 +50,8 @@ test("Webspace identity color is an accent rather than the only identity signal"
   assert.match(popup, /id="current-emblem"/);
   assert.match(options, /id="webspace-grid"/);
 });
+
+test("popup hidden controls stay hidden when Glaze button styles apply", () => {
+  assert.match(popup, /id="close-forget"[^>]*hidden/);
+  assert.match(popupCss, /\[hidden\]\s*\{\s*display:\s*none\s*!important;\s*\}/);
+});
