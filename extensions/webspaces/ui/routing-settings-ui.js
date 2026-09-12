@@ -60,20 +60,12 @@ function ensureRoutingControls() {
         <button id="manager-resume" class="glz-button" type="button" hidden>Resume</button>
       </div>
     </div>
-    <div class="routing-settings-block">
+    <div class="routing-settings-block standard-fallback-block">
       <div>
         <strong>Unassigned websites</strong>
-        <div class="glz-muted">Choose what happens when no explicit or provider rule matches.</div>
+        <div class="glz-muted">Websites without a more specific rule open in the isolated Standard Webspace until you assign them elsewhere.</div>
       </div>
-      <div class="routing-inline-actions">
-        <select id="default-behavior" class="glz-select">
-          <option value="normal">Open normally</option>
-          <option value="webspace">Open in selected Webspace</option>
-        </select>
-        <select id="default-webspace" class="glz-select"></select>
-        <button id="save-default" class="glz-button" type="button">Save</button>
-      </div>
-      <div id="default-status" class="form-status glz-muted" role="status"></div>
+      <span class="glz-capsule standard-fallback-capsule">Standard Webspace</span>
     </div>
   `;
   panel.append(advanced);
@@ -133,14 +125,6 @@ async function sync() {
   const resume = document.querySelector("#manager-resume");
   if (resume) resume.hidden = !pause;
 
-  const behavior = document.querySelector("#default-behavior");
-  const target = document.querySelector("#default-webspace");
-  if (behavior && target) {
-    behavior.value = config.defaultBehavior === "webspace" ? "webspace" : "normal";
-    fillWebspaces(target, config, config.defaultWebspaceId ?? null);
-    target.disabled = behavior.value !== "webspace";
-  }
-
   const bulk = document.querySelector("#bulk-webspace");
   if (bulk) fillWebspaces(bulk, config, bulk.value || null);
 }
@@ -166,24 +150,6 @@ document.querySelector("#manager-pause")?.addEventListener("click", async () => 
 document.querySelector("#manager-resume")?.addEventListener("click", async () => {
   await send("webspaces-controls:resume");
   await sync();
-});
-
-document.querySelector("#default-behavior")?.addEventListener("change", (event) => {
-  const target = document.querySelector("#default-webspace");
-  target.disabled = event.target.value !== "webspace";
-});
-
-document.querySelector("#save-default")?.addEventListener("click", async () => {
-  const status = document.querySelector("#default-status");
-  try {
-    const behavior = document.querySelector("#default-behavior").value;
-    const webspaceId = behavior === "webspace" ? document.querySelector("#default-webspace").value : null;
-    await send("webspaces-controls:set-default", { behavior, webspaceId });
-    status.textContent = behavior === "webspace" ? "Default Webspace saved." : "Unassigned websites will open normally.";
-    await sync();
-  } catch (error) {
-    status.textContent = error.message;
-  }
 });
 
 document.querySelector("#bulk-assign")?.addEventListener("click", async () => {
