@@ -14,10 +14,12 @@ import { normalizeAssignmentHostname } from "../src/management.js";
 import { applyBulkAssignments, parseBulkHostnames } from "../src/bulk-rules.js";
 
 const base = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   routingEnabled: true,
-  defaultBehavior: "normal",
+  defaultBehavior: "webspace",
+  defaultWebspaceId: "standard",
   webspaces: {
+    standard: { id: "standard", name: "Standard", temporary: false, locked: false },
     work: { id: "work", name: "Work", temporary: false, locked: false },
     temp: { id: "temp", name: "Temp", temporary: true, locked: false }
   },
@@ -58,22 +60,16 @@ test("indefinite pause uses the existing routingEnabled authority", () => {
   assert.equal(resumeRouting(paused).routingEnabled, true);
 });
 
-test("selected default Webspace routes otherwise-unassigned sites", () => {
-  const config = setDefaultBehavior(base, "webspace", "work");
+test("Standard is the fixed fallback for otherwise-unassigned websites", () => {
+  const config = setDefaultBehavior(base, "webspace", "standard");
   const result = analyzeRouting("https://example.org", config);
-  assert.equal(result.decision.webspaceId, "work");
-  assert.equal(result.decision.reason, "default-webspace");
+  assert.equal(result.decision.webspaceId, "standard");
+  assert.equal(result.decision.reason, "standard-fallback");
 });
 
-test("temporary Webspaces cannot become the default", () => {
-  assert.throws(() => setDefaultBehavior(base, "webspace", "temp"), /Temporary/);
-});
-
-test("normal default clears a prior selected Webspace", () => {
-  const selected = setDefaultBehavior(base, "webspace", "work");
-  const normal = setDefaultBehavior(selected, "normal");
-  assert.equal(normal.defaultBehavior, "normal");
-  assert.equal("defaultWebspaceId" in normal, false);
+test("normal or alternate global defaults cannot replace Standard fallback", () => {
+  assert.throws(() => setDefaultBehavior(base, "normal"), /Standard/);
+  assert.throws(() => setDefaultBehavior(base, "webspace", "work"), /Standard/);
 });
 
 test("explicit local-development hostnames normalize without automatic assignment", () => {
@@ -84,10 +80,7 @@ test("explicit local-development hostnames normalize without automatic assignmen
 });
 
 test("bulk parser deduplicates hostnames and accepts URLs", () => {
-  assert.deepEqual(
-    parseBulkHostnames("docs.example.com\nhttps://docs.example.com/path; localhost:3000"),
-    ["docs.example.com", "localhost"]
-  );
+  assert.deepEqual(parseBulkHostnames("docs.example.com\nhttps://docs.example.com/path; localhost:3000"), ["docs.example.com", "localhost"]);
 });
 
 test("bulk assignment adds new rules and skips conflicting unlocked ownership", () => {
@@ -97,14 +90,9 @@ test("bulk assignment adds new rules and skips conflicting unlocked ownership", 
     userRules: [{ id: "existing", kind: "domain", value: "owned.example.com", webspaceId: "personal", enabled: true }]
   };
   let n = 0;
-  const result = applyBulkAssignments(input, {
-    text: "new.example.com\nowned.example.com",
-    kind: "domain",
-    webspaceId: "work"
-  }, () => String(++n));
+  const result = applyBulkAssignments(input, { text: "new.example.com\nowned.example.com", kind: "domain", webspaceId: "work" }, () => String(++n));
   assert.deepEqual(result.summary, { added: 1, unchanged: 0, skipped: 1, total: 2 });
   assert.equal(result.config.userRules.some((rule) => rule.value === "new.example.com" && rule.webspaceId === "work"), true);
-  assert.equal(result.config.userRules.find((rule) => rule.value === "owned.example.com").webspaceId, "personal");
 });
 
 test("bulk assignment refuses to retarget a rule owned by a locked Webspace", () => {
@@ -113,9 +101,5 @@ test("bulk assignment refuses to retarget a rule owned by a locked Webspace", ()
     webspaces: { ...base.webspaces, secure: { id: "secure", name: "Secure", locked: true } },
     userRules: [{ id: "locked", kind: "domain", value: "secure.example.com", webspaceId: "secure", enabled: true }]
   };
-  assert.throws(() => applyBulkAssignments(input, {
-    text: "secure.example.com",
-    kind: "domain",
-    webspaceId: "work"
-  }), /locked Webspace Secure/);
+  assert.throws(() => applyBulkAssignments(input, { text: "secure.example.com", kind: "domain", webspaceId: "work" }), /locked Webspace Secure/);
 });
