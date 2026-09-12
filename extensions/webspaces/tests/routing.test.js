@@ -4,8 +4,9 @@ import { domainMatches, evaluateRouting, hostnameFromUrl } from "../src/routing.
 
 const baseConfig = {
   routingEnabled: true,
-  defaultBehavior: "normal",
-  webspaces: {},
+  defaultBehavior: "webspace",
+  defaultWebspaceId: "standard",
+  webspaces: { standard: { id: "standard", name: "Standard", builtIn: true } },
   userRules: [],
   exceptions: []
 };
@@ -47,7 +48,7 @@ test("explicit user assignment overrides provider routing", () => {
   assert.equal(result.reason, "user-site-assignment");
 });
 
-test("user exception overrides assignments", () => {
+test("user exception can deliberately escape automatic Webspace routing", () => {
   const config = {
     ...baseConfig,
     userRules: [{ id: "work-docs", kind: "exact", value: "docs.google.com", webspaceId: "work", enabled: true }],
@@ -58,14 +59,23 @@ test("user exception overrides assignments", () => {
   assert.equal(result.reason, "user-exception");
 });
 
-test("routing pause stops automatic routing", () => {
-  const result = evaluateRouting("https://mail.google.com", { ...baseConfig, routingEnabled: false });
+test("routing pause stops automatic routing including Standard fallback", () => {
+  const result = evaluateRouting("https://example.org", { ...baseConfig, routingEnabled: false });
   assert.equal(result.action, "normal");
   assert.equal(result.reason, "routing-paused");
 });
 
-test("unassigned sites remain normal by default", () => {
+test("unassigned websites route to the Standard Webspace", () => {
   const result = evaluateRouting("https://example.org", baseConfig);
-  assert.equal(result.action, "normal");
-  assert.equal(result.reason, "no-matching-rule");
+  assert.equal(result.action, "webspace");
+  assert.equal(result.webspaceId, "standard");
+  assert.equal(result.reason, "standard-fallback");
+});
+
+test("localhost and loopback remain explicit-only instead of using Standard fallback", () => {
+  for (const url of ["http://localhost:3000", "http://127.0.0.1:8080", "http://[::1]:5173"]) {
+    const result = evaluateRouting(url, baseConfig);
+    assert.equal(result.action, "normal");
+    assert.equal(result.reason, "local-development-explicit-only");
+  }
 });
