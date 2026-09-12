@@ -1,3 +1,4 @@
+[hidden] { display: none !important; }
 body { width: 384px; min-width: 384px; padding: 10px; }
 .popup-shell { width: 100%; padding: 16px; border-radius: var(--glz-radius-container); }
 .product-header,.brand-lockup,.current-identity,.routing-control,.section-heading,.space-identity,.assign-row,footer { display:flex; align-items:center; }
