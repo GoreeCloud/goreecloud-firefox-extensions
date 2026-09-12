@@ -1,19 +1,23 @@
 export const colorMap = Object.freeze({
   blue: "#3478f6",
+  cyan: "#1c8a8d",
   turquoise: "#1c8a8d",
+  gray: "#6f7887",
+  toolbar: "#6f7887",
   green: "#2f9e63",
   yellow: "#d9a35f",
   orange: "#c57a25",
   red: "#c63b32",
   pink: "#b95b8b",
-  purple: "#7657f6"
+  purple: "#7657f6",
+  violet: "#6849df"
 });
 
 const builtinColor = Object.freeze({
   goreecloud: "blue",
   google: "red",
   microsoft: "purple",
-  meta: "turquoise"
+  meta: "cyan"
 });
 
 const builtinGlyph = Object.freeze({
@@ -33,7 +37,10 @@ const iconGlyph = Object.freeze({
   gift: "◆",
   food: "◒",
   pet: "◇",
-  tree: "⌁"
+  tree: "⌁",
+  chill: "❄",
+  fence: "⌗",
+  fruit: "◉"
 });
 
 const iconLabel = Object.freeze({
@@ -46,7 +53,10 @@ const iconLabel = Object.freeze({
   gift: "Gift",
   food: "Food",
   pet: "Pet",
-  tree: "Nature"
+  tree: "Nature",
+  chill: "Chill",
+  fence: "Fence",
+  fruit: "Fruit"
 });
 
 export function accentFor(webspace) {
@@ -56,6 +66,7 @@ export function accentFor(webspace) {
 
 export function glyphFor(webspace) {
   if (!webspace) return "○";
+  if (webspace.temporary) return "◌";
   if (builtinGlyph[webspace.id]) return builtinGlyph[webspace.id];
   if (iconGlyph[webspace.icon]) return iconGlyph[webspace.icon];
   const name = webspace.name?.trim() || "W";
@@ -64,6 +75,7 @@ export function glyphFor(webspace) {
 
 export function iconLabelFor(webspace) {
   if (!webspace) return "Normal Firefox";
+  if (webspace.temporary) return "Temporary Webspace";
   if (webspace.builtIn) return "Built-in Webspace";
   return `${iconLabel[webspace.icon] ?? "Custom"} identity`;
 }
