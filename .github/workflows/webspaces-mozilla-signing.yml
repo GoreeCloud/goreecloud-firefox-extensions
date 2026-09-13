@@ -7,6 +7,11 @@ on:
         description: 'SHA-256 of the exact unsigned Webspaces XPI accepted before signing'
         required: true
         type: string
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/webspaces-mozilla-signing.yml'
 
 permissions:
   contents: read
@@ -14,6 +19,10 @@ permissions:
 concurrency:
   group: webspaces-mozilla-signing
   cancel-in-progress: false
+
+env:
+  WEBSPACES_RELEASE_VERSION: '0.1.14'
+  WEBSPACES_RELEASE_CANDIDATE_SHA256: 'ac605e4781a6dcc605d6c7474989e5f125cee12448580786cfefc4ffd81f3e00'
 
 jobs:
   sign-and-restart:
@@ -42,10 +51,29 @@ jobs:
         id: version
         shell: bash
         run: |
+          set -euo pipefail
           VERSION="$(python -c 'import json; print(json.load(open("extensions/webspaces/manifest.json", encoding="utf-8"))["version"])')"
           test -n "$VERSION"
+          if [[ "$VERSION" != "$WEBSPACES_RELEASE_VERSION" ]]; then
+            echo "::error::Signing workflow is bound to Webspaces $WEBSPACES_RELEASE_VERSION, found $VERSION."
+            exit 1
+          fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "WEBSPACES_VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Resolve accepted candidate digest
+        shell: bash
+        env:
+          MANUAL_CANDIDATE_SHA256: ${{ inputs.candidate_xpi_sha256 }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            ACCEPTED_CANDIDATE_SHA256="$MANUAL_CANDIDATE_SHA256"
+          else
+            ACCEPTED_CANDIDATE_SHA256="$WEBSPACES_RELEASE_CANDIDATE_SHA256"
+          fi
+          [[ "$ACCEPTED_CANDIDATE_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo '::error::Candidate SHA-256 must be 64 lowercase hex characters.'; exit 1; }
+          echo "ACCEPTED_CANDIDATE_SHA256=$ACCEPTED_CANDIDATE_SHA256" >> "$GITHUB_ENV"
 
       - name: Validate exact source candidate
         run: |
@@ -58,18 +86,16 @@ jobs:
         run: python shared/scripts/package_extension.py webspaces --output-dir dist/candidate
 
       - name: Bind accepted unsigned artifact to exact signing payload
-        env:
-          ACCEPTED_CANDIDATE_SHA256: ${{ inputs.candidate_xpi_sha256 }}
         shell: bash
         run: |
           set -euo pipefail
-          [[ "$ACCEPTED_CANDIDATE_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo '::error::Candidate SHA-256 must be 64 lowercase hex characters.'; exit 1; }
           candidate="$(find dist/candidate -maxdepth 1 -type f -name 'goreecloud-webspaces-*.xpi' -print -quit)"
           test -n "$candidate"
           mkdir -p signing-source dist/mozilla
           python - "$candidate" "$WEBSPACES_VERSION" "$ACCEPTED_CANDIDATE_SHA256" <<'PY'
           import hashlib
           import json
+          import os
           import sys
           import zipfile
           from pathlib import Path
@@ -92,7 +118,10 @@ jobs:
           if digest != accepted_digest:
               raise SystemExit(f'accepted candidate digest mismatch: expected {accepted_digest}, rebuilt {digest}')
           Path('dist/candidate-sha256.txt').write_text(f'{digest}  {candidate.name}\n', encoding='utf-8')
-          Path('dist/source-revision.txt').write_text(f'{Path.cwd()}\nsource_revision={__import__("os").environ.get("GITHUB_SHA", "unknown")}\n', encoding='utf-8')
+          Path('dist/source-revision.txt').write_text(
+              f'source_revision={os.environ.get("GITHUB_SHA", "unknown")}\n',
+              encoding='utf-8',
+          )
           print(f'Candidate SHA-256: {digest}')
           print('Accepted candidate digest matches exact signing payload.')
           PY
