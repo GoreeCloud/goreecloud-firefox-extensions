@@ -32,6 +32,10 @@ jobs:
         run: python shared/scripts/validate_repository.py
       - name: Validate Bookmarks source contract
         run: python extensions/bookmarks/scripts/validate.py
+      - name: Validate Webspaces source contract
+        run: python extensions/webspaces/scripts/validate.py
+      - name: Test Webspaces routing and management core
+        run: node --experimental-default-type=module --test extensions/webspaces/tests/*.test.js
       - name: Validate Privacy Shield source contract
         run: python extensions/privacy-shield/scripts/validate.py
       - name: Validate Privacy Shield target acceptance source contract
@@ -77,6 +81,7 @@ jobs:
           python shared/scripts/package_extension.py redirector
           python shared/scripts/package_extension.py source-resync
           python shared/scripts/package_extension.py privacy-shield
+          python shared/scripts/package_extension.py webspaces
       - name: Verify package archives
         shell: bash
         run: |
@@ -85,3 +90,10 @@ jobs:
             unzip -t "$package"
             unzip -l "$package"
           done
+      - name: Publish Webspaces unsigned test package
+        uses: actions/upload-artifact@v4
+        with:
+          name: goreecloud-webspaces-${{ github.sha }}
+          path: dist/goreecloud-webspaces-*.xpi
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,47 @@
+.shortcuts-heading {
+  gap: 18px;
+}
+.shortcut-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, CanvasText 10%, transparent);
+  border-radius: 13px;
+  background: color-mix(in srgb, Canvas 88%, transparent);
+}
+.shortcut-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.shortcut-copy span {
+  color: color-mix(in srgb, CanvasText 62%, transparent);
+  font-size: 12px;
+}
+.shortcut-key {
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, CanvasText 16%, transparent);
+  border-bottom-width: 2px;
+  border-radius: 8px;
+  padding: 5px 8px;
+  background: color-mix(in srgb, Canvas 92%, transparent);
+  color: CanvasText;
+  font: 600 12px/1 system-ui, sans-serif;
+}
+@media (max-width: 720px) {
+  .shortcuts-heading,
+  .shortcut-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .shortcut-key {
+    align-self: flex-start;
+  }
+}

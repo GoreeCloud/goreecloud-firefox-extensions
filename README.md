@@ -25,7 +25,8 @@ extensions/
 ├── download-manager/
 ├── privacy-shield/
 ├── redirector/
-└── source-resync/
+├── source-resync/
+└── webspaces/
 
 docs/
 ├── extension-inventory.json
@@ -47,6 +48,7 @@ shared/
 | GoreeCloud Privacy Shield | `extensions/privacy-shield/` | `privacy-shield@goreecloud.com` | Stable 0.2.0 accepted for Mozilla unlisted/self-distribution | None |
 | GoreeCloud Redirector | `extensions/redirector/` | `redirector@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-redirector` |
 | GoreeCloud Source Resync | `extensions/source-resync/` | `source-resync@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-source-resync` |
+| GoreeCloud Webspaces | `extensions/webspaces/` | `webspaces@goreecloud.com` | **Release candidate 0.1.14; not Stable until signed/restart acceptance completes** | None |
 
 Machine-readable inventory lives in [`docs/extension-inventory.json`](docs/extension-inventory.json). Inventory schema v2 records each checked-in manifest version and source lifecycle state separately from independently accepted Mozilla-signed Stable versions, preventing a newer source candidate from silently inheriting older release status.
 
@@ -70,12 +72,6 @@ Create a deterministic unsigned XPI candidate with:
 python shared/scripts/package_extension.py <extension-slug>
 ```
 
-For example:
-
-```bash
-python shared/scripts/package_extension.py download-manager
-```
-
 Generated packages are written to `dist/` and are build outputs rather than authoritative source. Packaging success does not imply Mozilla signing or Stable acceptance.
 
 ## Mozilla signing
@@ -84,23 +80,17 @@ See [`docs/MOZILLA_SIGNING.md`](docs/MOZILLA_SIGNING.md). Each extension keeps a
 
 ### GoreeCloud Download Manager Extension 0.2.12
 
-Download Manager 0.2.12 is the accepted Stable release for Mozilla unlisted/self-distribution. Governed signing/restart run `34176105690` accepted exact source revision `2cc6d3bbe6ec2c63d49bec338bd68f154747be70`.
-
-- candidate SHA-256: `779425b150921c1969462066a3e79cb345d976d11369a6891b5611c63a3d5537`;
-- Mozilla-signed XPI SHA-256: `4c02a152a258c4f8e76581ece2cb2a41f088463a4464354da0c374dfb2957f25`;
-- accepted native helper: `0.2.11` / protocol `2`;
-- persistent signed installation: accepted;
-- full Firefox 155.0.1 process restart without reinstalling: accepted;
-- automatic same-job preserved-range recovery: accepted;
-- recovered final SHA-256 matched source exactly;
-- original staging cleanup and post-restart helper reconnect: accepted;
-- manual Resume actions after restart: `0`.
+Download Manager 0.2.12 is the accepted Stable release for Mozilla unlisted/self-distribution. Governed signing/restart run `34176105690` accepted source revision `2cc6d3bbe6ec2c63d49bec338bd68f154747be70`, candidate SHA-256 `779425b150921c1969462066a3e79cb345d976d11369a6891b5611c63a3d5537`, signed XPI SHA-256 `4c02a152a258c4f8e76581ece2cb2a41f088463a4464354da0c374dfb2957f25`, compatible native helper 0.2.11/protocol 2, persistent installation, full Firefox process restart without reinstalling, automatic same-job preserved-range recovery, exact final integrity, staging cleanup, and post-restart helper reconnect with zero manual Resume actions.
 
 0.2.11 was intentionally not promoted despite passing runtime recovery because its already-signed Settings page still labeled itself a source candidate. 0.2.12 corrected that packaged release-quality issue using a lifecycle-neutral version label and repeated the full governed signed gate.
 
 ### GoreeCloud Privacy Shield 0.2.0
 
 Privacy Shield 0.2.0 remains the accepted Stable Privacy Shield Firefox release for Mozilla unlisted/self-distribution after exact-payload signing, signed-artifact runtime verification, persistent installation, full same-profile Firefox restart acceptance, and governed target-environment acceptance.
+
+### GoreeCloud Webspaces 0.1.14
+
+Webspaces 0.1.14 is the current release candidate. It carries the runtime-accepted Standard fallback, six-Webspace isolation, provider identity marks, Proton routing, and current-Webspace reconciliation forward with lifecycle-neutral packaged UI. Its dedicated Mozilla-signing workflow binds the accepted unsigned digest to the exact signing payload and requires persistent signed installation plus full Firefox restart acceptance before Stable promotion. Until that governed release gate passes, `accepted_stable_version` remains null.
 
 ## Maintenance rule
 

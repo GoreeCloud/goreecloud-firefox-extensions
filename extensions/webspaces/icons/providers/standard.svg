@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">GoreeCloud Browser</title>
+  <defs>
+    <linearGradient id="g" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22D3EE"/>
+      <stop offset="1" stop-color="#14B8A6"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#g)"/>
+  <rect x="14" y="17" width="36" height="31" rx="7" fill="none" stroke="#fff" stroke-width="4"/>
+  <path d="M14 27H50" stroke="#fff" stroke-width="4"/>
+  <path d="M22 17H35L38 27H19L22 17Z" fill="#fff"/>
+</svg>

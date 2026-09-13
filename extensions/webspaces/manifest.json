@@ -1,0 +1,70 @@
+{
+  "manifest_version": 3,
+  "name": "GoreeCloud Webspaces",
+  "version": "0.1.14",
+  "description": "Isolated Firefox browsing environments with deterministic site routing and multi-account separation.",
+  "icons": {
+    "48": "icons/webspaces.svg",
+    "96": "icons/webspaces.svg"
+  },
+  "permissions": [
+    "activeTab",
+    "contextualIdentities",
+    "cookies",
+    "menus",
+    "storage",
+    "webNavigation"
+  ],
+  "action": {
+    "default_title": "GoreeCloud Webspaces",
+    "default_icon": "icons/webspaces.svg",
+    "default_popup": "ui/popup.html"
+  },
+  "options_ui": {
+    "page": "ui/options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "scripts": [
+      "src/background.js",
+      "src/routing-settings-background.js",
+      "src/commands-background.js",
+      "src/isolation-health-background.js"
+    ],
+    "type": "module"
+  },
+  "commands": {
+    "open-webspaces-launcher": {
+      "description": "Open the GoreeCloud Webspaces launcher"
+    },
+    "open-standard-webspace": {
+      "description": "Open a new Standard Webspace tab"
+    },
+    "open-goreecloud-webspace": {
+      "description": "Open a new GoreeCloud Webspace tab"
+    },
+    "open-google-webspace": {
+      "description": "Open a new Google Webspace tab"
+    },
+    "open-microsoft-webspace": {
+      "description": "Open a new Microsoft Webspace tab"
+    },
+    "open-meta-webspace": {
+      "description": "Open a new Meta Webspace tab"
+    },
+    "open-proton-webspace": {
+      "description": "Open a new Proton Webspace tab"
+    },
+    "toggle-routing-pause": {
+      "description": "Pause or resume GoreeCloud Webspaces routing"
+    },
+    "open-webspaces-manager": {
+      "description": "Open the GoreeCloud Webspaces manager"
+    }
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "webspaces@goreecloud.com"
+    }
+  }
+}

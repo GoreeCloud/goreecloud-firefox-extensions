@@ -1,0 +1,385 @@
+/*
+ * GoreeCloud Webspaces — Glaze UI V1.3 adoption layer.
+ *
+ * This consumer-local stylesheet maps the Webspaces interface to the current
+ * GLAZE UI V1.3 Stable design direction without claiming full consumer
+ * conformance. Neutral glass is the material foundation; Webspace color is an
+ * identity accent only. All assets remain local and semantics survive without
+ * blur, transparency, motion, or color.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --glz-canvas: #f5f7fa;
+  --glz-surface: #ffffff;
+  --glz-raised: #ffffff;
+  --glz-text: #151a23;
+  --glz-text-secondary: #5d6675;
+  --glz-text-tertiary: #7b8492;
+  --glz-line: rgba(25, 35, 50, 0.12);
+  --glz-line-strong: rgba(25, 35, 50, 0.18);
+  --glz-focus: #3478f6;
+  --glz-info: #3478f6;
+  --glz-success: #2f9e63;
+  --glz-warning: #b56a00;
+  --glz-critical: #c63b32;
+
+  --glz-deep-teal: #0f6b6f;
+  --glz-mineral-teal: #1c8a8d;
+  --glz-soft-aqua: #8fd6d2;
+  --glz-soft-amber: #d9a35f;
+
+  --glz-glass-soft: rgba(255, 255, 255, 0.58);
+  --glz-glass: rgba(250, 250, 250, 0.82);
+  --glz-glass-panel: rgba(255, 255, 255, 0.76);
+  --glz-specular: rgba(255, 255, 255, 0.58);
+  --glz-shadow-soft: 0 14px 38px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(0, 0, 0, 0.05);
+  --glz-shadow-float: 0 28px 76px rgba(0, 0, 0, 0.15), 0 8px 22px rgba(0, 0, 0, 0.07);
+
+  --glz-radius-micro: 8px;
+  --glz-radius-control: 16px;
+  --glz-radius-container: 24px;
+  --glz-radius-hero: 32px;
+  --glz-radius-pill: 999px;
+
+  --glz-space-1: 4px;
+  --glz-space-2: 8px;
+  --glz-space-3: 12px;
+  --glz-space-4: 16px;
+  --glz-space-5: 20px;
+  --glz-space-6: 24px;
+  --glz-space-8: 32px;
+
+  --glz-target: 48px;
+  --glz-transition: 160ms cubic-bezier(0.2, 0, 0, 1);
+  --space-accent: var(--glz-focus);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --glz-canvas: #0b0d11;
+    --glz-surface: #12151b;
+    --glz-raised: #1b2028;
+    --glz-text: #f5f7fa;
+    --glz-text-secondary: #b0b7c3;
+    --glz-text-tertiary: #8d96a5;
+    --glz-line: rgba(225, 232, 244, 0.12);
+    --glz-line-strong: rgba(225, 232, 244, 0.19);
+    --glz-focus: #8db5ff;
+    --glz-info: #82afff;
+    --glz-success: #72d9a3;
+    --glz-warning: #f0bc65;
+    --glz-critical: #ff8c84;
+    --glz-glass-soft: rgba(25, 25, 27, 0.62);
+    --glz-glass: rgba(42, 42, 45, 0.82);
+    --glz-glass-panel: rgba(34, 34, 37, 0.78);
+    --glz-specular: rgba(255, 255, 255, 0.12);
+    --glz-shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.30), 0 4px 12px rgba(0, 0, 0, 0.18);
+    --glz-shadow-float: 0 30px 86px rgba(0, 0, 0, 0.44), 0 9px 26px rgba(0, 0, 0, 0.24);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--glz-text);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background:
+    radial-gradient(circle at 8% -12%, color-mix(in srgb, var(--glz-deep-teal) 6%, transparent) 0%, transparent 34%),
+    radial-gradient(circle at 104% 110%, color-mix(in srgb, var(--glz-soft-amber) 4%, transparent) 0%, transparent 32%),
+    linear-gradient(145deg, color-mix(in srgb, var(--glz-canvas) 98%, white 2%), var(--glz-canvas));
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button,
+select,
+input[type="text"] {
+  min-height: var(--glz-target);
+}
+
+.glz-glass {
+  background: var(--glz-glass);
+  border: 1px solid var(--glz-line);
+  box-shadow: inset 0 1px 0 var(--glz-specular), var(--glz-shadow-soft);
+  -webkit-backdrop-filter: blur(28px) saturate(1.10);
+  backdrop-filter: blur(28px) saturate(1.10);
+}
+
+.glz-surface {
+  background: color-mix(in srgb, var(--glz-surface) 96%, transparent);
+  border: 1px solid var(--glz-line);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--glz-specular) 72%, transparent);
+}
+
+.glz-raised {
+  background: var(--glz-raised);
+  border: 1px solid var(--glz-line);
+  box-shadow: 0 8px 24px color-mix(in srgb, black 6%, transparent);
+}
+
+.glz-capsule {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--glz-line);
+  border-radius: var(--glz-radius-pill);
+  background: color-mix(in srgb, var(--glz-glass) 90%, transparent);
+  color: var(--glz-text-secondary);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.glz-kicker {
+  color: var(--glz-text-secondary);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.glz-title {
+  margin: 0;
+  color: var(--glz-text);
+  font-weight: 720;
+  letter-spacing: -0.025em;
+}
+
+.glz-muted {
+  color: var(--glz-text-secondary);
+}
+
+.glz-button {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--glz-target);
+  min-width: var(--glz-target);
+  padding: 0 16px;
+  border: 1px solid var(--glz-line-strong);
+  border-radius: var(--glz-radius-control);
+  background: var(--glz-raised);
+  color: var(--glz-text);
+  font-weight: 650;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background var(--glz-transition), border-color var(--glz-transition), box-shadow var(--glz-transition), transform var(--glz-transition);
+}
+
+.glz-button:hover {
+  background: color-mix(in srgb, var(--glz-raised) 94%, var(--glz-text) 6%);
+  border-color: color-mix(in srgb, var(--space-accent) 28%, var(--glz-line-strong));
+}
+
+.glz-button:active {
+  transform: scale(0.988);
+}
+
+.glz-button.primary {
+  background: var(--glz-focus);
+  border-color: color-mix(in srgb, var(--glz-focus) 78%, black);
+  color: #fff;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--glz-focus) 22%, transparent);
+}
+
+.glz-button.quiet {
+  background: transparent;
+  border-color: transparent;
+}
+
+.glz-button.full {
+  width: 100%;
+}
+
+.glz-button:focus-visible,
+.glz-select:focus-visible,
+.glz-input:focus-visible,
+.glz-switch input:focus-visible + .glz-switch-track {
+  outline: 3px solid var(--glz-focus);
+  outline-offset: 2px;
+}
+
+.glz-select,
+.glz-input {
+  width: 100%;
+  min-height: var(--glz-target);
+  border: 1px solid var(--glz-line-strong);
+  border-radius: var(--glz-radius-control);
+  background: var(--glz-raised);
+  color: var(--glz-text);
+  padding: 0 14px;
+  transition: border-color var(--glz-transition), box-shadow var(--glz-transition), background var(--glz-transition);
+}
+
+.glz-select:hover,
+.glz-input:hover {
+  border-color: color-mix(in srgb, var(--glz-text) 24%, var(--glz-line-strong));
+}
+
+.glz-select:focus-visible,
+.glz-input:focus-visible {
+  border-color: var(--glz-focus);
+}
+
+.glz-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.glz-switch input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.glz-switch-track {
+  position: relative;
+  inline-size: 52px;
+  block-size: 32px;
+  flex: none;
+  border: 1px solid var(--glz-line-strong);
+  border-radius: var(--glz-radius-pill);
+  background: color-mix(in srgb, var(--glz-raised) 88%, var(--glz-text) 12%);
+  transition: background var(--glz-transition), border-color var(--glz-transition);
+}
+
+.glz-switch-track::after {
+  content: "";
+  position: absolute;
+  inline-size: 24px;
+  block-size: 24px;
+  inset-block-start: 3px;
+  inset-inline-start: 3px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  transition: transform var(--glz-transition);
+}
+
+.glz-switch input:checked + .glz-switch-track {
+  background: var(--glz-focus);
+  border-color: var(--glz-focus);
+}
+
+.glz-switch input:checked + .glz-switch-track::after {
+  transform: translateX(20px);
+}
+
+.space-emblem {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 40px;
+  block-size: 40px;
+  flex: none;
+  border-radius: 14px;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--space-accent) 22%, var(--glz-raised)), color-mix(in srgb, var(--space-accent) 9%, var(--glz-raised)));
+  border: 1px solid color-mix(in srgb, var(--space-accent) 28%, var(--glz-line));
+  color: color-mix(in srgb, var(--space-accent) 86%, var(--glz-text));
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 58%, transparent);
+}
+
+.status-dot {
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 50%;
+  background: var(--glz-success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--glz-success) 12%, transparent);
+}
+
+[data-routing-state="paused"] .status-dot {
+  background: var(--glz-warning);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--glz-warning) 12%, transparent);
+}
+
+@supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+  .glz-glass {
+    background: color-mix(in srgb, var(--glz-raised) 98%, transparent);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glz-glass,
+  .glz-capsule {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--glz-raised);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (forced-colors: active) {
+  :root {
+    --glz-canvas: Canvas;
+    --glz-surface: Canvas;
+    --glz-raised: Canvas;
+    --glz-text: CanvasText;
+    --glz-text-secondary: CanvasText;
+    --glz-text-tertiary: CanvasText;
+    --glz-line: CanvasText;
+    --glz-line-strong: CanvasText;
+    --glz-glass-soft: Canvas;
+    --glz-glass: Canvas;
+    --glz-glass-panel: Canvas;
+    --glz-shadow-soft: none;
+    --glz-shadow-float: none;
+  }
+
+  body {
+    background: Canvas;
+  }
+
+  .glz-glass,
+  .glz-surface,
+  .glz-raised,
+  .glz-capsule,
+  .space-emblem {
+    background: Canvas;
+    box-shadow: none;
+  }
+
+  .glz-button:focus-visible,
+  .glz-select:focus-visible,
+  .glz-input:focus-visible,
+  .glz-switch input:focus-visible + .glz-switch-track {
+    outline-color: Highlight;
+  }
+}

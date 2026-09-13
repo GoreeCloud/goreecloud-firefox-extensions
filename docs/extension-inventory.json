@@ -52,6 +52,16 @@
       "accepted_stable_version": "0.2.0",
       "legacy_repository": null,
       "broad_host_permission_review": "extensions/privacy-shield/BROAD_HOST_PERMISSION_REVIEW.md"
+    },
+    {
+      "slug": "webspaces",
+      "name": "GoreeCloud Webspaces",
+      "directory": "extensions/webspaces",
+      "gecko_id": "webspaces@goreecloud.com",
+      "source_version": "0.1.14",
+      "source_state": "source-candidate",
+      "accepted_stable_version": null,
+      "legacy_repository": null
     }
   ]
 }

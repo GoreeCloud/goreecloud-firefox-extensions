@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en" data-glaze-version="1.3">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GoreeCloud Webspaces</title>
+  <link rel="stylesheet" href="glaze-webspaces.css">
+  <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="routing-controls.css">
+  <link rel="stylesheet" href="provider-logos.css">
+</head>
+<body>
+  <main class="popup-shell glz-glass">
+    <header class="product-header">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true"><img src="../icons/webspaces.svg" alt=""></div>
+        <div class="brand-copy">
+          <strong>Webspaces</strong>
+          <span>GoreeCloud</span>
+        </div>
+      </div>
+      <span id="routing-badge" class="glz-capsule routing-badge" data-routing-state="on">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>Routing on</span>
+      </span>
+    </header>
+
+    <section id="current-card" class="current-card glz-surface">
+      <div class="glz-kicker">Current Webspace</div>
+      <div class="current-identity">
+        <div id="current-emblem" class="space-emblem" aria-hidden="true">W</div>
+        <div class="current-copy">
+          <div id="current-webspace" class="current-name">Loading…</div>
+          <div id="current-site" class="current-site glz-muted"></div>
+        </div>
+      </div>
+      <div id="routing-reason" class="routing-reason"></div>
+      <details id="why-panel" class="why-panel">
+        <summary>Why this Webspace?</summary>
+        <div id="why-details" class="why-details"></div>
+      </details>
+      <button id="close-forget" class="glz-button danger compact" type="button" hidden>Close &amp; Forget</button>
+    </section>
+
+    <label class="routing-control glz-surface">
+      <span class="routing-copy">
+        <strong>Automatic routing</strong>
+        <span>Keep assigned sites in their Webspaces</span>
+      </span>
+      <span class="glz-switch">
+        <input id="routing-enabled" type="checkbox" aria-label="Automatic routing">
+        <span class="glz-switch-track" aria-hidden="true"></span>
+      </span>
+    </label>
+
+    <section class="popup-section">
+      <div class="section-heading">
+        <div>
+          <div class="glz-kicker">Launcher</div>
+          <h2>Open a Webspace</h2>
+        </div>
+        <button id="new-temporary" class="glz-button quiet compact" type="button">+ Temporary</button>
+      </div>
+      <div id="webspace-list" class="webspace-list"></div>
+    </section>
+
+    <section id="site-tools" class="popup-section" hidden>
+      <div class="section-heading">
+        <div>
+          <div class="glz-kicker">Current site</div>
+          <h2>Route or move this tab</h2>
+        </div>
+      </div>
+
+      <div class="tool-stack">
+        <div class="assign-row">
+          <select id="assignment-target" class="glz-select" aria-label="Permanent Webspace assignment"></select>
+          <button id="assign-site" class="glz-button primary" type="button">Always</button>
+        </div>
+        <div class="assign-row">
+          <select id="move-target" class="glz-select" aria-label="Move current tab to Webspace"></select>
+          <button id="move-tab" class="glz-button" type="button">Move</button>
+        </div>
+      </div>
+
+      <button id="remove-assignment" class="inline-link" type="button" hidden>Remove explicit assignment</button>
+      <div id="assignment-status" class="assignment-status glz-muted" role="status"></div>
+    </section>
+
+    <footer>
+      <button id="manage" class="glz-button full" type="button">Manage Webspaces</button>
+    </footer>
+  </main>
+
+  <script type="module" src="popup.js"></script>
+  <script type="module" src="current-webspace-ui.js"></script>
+  <script type="module" src="routing-controls-ui.js"></script>
+  <script type="module" src="provider-logos.js"></script>
+</body>
+</html>

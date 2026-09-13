@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Official GoreeCloud Logo</title>
+  <desc id="desc">The approved GoreeCloud Unified Clean logo in blue.</desc>
+  <rect width="512" height="512" rx="118" fill="#F7FAFF"/>
+  <path fill-rule="evenodd" d="M256 98c87 0 158 71 158 158s-71 158-158 158S98 343 98 256 169 98 256 98Zm0 67c-50 0-91 41-91 91s41 91 91 91c35 0 65-20 80-49h-80c-23 0-42-19-42-42s19-42 42-42h80c-15-29-45-49-80-49Z" fill="#3B82F6"/>
+  <path d="M256 231h158c14 0 25 11 25 25s-11 25-25 25H256c-14 0-25-11-25-25s11-25 25-25Z" fill="#174EA6"/>
+  <circle cx="256" cy="256" r="13" fill="#F7FAFF"/>
+</svg>

@@ -1,0 +1,177 @@
+name: Webspaces Mozilla Signing
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_xpi_sha256:
+        description: 'SHA-256 of the exact unsigned Webspaces XPI accepted before signing'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: webspaces-mozilla-signing
+  cancel-in-progress: false
+
+jobs:
+  sign-and-restart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: browser-actions/setup-firefox@v1
+        with:
+          firefox-version: latest
+
+      - uses: browser-actions/setup-geckodriver@latest
+
+      - name: Install Selenium
+        run: python -m pip install --disable-pip-version-check selenium
+
+      - name: Resolve Webspaces version
+        id: version
+        shell: bash
+        run: |
+          VERSION="$(python -c 'import json; print(json.load(open("extensions/webspaces/manifest.json", encoding="utf-8"))["version"])')"
+          test -n "$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "WEBSPACES_VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Validate exact source candidate
+        run: |
+          python shared/scripts/validate_repository.py
+          python extensions/webspaces/scripts/validate.py
+          node --experimental-default-type=module --test extensions/webspaces/tests/*.test.js
+          python -m py_compile extensions/webspaces/tests/signed_restart_smoke.py
+
+      - name: Build deterministic unsigned candidate
+        run: python shared/scripts/package_extension.py webspaces --output-dir dist/candidate
+
+      - name: Bind accepted unsigned artifact to exact signing payload
+        env:
+          ACCEPTED_CANDIDATE_SHA256: ${{ inputs.candidate_xpi_sha256 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$ACCEPTED_CANDIDATE_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo '::error::Candidate SHA-256 must be 64 lowercase hex characters.'; exit 1; }
+          candidate="$(find dist/candidate -maxdepth 1 -type f -name 'goreecloud-webspaces-*.xpi' -print -quit)"
+          test -n "$candidate"
+          mkdir -p signing-source dist/mozilla
+          python - "$candidate" "$WEBSPACES_VERSION" "$ACCEPTED_CANDIDATE_SHA256" <<'PY'
+          import hashlib
+          import json
+          import sys
+          import zipfile
+          from pathlib import Path
+
+          candidate = Path(sys.argv[1])
+          expected_version = sys.argv[2]
+          accepted_digest = sys.argv[3]
+          stage = Path('signing-source')
+          with zipfile.ZipFile(candidate) as archive:
+              bad = archive.testzip()
+              if bad:
+                  raise SystemExit(f'candidate archive integrity failure: {bad}')
+              archive.extractall(stage)
+          manifest = json.loads((stage / 'manifest.json').read_text(encoding='utf-8'))
+          if manifest.get('browser_specific_settings', {}).get('gecko', {}).get('id') != 'webspaces@goreecloud.com':
+              raise SystemExit('unexpected or missing Firefox extension ID')
+          if manifest.get('version') != expected_version:
+              raise SystemExit(f"unexpected candidate version: {manifest.get('version')} (expected {expected_version})")
+          digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
+          if digest != accepted_digest:
+              raise SystemExit(f'accepted candidate digest mismatch: expected {accepted_digest}, rebuilt {digest}')
+          Path('dist/candidate-sha256.txt').write_text(f'{digest}  {candidate.name}\n', encoding='utf-8')
+          Path('dist/source-revision.txt').write_text(f'{Path.cwd()}\nsource_revision={__import__("os").environ.get("GITHUB_SHA", "unknown")}\n', encoding='utf-8')
+          print(f'Candidate SHA-256: {digest}')
+          print('Accepted candidate digest matches exact signing payload.')
+          PY
+
+      - name: Require AMO signing credentials
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${AMO_JWT_ISSUER}" || -z "${AMO_JWT_SECRET}" ]]; then
+            echo '::error::Missing AMO_JWT_ISSUER and/or AMO_JWT_SECRET repository secrets.'
+            echo 'Configure Mozilla Add-ons API credentials as repository secrets before rerunning this workflow.'
+            exit 1
+          fi
+
+      - name: Submit exact candidate to Mozilla for unlisted signing
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: >-
+          npx --yes web-ext@10.5.0 sign
+          --source-dir signing-source
+          --artifacts-dir dist/mozilla
+          --channel=unlisted
+          --approval-timeout=900000
+          --timeout=900000
+
+      - name: Normalize and inspect signed XPI
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - "$WEBSPACES_VERSION" <<'PY'
+          import hashlib
+          import json
+          import shutil
+          import sys
+          import zipfile
+          from pathlib import Path
+
+          version = sys.argv[1]
+          files = sorted(Path('dist/mozilla').glob('*.xpi'))
+          if len(files) != 1:
+              raise SystemExit(f'expected exactly one Mozilla-signed XPI, found: {files}')
+          source = files[0]
+          target = Path(f'dist/goreecloud-webspaces-{version}-signed.xpi')
+          shutil.copy2(source, target)
+          with zipfile.ZipFile(target) as archive:
+              bad = archive.testzip()
+              if bad:
+                  raise SystemExit(f'signed XPI integrity failure: {bad}')
+              names = archive.namelist()
+              if 'manifest.json' not in names:
+                  raise SystemExit('signed XPI is missing manifest.json')
+              if not any(name.startswith('META-INF/') for name in names):
+                  raise SystemExit('signed XPI does not contain Mozilla signature metadata')
+              manifest = json.loads(archive.read('manifest.json').decode('utf-8'))
+              if manifest.get('version') != version:
+                  raise SystemExit('signed XPI version mismatch')
+              if manifest.get('browser_specific_settings', {}).get('gecko', {}).get('id') != 'webspaces@goreecloud.com':
+                  raise SystemExit('signed XPI add-on ID mismatch')
+          digest = hashlib.sha256(target.read_bytes()).hexdigest()
+          Path('dist/signed-sha256.txt').write_text(f'{digest}  {target.name}\n', encoding='utf-8')
+          print(f'Signed SHA-256: {digest}')
+          PY
+          unzip -t "dist/goreecloud-webspaces-${WEBSPACES_VERSION}-signed.xpi"
+
+      - name: Persistent signed-XPI install and Firefox restart acceptance
+        run: python extensions/webspaces/tests/signed_restart_smoke.py "dist/goreecloud-webspaces-${WEBSPACES_VERSION}-signed.xpi"
+
+      - name: Retain signed release evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: goreecloud-webspaces-${{ steps.version.outputs.version }}-mozilla-signed
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            dist/goreecloud-webspaces-*-signed.xpi
+            dist/candidate-sha256.txt
+            dist/signed-sha256.txt
+            dist/source-revision.txt
