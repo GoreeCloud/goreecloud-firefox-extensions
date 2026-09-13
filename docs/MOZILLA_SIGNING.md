@@ -36,6 +36,7 @@ The manifest version must match `source_version` exactly. `accepted_stable_versi
 
 - **GoreeCloud Download Manager Extension 0.2.12** is Stable for Mozilla unlisted/self-distribution. Governed run `34176105690` accepted source revision `2cc6d3bbe6ec2c63d49bec338bd68f154747be70`, candidate SHA-256 `779425b150921c1969462066a3e79cb345d976d11369a6891b5611c63a3d5537`, signed XPI SHA-256 `4c02a152a258c4f8e76581ece2cb2a41f088463a4464354da0c374dfb2957f25`, compatible native helper 0.2.11/protocol 2, persistent installation, full Firefox process restart without reinstalling, automatic same-job preserved-range recovery, exact final integrity, staging cleanup, and post-restart helper reconnect with zero manual Resume actions. The final lifecycle evidence rerun must derive `stablePromoted: true` from the canonical Stable inventory.
 - **GoreeCloud Privacy Shield 0.2.0** is Stable for Mozilla unlisted/self-distribution after its governed signing and signed-runtime/persistent-restart acceptance.
+- **GoreeCloud Webspaces 0.1.14** is the current release candidate. Its governed `.github/workflows/webspaces-mozilla-signing.yml` path binds an accepted unsigned XPI digest to the exact signing payload, uses AMO credentials only from repository secrets, verifies Mozilla signature metadata, and requires persistent signed-install/full-restart acceptance before `accepted_stable_version` may become `0.1.14`.
 - **GoreeCloud Redirector** checks in source version 0.2.1 while historical Stable acceptance remains 0.2.0. The newer source version requires its own signing and runtime acceptance before it can replace that Stable release.
 - **GoreeCloud Bookmarks** checks in source version 0.1.1 as a source candidate with no accepted Stable version recorded. Its required runtime, signing, restart, and post-restart gates remain outstanding.
 - **GoreeCloud Source Resync** checks in source version 1.1.2 as canonical source with no accepted Stable version currently recorded in the shared inventory.
@@ -58,6 +59,7 @@ python shared/scripts/package_extension.py download-manager
 python shared/scripts/package_extension.py redirector
 python shared/scripts/package_extension.py source-resync
 python shared/scripts/package_extension.py privacy-shield
+python shared/scripts/package_extension.py webspaces
 ```
 
 Generated packages are written beneath `dist/` by default. `dist/` is build output and must not be treated as authoritative source.
