@@ -5,13 +5,19 @@ This gate deliberately requires a Mozilla-signed XPI. It installs the add-on
 non-temporarily into an in-place Firefox profile, verifies the expected add-on
 identity, confirms that the six built-in Firefox contextual identities exist,
 fully quits Firefox, starts a second Firefox process against the same profile
-without reinstalling the add-on, and verifies that the extension is still
-registered and the built-in contextual identities persist.
+without reinstalling the add-on, and verifies that the extension registration
+and built-in contextual identities persist.
 
-The test does not claim to replace rendered/manual routing acceptance. It proves
-the signed installation/restart boundary and persistence of Webspaces' Firefox
-identity substrate; routing, popup rendering, and isolation-health semantics are
-covered by the maintained source suite and release acceptance evidence.
+Marionette/WebDriver deliberately blocks navigation to privileged pages such as
+about:debugging, so this test uses Firefox's on-disk profile registries after each
+browser process has exited. That avoids treating a WebDriver restriction as an
+extension failure while still proving persistent installation and same-profile
+restart survival.
+
+The test does not replace rendered/manual routing acceptance. It proves the
+signed installation/restart boundary and persistence of Webspaces' Firefox
+identity substrate; routing, popup rendering, and Isolation Health semantics are
+covered by the maintained source suite and direct Firefox acceptance evidence.
 """
 
 from __future__ import annotations
@@ -24,12 +30,9 @@ import time
 from pathlib import Path
 
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
 
 EXPECTED_ADDON_ID = "webspaces@goreecloud.com"
-EXPECTED_NAME = "GoreeCloud Webspaces"
 EXPECTED_BUILT_INS = {"Standard", "GoreeCloud", "Google", "Microsoft", "Meta", "Proton"}
 
 
@@ -60,51 +63,70 @@ def firefox_options(profile: Path) -> Options:
     return options
 
 
-def read_extensions_registry(profile: Path) -> dict:
-    path = profile / "extensions.json"
-    require(path.is_file(), "Firefox extensions registry exists", str(path))
-    return json.loads(path.read_text(encoding="utf-8"))
+def read_json(path: Path, label: str) -> dict:
+    require(path.is_file(), f"{label} exists", str(path))
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise AssertionError(f"FAIL {label} is readable JSON: {exc}") from exc
 
 
-def assert_registered(profile: Path, phase: str) -> None:
-    registry = read_extensions_registry(profile)
-    addons = registry.get("addons", [])
-    matches = [item for item in addons if item.get("id") == EXPECTED_ADDON_ID]
-    require(len(matches) == 1, f"{phase} Webspaces registry entry", str(len(matches)))
-    addon = matches[0]
+def registered_addon(profile: Path) -> dict:
+    registry = read_json(profile / "extensions.json", "Firefox extensions registry")
+    matches = [item for item in registry.get("addons", []) if item.get("id") == EXPECTED_ADDON_ID]
+    require(len(matches) == 1, "Webspaces has one Firefox registry entry", str(len(matches)))
+    return matches[0]
+
+
+def assert_registered(profile: Path, phase: str) -> dict:
+    addon = registered_addon(profile)
     require(addon.get("active") is True, f"{phase} Webspaces active in Firefox registry")
     require(addon.get("type") == "extension", f"{phase} Webspaces registered as extension", str(addon.get("type")))
+    require(addon.get("version") == "0.1.14", f"{phase} Webspaces registry version", str(addon.get("version")))
+    path_value = str(addon.get("path") or addon.get("rootURI") or "")
+    require(bool(path_value), f"{phase} Webspaces registry records installed location")
+    return addon
+
+
+def assert_persistent_extension_file(profile: Path, phase: str) -> Path:
+    candidates = [
+        profile / "extensions" / f"{EXPECTED_ADDON_ID}.xpi",
+        profile / "extensions" / EXPECTED_ADDON_ID,
+    ]
+    existing = [path for path in candidates if path.exists()]
+    require(bool(existing), f"{phase} persistent Webspaces install exists in profile", str(candidates))
+    return existing[0]
 
 
 def read_container_identities(profile: Path) -> list[dict]:
-    path = profile / "containers.json"
-    require(path.is_file(), "Firefox contextual-identity registry exists", str(path))
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = read_json(profile / "containers.json", "Firefox contextual-identity registry")
     identities = payload.get("identities", [])
     require(isinstance(identities, list), "Firefox contextual-identity registry is readable")
     return identities
 
 
-def assert_builtin_identities(profile: Path, phase: str) -> None:
+def assert_builtin_identities(profile: Path, phase: str) -> dict[str, int]:
     identities = read_container_identities(profile)
-    names = {str(item.get("name", "")) for item in identities}
-    missing = sorted(EXPECTED_BUILT_INS - names)
+    by_name = {
+        str(item.get("name", "")): item
+        for item in identities
+        if str(item.get("name", "")) in EXPECTED_BUILT_INS
+    }
+    missing = sorted(EXPECTED_BUILT_INS - set(by_name))
     require(not missing, f"{phase} six built-in Webspace identities persist", ", ".join(missing))
-    managed = [item for item in identities if item.get("name") in EXPECTED_BUILT_INS]
-    context_ids = [item.get("userContextId") for item in managed]
-    require(len(context_ids) == 6, f"{phase} six built-in Firefox identities found", str(context_ids))
-    require(len(set(context_ids)) == 6, f"{phase} built-in Firefox identities are distinct", str(context_ids))
+    require(len(by_name) == 6, f"{phase} six built-in Firefox identities found", str(sorted(by_name)))
 
-
-def assert_about_debugging_registration(driver: webdriver.Firefox, phase: str) -> None:
-    driver.get("about:debugging#/runtime/this-firefox")
-    try:
-        WebDriverWait(driver, 15).until(
-            lambda d: EXPECTED_NAME in d.page_source and EXPECTED_ADDON_ID in d.page_source
-        )
-    except TimeoutException as exc:
-        raise AssertionError(f"FAIL {phase} Webspaces visible in about:debugging") from exc
-    require(True, f"{phase} Webspaces visible in about:debugging")
+    context_ids: dict[str, int] = {}
+    for name in sorted(EXPECTED_BUILT_INS):
+        raw = by_name[name].get("userContextId")
+        require(isinstance(raw, int) and raw > 0, f"{phase} {name} has valid Firefox userContextId", str(raw))
+        context_ids[name] = raw
+    require(
+        len(set(context_ids.values())) == 6,
+        f"{phase} built-in Firefox identities are distinct",
+        str(context_ids),
+    )
+    return context_ids
 
 
 def main() -> int:
@@ -122,21 +144,44 @@ def main() -> int:
             first = webdriver.Firefox(options=firefox_options(profile))
             addon_id = first.install_addon(str(xpi), temporary=False)
             require(addon_id == EXPECTED_ADDON_ID, "persistent signed installation", str(addon_id))
-            time.sleep(2.0)
-            assert_about_debugging_registration(first, "pre-restart")
-            assert_registered(profile, "pre-restart")
-            assert_builtin_identities(profile, "pre-restart")
+            # Give the extension background event page time to reconcile built-ins
+            # and Firefox time to flush profile state before the full process exit.
+            time.sleep(3.0)
             first.quit()
             first = None
 
+            pre_addon = assert_registered(profile, "pre-restart")
+            pre_install_path = assert_persistent_extension_file(profile, "pre-restart")
+            pre_context_ids = assert_builtin_identities(profile, "pre-restart")
+
             time.sleep(1.0)
             second = webdriver.Firefox(options=firefox_options(profile))
-            # Deliberately do not call install_addon again. Everything observed in
-            # this process must come from the add-on that persisted in the profile.
-            time.sleep(2.0)
-            assert_about_debugging_registration(second, "post-restart")
-            assert_registered(profile, "post-restart")
-            assert_builtin_identities(profile, "post-restart")
+            # Deliberately do not call install_addon here. Everything observed after
+            # this process exits must come from the signed add-on already persisted
+            # in the same Firefox profile.
+            time.sleep(3.0)
+            second.quit()
+            second = None
+
+            post_addon = assert_registered(profile, "post-restart")
+            post_install_path = assert_persistent_extension_file(profile, "post-restart")
+            post_context_ids = assert_builtin_identities(profile, "post-restart")
+
+            require(
+                pre_context_ids == post_context_ids,
+                "built-in Firefox contextual identities survive restart unchanged",
+                f"before={pre_context_ids} after={post_context_ids}",
+            )
+            require(
+                pre_install_path == post_install_path,
+                "persistent Webspaces install path survives restart",
+                f"before={pre_install_path} after={post_install_path}",
+            )
+            require(
+                str(pre_addon.get("path") or pre_addon.get("rootURI"))
+                == str(post_addon.get("path") or post_addon.get("rootURI")),
+                "Firefox registry installation location survives restart",
+            )
             require(True, "signed GoreeCloud Webspaces survived full Firefox restart")
         finally:
             if first is not None:
