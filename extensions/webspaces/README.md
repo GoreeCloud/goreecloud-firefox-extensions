@@ -2,20 +2,22 @@
 
 **Canonical repository:** `GoreeCloud/goreecloud-firefox-extensions`  
 **Component path:** `extensions/webspaces/`  
-**Source lifecycle:** Release candidate / Active Development  
+**Source lifecycle:** Stable  
 **Firefox add-on ID:** `webspaces@goreecloud.com`  
 **Source version:** `0.1.14`  
-**Accepted Stable version:** None yet
+**Accepted Stable version:** `0.1.14`
 
 GoreeCloud Webspaces is a Firefox extension for isolated browsing environments, deterministic website routing, and multi-account separation. Firefox contextual identities are the browser isolation mechanism; GoreeCloud Webspaces is the product, management surface, routing authority, and user-facing abstraction.
 
-## 0.1.14 release-candidate purpose
+## 0.1.14 Stable release
 
-0.1.14 carries the runtime-accepted 0.1.13 behavior forward without changing the Webspace configuration schema or routing model. Its release-specific changes make the packaged manager lifecycle-neutral and add a governed Mozilla signing plus persistent-restart acceptance path so the exact version can be evaluated for Stable promotion.
+0.1.14 carries the runtime-accepted 0.1.13 behavior forward without changing the Webspace configuration schema or routing model. Its release-specific changes made the packaged manager lifecycle-neutral and established the governed Mozilla signing plus persistent-restart acceptance path used to promote this exact version to Stable.
 
-The packaged UI intentionally identifies itself as `GoreeCloud Webspaces 0.1.14` rather than embedding `source candidate` or `Stable` into signed runtime bytes. Stable status is recorded separately in repository release metadata only after the exact signed version passes the release gates.
+The packaged UI intentionally identifies itself as `GoreeCloud Webspaces 0.1.14` rather than embedding lifecycle language into signed runtime bytes. Stable status is recorded separately in canonical release metadata.
 
-## Implemented release-candidate capabilities
+The accepted unsigned XPI SHA-256 is `ac605e4781a6dcc605d6c7474989e5f125cee12448580786cfefc4ffd81f3e00`. The Mozilla-signed XPI SHA-256 is `37a42b44e779b0a5585b622ae5040ffe1b51e15a72099e2c13182ca3c5a18479`. Governed signing/restart run `34735370919` verified the existing unlisted Mozilla-signed 0.1.14 package, persistent installation, a full Firefox 155.0.1 restart on the same profile without reinstalling Webspaces, and persistence of the extension registration plus all six distinct built-in Firefox contextual identities.
+
+## Implemented Stable capabilities
 
 - Built-in Webspaces are **Standard, GoreeCloud, Google, Microsoft, Meta, and Proton**.
 - Standard has its own Firefox contextual identity and is the default destination for otherwise-unassigned external HTTP(S) websites while automatic routing is active.
@@ -33,9 +35,9 @@ The packaged UI intentionally identifies itself as `GoreeCloud Webspaces 0.1.14`
 
 The broader implemented slice includes race-hardened tab migration; 5/30-minute, site, restart-scoped, and indefinite routing pauses; bulk assignment; **Why this Webspace?**; context-menu actions; persistent and temporary custom Webspaces; Close & Forget; appearance editing; duplicate, lock/unlock, reset, and custom deletion; searchable/editable site assignments; local conflict detection and rule testing; managed-tab counts; and portable JSON configuration import/export.
 
-## Runtime acceptance carried into 0.1.14
+## Stable acceptance evidence
 
-Direct Firefox 155.0.1 evidence for 0.1.13 confirmed the release-critical behavior carried unchanged into this release candidate:
+Direct Firefox 155.0.1 acceptance confirmed:
 
 - an otherwise-unassigned ChatGPT tab is visibly owned by Firefox's **Standard** contextual identity and the Webspaces popup identifies it as **Standard**;
 - the Standard identity mark renders in the Current Webspace card;
@@ -45,7 +47,7 @@ Direct Firefox 155.0.1 evidence for 0.1.13 confirmed the release-critical behavi
 - Proton is present as a first-class built-in Webspace;
 - Proton Drive opens inside Firefox's **Proton** contextual identity.
 
-0.1.14 still requires exact-version validation, Mozilla signing, persistent signed installation, full Firefox process restart, and post-restart acceptance before Stable can be recorded.
+The governed 0.1.14 signing/restart gate additionally confirmed the exact candidate digest, Mozilla signature material, persistent signed installation, full same-profile Firefox process restart without reinstalling, active Webspaces registration after restart, and persistence of all six distinct built-in contextual identities.
 
 ## Standard fallback boundary
 
@@ -84,25 +86,23 @@ python extensions/webspaces/scripts/validate.py
 node --experimental-default-type=module --test extensions/webspaces/tests/*.test.js
 ```
 
-## Stable promotion gate
+## Stable release evidence
 
-The governed Stable path is:
+Stable 0.1.14 is bound to:
 
-1. validate and deterministically package the exact 0.1.14 source revision;
-2. bind the accepted unsigned XPI digest to the signing workflow;
-3. submit that exact payload to Mozilla for unlisted signing using repository secrets;
-4. verify signed package identity, version, add-on ID, archive integrity, and Mozilla signature metadata;
-5. install the signed XPI persistently in Firefox;
-6. fully restart Firefox without reinstalling the extension;
-7. confirm Webspaces remains installed/enabled and its built-in contextual identities persist;
-8. repeat release-critical Firefox acceptance on the signed build;
-9. only then record `0.1.14` as the accepted Stable version in canonical repository metadata.
+1. source version `0.1.14` and add-on ID `webspaces@goreecloud.com`;
+2. accepted deterministic unsigned XPI SHA-256 `ac605e4781a6dcc605d6c7474989e5f125cee12448580786cfefc4ffd81f3e00`;
+3. Mozilla-signed XPI SHA-256 `37a42b44e779b0a5585b622ae5040ffe1b51e15a72099e2c13182ca3c5a18479`;
+4. governed signing/restart run `34735370919`;
+5. persistent signed installation and full Firefox restart without reinstalling;
+6. post-restart persistence of the active extension registration and all six distinct built-in Firefox contextual identities;
+7. previously recorded release-critical Firefox acceptance for Standard fallback, current-Webspace reconciliation, six-Webspace Isolation Health, provider identity marks, and Proton routing.
 
-A source merge or unsigned package is not Stable by itself.
+Any future Webspaces version must independently satisfy the applicable release gates before it may replace 0.1.14 as the accepted Stable release.
 
 ## Security and privacy boundary
 
-Webspaces does not by itself provide a VPN, separate IP addresses, operating-system process isolation, malware sandboxing, anonymity, fingerprinting resistance, or complete tracking prevention. No Wardveil Security, Privacy Shield, Everkeep, GoreeCloud Mesh, GoreeCloud Identity, or GoreeCloud Manager runtime integration is claimed by this release candidate.
+Webspaces does not by itself provide a VPN, separate IP addresses, operating-system process isolation, malware sandboxing, anonymity, fingerprinting resistance, or complete tracking prevention. No Wardveil Security, Privacy Shield, Everkeep, GoreeCloud Mesh, GoreeCloud Identity, or GoreeCloud Manager runtime integration is claimed by this Stable release.
 
 ## Authoritative product specification
 

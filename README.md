@@ -48,7 +48,7 @@ shared/
 | GoreeCloud Privacy Shield | `extensions/privacy-shield/` | `privacy-shield@goreecloud.com` | Stable 0.2.0 accepted for Mozilla unlisted/self-distribution | None |
 | GoreeCloud Redirector | `extensions/redirector/` | `redirector@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-redirector` |
 | GoreeCloud Source Resync | `extensions/source-resync/` | `source-resync@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-source-resync` |
-| GoreeCloud Webspaces | `extensions/webspaces/` | `webspaces@goreecloud.com` | **Release candidate 0.1.14; not Stable until signed/restart acceptance completes** | None |
+| GoreeCloud Webspaces | `extensions/webspaces/` | `webspaces@goreecloud.com` | **Stable 0.1.14** accepted for Mozilla unlisted/self-distribution | None |
 
 Machine-readable inventory lives in [`docs/extension-inventory.json`](docs/extension-inventory.json). Inventory schema v2 records each checked-in manifest version and source lifecycle state separately from independently accepted Mozilla-signed Stable versions, preventing a newer source candidate from silently inheriting older release status.
 
@@ -90,7 +90,9 @@ Privacy Shield 0.2.0 remains the accepted Stable Privacy Shield Firefox release 
 
 ### GoreeCloud Webspaces 0.1.14
 
-Webspaces 0.1.14 is the current release candidate. It carries the runtime-accepted Standard fallback, six-Webspace isolation, provider identity marks, Proton routing, and current-Webspace reconciliation forward with lifecycle-neutral packaged UI. Its dedicated Mozilla-signing workflow binds the accepted unsigned digest to the exact signing payload and requires persistent signed installation plus full Firefox restart acceptance before Stable promotion. Until that governed release gate passes, `accepted_stable_version` remains null.
+Webspaces 0.1.14 is the accepted Stable release for Mozilla unlisted/self-distribution. It includes the runtime-accepted Standard fallback, six-Webspace isolation, provider identity marks, Proton routing, and current-Webspace reconciliation with lifecycle-neutral packaged UI.
+
+The accepted deterministic unsigned XPI SHA-256 is `ac605e4781a6dcc605d6c7474989e5f125cee12448580786cfefc4ffd81f3e00`. The Mozilla-signed XPI SHA-256 is `37a42b44e779b0a5585b622ae5040ffe1b51e15a72099e2c13182ca3c5a18479`. Governed signing/restart run `34735370919` verified the existing unlisted Mozilla-signed 0.1.14 artifact, persistent installation, a full Firefox 155.0.1 restart on the same profile without reinstalling Webspaces, the active extension registration after restart, and persistence of all six distinct built-in Firefox contextual identities.
 
 ## Maintenance rule
 
