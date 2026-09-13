@@ -2,7 +2,9 @@
 
 ## Status
 
-This file describes the current **0.1.13 source-candidate** implementation slice. The authoritative broader product specification remains the GoreeCloud Drive record `Project Specification — Webspaces.docx`.
+This file describes the current **0.1.14 release-candidate** implementation slice. The authoritative broader product specification remains the GoreeCloud Drive record `Project Specification — Webspaces.docx`.
+
+0.1.14 carries the runtime-accepted 0.1.13 functional behavior forward and changes release-facing metadata/tooling so the exact package can enter Mozilla signing and persistent-restart acceptance without embedding a premature `source candidate` or `Stable` label into signed runtime bytes.
 
 ## Current requirements
 
@@ -12,7 +14,7 @@ This file describes the current **0.1.13 source-candidate** implementation slice
 4. Explicit user assignments, user exceptions, exact/subdomain rules, provider mappings, and the built-in GoreeCloud rule retain deterministic precedence above Standard.
 5. Browser-internal/unsupported URLs, deliberate routing pauses, explicit Normal-Firefox exceptions, and explicit-only local-development hosts may remain outside Standard according to their defined semantics.
 6. `localhost`, loopback addresses, and local-development hostnames may be routed only through explicit user configuration; they must not automatically fall into Standard.
-7. Configuration is local-first and versioned. Schema 2 remains current because Proton and current-tab reconciliation do not change the persisted data shape.
+7. Configuration is local-first and versioned. Schema 2 remains current because the 0.1.14 release preparation does not change the persisted data shape.
 8. Routing is deterministic and explainable, including selected rule, reason, priority, and matching candidates where available.
 9. Tab migration establishes the destination contextual identity before starting requested site navigation; destination setup must succeed before source removal.
 10. Context-menu one-time Open/Move actions use the same race-safe transition model.
@@ -44,8 +46,13 @@ This file describes the current **0.1.13 source-candidate** implementation slice
 36. Built-in provider identities use locally packaged logo/icon assets in the popup and manager. Standard and GoreeCloud use existing first-party GoreeCloud assets; Google, Microsoft, Meta, and Proton use locally packaged provider marks with attribution/licensing records. Text names and fallback glyphs remain available so the UI does not depend on image rendering alone.
 37. Provider artwork must not be fetched from remote hosts at runtime. Local marks are presentation assets and must not influence routing, authorization, or contextual-identity ownership.
 38. Proton is a first-class built-in Webspace. The initial deterministic Proton provider registry includes `proton.me`, `protonmail.com`, and `protonvpn.com`; matching subdomains route to Proton unless a higher-priority user rule or exception applies.
-39. Adding Proton must create/reconcile a distinct Firefox contextual identity for Proton rather than reuse another built-in Webspace's `cookieStoreId`.
+39. Adding/reconciling Proton must create a distinct Firefox contextual identity for Proton rather than reuse another built-in Webspace's `cookieStoreId`.
 40. The popup's **Current Webspace** identity must represent the Firefox contextual identity that actually owns the active tab. It should use the active tab's `cookieStoreId` when Firefox exposes it directly and fall back to Firefox cookie-store tab membership when that tab object does not reliably expose the managed store. A tab that Firefox presents as Standard, Proton, or another managed identity must not be mislabeled as Normal Firefox.
+41. Release-facing signed runtime UI must use a lifecycle-neutral version label. It must not claim `Stable` before the exact signed version is accepted, and it must not permanently embed `source candidate` into an otherwise releasable signed XPI.
+42. Stable promotion is version-specific and requires exact-source validation, deterministic unsigned packaging, accepted candidate digest binding, Mozilla signing, signed-package verification, persistent signed installation, full Firefox restart without reinstalling, and post-restart release-critical acceptance.
+43. The governed Mozilla-signing workflow must consume `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` only from GitHub repository secrets and must never expose them in source, artifacts, examples, or logs.
+44. The signed restart gate must verify the expected add-on ID, persistent Firefox registration, and persistence of all six distinct built-in Firefox contextual identities across a full browser-process restart.
+45. `accepted_stable_version` must remain null until the exact signed 0.1.14 payload completes the Stable gate. A source merge or unsigned package is not sufficient evidence for Stable status.
 
 ## Standard fallback boundary
 
@@ -59,14 +66,18 @@ Standard, GoreeCloud, Google, Microsoft, Meta, Proton, custom persistent Webspac
 
 Provider logos are local UI identity aids. They do not imply sponsorship, partnership, or endorsement. Third-party marks remain the property of their owners. The dedicated Proton Webspace groups Proton services into one isolated identity by provider-domain rules; it does not claim that Proton services are otherwise affiliated with GoreeCloud.
 
-## Isolation Health boundary
+## Runtime evidence entering the Stable gate
 
-Live Firefox 155.0.1 evidence for 0.1.12 confirmed the healthy six-built-in mapping after Proton was introduced: six managed Webspaces, six unique cookie stores, six Firefox identities present, and each built-in Webspace marked isolated. The same runtime pass confirmed the local provider marks render and Proton Drive opens inside the Proton Firefox contextual identity. The 0.1.12 popup also exposed a current-identity presentation defect where a Standard-owned tab could be labeled Normal Firefox; 0.1.13 adds current-tab contextual-identity reconciliation to correct that presentation state.
+Live Firefox 155.0.1 evidence for 0.1.13 confirmed the functional behavior carried unchanged into 0.1.14: an unassigned ChatGPT tab was visibly in Firefox's Standard identity and correctly reported as Standard by the popup; the manager reported six managed Webspaces, six unique cookie stores, and six Firefox identities; every built-in Webspace was marked Isolated; provider marks rendered; Proton was present; and Proton Drive opened inside the Proton contextual identity.
+
+0.1.14 must independently pass exact-version packaging/signing and signed persistent-restart acceptance before that evidence can support Stable promotion.
 
 ## Current exclusions
 
-Complete browsing-data erasure verification for Close & Forget; persistent routing-history storage; ask-every-time/inherit-current/temporary default modes; advanced wildcard/domain-group routing; synchronization/recovery/Identity/Privacy Shield/Wardveil/Manager/Mesh/Everkeep adapters; managed enterprise policy; Firefox Android acceptance; full Glaze production acceptance; Mozilla signing; and Stable release acceptance remain outside this slice.
+Complete browsing-data erasure verification for Close & Forget; persistent routing-history storage; ask-every-time/inherit-current/temporary default modes; advanced wildcard/domain-group routing; synchronization/recovery/Identity/Privacy Shield/Wardveil/Manager/Mesh/Everkeep adapters; managed enterprise policy; Firefox Android acceptance; and any Stable release claim before signed-release acceptance remain outside this slice.
 
 ## Acceptance criteria
 
-Repository validation and all Webspaces tests must pass. Manifest permissions remain exactly `activeTab`, `contextualIdentities`, `cookies`, `menus`, `storage`, and `webNavigation`, with no broad host permissions. Tests cover Proton provider routing, provider-logo asset mapping, built-in command mapping including Proton, current active-tab Webspace resolution, deterministic routing, migration safety, context menus, lifecycle ordering/rollback, management validation, portability exclusions, first-party UI controls, semantic hidden states, locked-rule protection, routing pause lifecycle/scope, Standard fallback, explicit local-development routing, bulk-assignment safety, unique cookie-store isolation, Isolation Health, and non-overlapping runtime-message routing. Shortcut configuration remains under Firefox/user control.
+Repository validation and all maintained Webspaces tests must pass. Manifest permissions remain exactly `activeTab`, `contextualIdentities`, `cookies`, `menus`, `storage`, and `webNavigation`, with no broad host permissions. Tests cover Proton provider routing, provider-logo asset mapping, built-in command mapping including Proton, current active-tab Webspace resolution, deterministic routing, migration safety, context menus, lifecycle ordering/rollback, management validation, portability exclusions, first-party UI controls, semantic hidden states, locked-rule protection, routing pause lifecycle/scope, Standard fallback, explicit local-development routing, bulk-assignment safety, unique cookie-store isolation, Isolation Health, and non-overlapping runtime-message routing. Shortcut configuration remains under Firefox/user control.
+
+For Stable promotion, the exact 0.1.14 candidate must additionally pass the governed Mozilla signing workflow, signed-XPI archive/identity verification, persistent signed installation, full Firefox restart without reinstalling, built-in contextual-identity persistence, and post-restart release-critical Firefox acceptance. Only after those gates pass may canonical inventory metadata record `source_state: stable` and `accepted_stable_version: 0.1.14`.
