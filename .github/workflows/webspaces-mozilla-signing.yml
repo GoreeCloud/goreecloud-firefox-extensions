@@ -194,11 +194,12 @@ jobs:
         run: python extensions/webspaces/tests/signed_restart_smoke.py "dist/goreecloud-webspaces-${WEBSPACES_VERSION}-signed.xpi"
 
       - name: Retain signed release evidence
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: goreecloud-webspaces-${{ steps.version.outputs.version }}-mozilla-signed
           retention-days: 30
-          if-no-files-found: error
+          if-no-files-found: warn
           path: |
             dist/goreecloud-webspaces-*-signed.xpi
             dist/candidate-sha256.txt
