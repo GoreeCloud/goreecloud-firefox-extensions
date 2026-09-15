@@ -1,0 +1,70 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {
+  TAB_GROUP_ID_NONE,
+  buildSnapshot,
+  countExactUrlDuplicates,
+  flattenTabs,
+  normalizeTab
+} from "../src/core/state.js";
+
+test("normalizeTab preserves only the live fields the foundation needs", () => {
+  const value = normalizeTab({
+    id: 7,
+    windowId: 2,
+    index: 4,
+    active: true,
+    highlighted: true,
+    pinned: false,
+    audible: true,
+    discarded: false,
+    hidden: false,
+    incognito: false,
+    groupId: 9,
+    title: "Example",
+    url: "https://example.com/",
+    favIconUrl: "https://example.com/favicon.ico",
+    mutedInfo: { muted: true }
+  }, "logical-7");
+
+  assert.equal(value.logicalId, "logical-7");
+  assert.equal(value.groupId, 9);
+  assert.equal(value.muted, true);
+  assert.equal(value.title, "Example");
+});
+
+test("normalizeTab treats a missing group ID as ungrouped", () => {
+  assert.equal(normalizeTab({ id: 1, windowId: 1, index: 0 }).groupId, TAB_GROUP_ID_NONE);
+});
+
+test("buildSnapshot sorts focused windows first and tabs by index", () => {
+  const snapshot = buildSnapshot({
+    capturedAt: 123,
+    windows: [
+      { id: 2, focused: false, tabs: [{ id: 4, windowId: 2, index: 1 }, { id: 3, windowId: 2, index: 0 }] },
+      { id: 1, focused: true, tabs: [{ id: 1, windowId: 1, index: 0 }] }
+    ],
+    groups: [{ id: 12, windowId: 2, title: "Research", color: "blue", collapsed: false }],
+    logicalIds: new Map([[1, "one"], [3, "three"], [4, "four"]])
+  });
+
+  assert.equal(snapshot.capturedAt, 123);
+  assert.deepEqual(snapshot.windows.map((window) => window.id), [1, 2]);
+  assert.deepEqual(snapshot.windows[1].tabs.map((tab) => tab.id), [3, 4]);
+  assert.equal(flattenTabs(snapshot).length, 3);
+});
+
+test("exact duplicate counting reports extra tabs and duplicate sets", () => {
+  const snapshot = buildSnapshot({
+    windows: [{ id: 1, focused: true, tabs: [
+      { id: 1, windowId: 1, index: 0, url: "https://example.com/" },
+      { id: 2, windowId: 1, index: 1, url: "https://example.com/" },
+      { id: 3, windowId: 1, index: 2, url: "https://example.org/" },
+      { id: 4, windowId: 1, index: 3, url: "https://example.org/" },
+      { id: 5, windowId: 1, index: 4, url: "https://example.org/" }
+    ] }],
+    groups: []
+  });
+
+  assert.deepEqual(countExactUrlDuplicates(snapshot), { duplicateSets: 2, duplicateTabs: 3 });
+});
