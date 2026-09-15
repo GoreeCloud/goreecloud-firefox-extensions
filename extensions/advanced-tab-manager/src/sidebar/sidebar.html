@@ -10,11 +10,14 @@
   <main class="shell">
     <header class="topbar">
       <div><p class="eyebrow">GoreeCloud</p><h1>Advanced Tab Manager</h1></div>
-      <button id="refresh" class="icon-button" type="button" aria-label="Refresh live browser state">↻</button>
+      <div class="topbar-actions">
+        <button id="save-window" class="icon-button" type="button" aria-label="Save focused window as a Tab Set">＋</button>
+        <button id="refresh" class="icon-button" type="button" aria-label="Refresh live browser and saved state">↻</button>
+      </div>
     </header>
     <div class="controls">
-      <label class="search-field"><span class="sr-only">Search open tabs</span><input id="search" type="search" autocomplete="off" placeholder="Search tabs, URLs, groups…"></label>
-      <label class="view-field"><span class="sr-only">Sidebar view</span><select id="view-mode" aria-label="Sidebar view"><option value="tree">Tree view</option><option value="groups">Native groups</option></select></label>
+      <label class="search-field"><span class="sr-only">Search tabs and saved items</span><input id="search" type="search" autocomplete="off" placeholder="Search open and saved tabs…"></label>
+      <label class="view-field"><span class="sr-only">Sidebar view</span><select id="view-mode" aria-label="Sidebar view"><option value="tree">Tree view</option><option value="groups">Native groups</option><option value="saved">Saved items</option></select></label>
     </div>
     <section id="summary" class="summary" aria-live="polite"></section>
     <section id="content" class="content" aria-live="polite"></section>
