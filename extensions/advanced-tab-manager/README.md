@@ -4,22 +4,27 @@ GoreeCloud Advanced Tab Manager is a local-first Firefox WebExtension for high-s
 
 ## Current source state
 
-- Version: `0.1.1`
+- Version: `0.1.2`
 - Lifecycle: `source-candidate`
 - Firefox add-on ID: `advanced-tab-manager@goreecloud.com`
 - Minimum Firefox version: `139.0`
 - Stable release: none
+- Permissions: `sessions`, `storage`, `tabGroups`, `tabs`
 - Host permissions: none
 - Content scripts: none
 - Private browsing: explicitly not allowed by manifest
 
-The current source implements live window/tab/native-group synchronization, a persistent sidebar surface, a lightweight popup, exact duplicate counting, safe tab activation/close/discard actions, extension-owned logical tab identifiers, and durable parent/child tree relationships stored with Firefox session tab values.
+The current source implements live window/tab/native-group synchronization, durable logical-ID trees, persistent Tab Sets, transactional tab stashing, safe restoration, a persistent sidebar surface, a lightweight popup, exact duplicate counting, and bounded tab actions.
 
-Tree relationships are keyed by logical tab identity rather than Firefox runtime tab IDs. This allows a restored tab to recover its extension-owned parent relationship even when Firefox assigns new runtime IDs. Missing or cross-window parents are reconciled as orphaned live roots without fabricating browser state, and malformed cycles are broken for presentation while new cycle-producing reparent operations fail closed.
+Tree relationships remain keyed by logical tab identity rather than Firefox runtime tab IDs. Tab Sets and stashed items are stored locally in `storage.local` under an explicit versioned schema. Saved records contain only the minimum local restoration metadata required by the implemented features: safe URLs, titles, ordering, pin state, tree relationships, and native-group presentation metadata where applicable.
 
-The sidebar now provides a tree view and native-group view. Tabs opened from another tab can adopt the opener as their tree parent; users can also make a tab a child of the previous browser tab or remove its tree parent. Tree metadata writes use verified transactional persistence with rollback on failure.
+Tab Set capture excludes URLs the extension cannot safely recreate with Firefox extension APIs. The current restorable boundary is `http:`, `https:`, and `about:blank`; privileged or executable schemes are not captured for restoration.
 
-It does **not** yet implement persistent Tab Sets, transactional stashing, snoozing, automatic organization rules, tree drag-and-drop/bulk tree actions, hidden-tab Focus Mode, Webspaces integration, Mozilla signing, or Stable release acceptance.
+Stashing is source-preserving: persist recovery state → verify persistence → close the live tab. If the close fails, the saved state is rolled back. Restoring a stash reverses the sequence: create the replacement tab → verify/update its supported metadata → remove the stored recovery record. If stored-state removal fails, the created replacement is removed as rollback.
+
+Restoring a Tab Set creates a new Firefox window and reconstructs restorable tabs, supported native groups, pinning, tree relationships, and the captured active tab. The saved Tab Set remains stored after restoration so it can be reused or deleted explicitly.
+
+It does **not** yet implement tree drag-and-drop/bulk tree operations, snoozing, automatic organization rules, normalized duplicate cleanup, automatic discard policy, import/export, the full manager/settings interface, Webspaces integration, representative Firefox runtime acceptance, Mozilla signing, or Stable release acceptance.
 
 ## Development validation
 

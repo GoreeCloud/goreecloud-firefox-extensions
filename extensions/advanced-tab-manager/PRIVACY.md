@@ -1,11 +1,15 @@
 # GoreeCloud Advanced Tab Manager — Privacy
 
-Version `0.1.1` is local-first and has no remote service dependency.
+Version `0.1.2` is local-first and has no remote service dependency.
 
 The source candidate requests no host permissions and injects no content scripts. It does not inspect page contents, cookies, form contents, authentication data, or network requests.
 
-The `tabs` permission permits access to privileged tab metadata such as title, URL, and favicon URL so the extension can present and organize open tabs. The `tabGroups` permission provides native Firefox tab-group metadata. The `sessions` permission is used only for extension-owned tab-session metadata needed by the current source: a random logical tab identifier and, when the user or Firefox opener relationship establishes a tree, the parent tab's logical identifier.
+The `tabs` permission permits access to privileged tab metadata such as title and URL so the extension can present and organize open tabs. `tabGroups` provides native Firefox tab-group metadata. `sessions` stores only extension-owned tab-session metadata used for durable logical/tree identity. Version `0.1.2` adds the `storage` permission because persistent Tab Sets and stash records now require extension-local persistence.
 
-Tree metadata contains no page contents, credentials, cookies, account tokens, browsing-body data, or remote identity information. It remains associated with Firefox's own session restoration mechanism and is not uploaded by the extension.
+`storage.local` contains only data required by saved features the user invokes: safe restorable URLs, titles, timestamps, ordering, pin state, extension-owned local identifiers, tree relationships, and native-group presentation metadata. The extension does not store page contents, cookies, authentication tokens, passwords, form contents, private keys, or reusable credentials.
+
+The current restorable URL boundary is intentionally conservative: `http:`, `https:`, and `about:blank`. Privileged or executable URLs such as `about:config`, `file:`, `data:`, `javascript:`, and `chrome:` are not persisted for Tab Set/stash restoration and are not closed by the stash action.
+
+Users can delete individual Tab Sets, individual stashed items, or all Tab Set/stash persistent state from the extension UI. These actions affect extension-owned saved state only; they do not erase Firefox history or unrelated browser data.
 
 The source candidate does not implement telemetry, advertising, analytics, remote synchronization, or Webspaces identity inference. The manifest explicitly sets `incognito: "not_allowed"`, so private tabs and windows are outside the extension's operating boundary.

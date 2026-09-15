@@ -6,15 +6,19 @@
 - No content scripts.
 - No remote code or remote telemetry.
 - No credential, cookie, token, or page-content storage.
-- Firefox remains authoritative for browser state.
+- Private browsing is explicitly disabled.
+- Firefox remains authoritative for live browser state.
 - Background state is reconstructed after suspension instead of trusting stale globals.
-- Extension-owned logical and tree-parent identifiers use Firefox session tab values rather than persisted runtime tab IDs.
-- Tree edges are accepted only between live tabs in the same normal window.
-- New self/descendant relationships and relationships whose ancestry is already malformed fail closed.
-- Missing/cross-window parents are reconciled as orphaned live roots without fabricating a browser tab.
-- Tree metadata writes require readback verification and attempt rollback to the prior relationship if persistence fails.
-- UI commands accept numeric Firefox tab IDs only as current runtime handles and delegate browser mutations to Firefox APIs.
-- Manual discard is suppressed in the current UI for active, pinned, or audible tabs.
+- Runtime Firefox tab/group IDs are never persisted as durable organizational identity.
+- Persistent Tab Sets/stashes use a validated schema in local extension storage and fail closed on corrupt/unsupported state.
+- Persistent writes require complete-record readback verification and attempt exact previous-record rollback on failure.
+- Stashing cannot close a live source tab until the recovery record has persisted and verified.
+- A stash restore cannot consume its recovery record until a live replacement has been created; failure to consume attempts to remove the replacement.
+- Tab Set/stash capture accepts only `http:`, `https:`, and `about:blank` for restoration; privileged/executable URL schemes fail closed.
+- Tree edges are accepted only between live tabs in the same normal window; cycle-producing relationships fail closed.
+- Persistent operations are serialized so reads do not observe partial save/stash transactions.
+- No `unlimitedStorage` permission is requested.
+- Manual discard remains suppressed in the UI for active, pinned, or audible tabs.
 
 ## Release boundary
 

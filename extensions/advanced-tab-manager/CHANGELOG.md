@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.2 — Source candidate
+
+- Added versioned persistent Tab Set and stash state in Firefox `storage.local`.
+- Added verified complete-record storage mutation with schema validation, revisioning, readback verification, and rollback.
+- Added Save Focused Window as Tab Set with safe-URL filtering and set-local group/tree identities.
+- Added reusable Tab Set restoration into a new Firefox window with supported group, pin, tree, and active-tab reconstruction.
+- Added transactional tab stashing that persists recovery state before closing the source tab and restores prior persistent state if close fails.
+- Added transactional stash restoration that creates a replacement before consuming stored state and rolls the replacement back if storage consumption fails.
+- Added conservative restoration URL allowlist for `http:`, `https:`, and `about:blank`.
+- Added serialized persistent operations and consistent dashboard reads.
+- Added Saved Items sidebar controls, individual deletion, and clear-all saved-state control.
+- Added focused-window Tab Set capture to the popup and saved-state counts to popup/sidebar summaries.
+- Added `storage` as the only new manifest permission; no host permissions, content scripts, or `unlimitedStorage` permission were added.
+- Expanded deterministic tests with persistent-state, Tab Set, stash transaction, and background message-flow coverage.
+
 ## 0.1.1 — Source candidate
 
 - Added durable parent/child tree relationships using Firefox session tab values keyed by logical tab identity.

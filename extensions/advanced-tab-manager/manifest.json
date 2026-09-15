@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "GoreeCloud Advanced Tab Manager",
-  "version": "0.1.1",
-  "description": "Local-first Firefox tab organization with live tab, window, native-group, and durable tree synchronization.",
+  "version": "0.1.2",
+  "description": "Local-first Firefox tab organization with durable trees, persistent Tab Sets, and transactional stashing.",
   "homepage_url": "https://github.com/GoreeCloud/goreecloud-firefox-extensions",
   "incognito": "not_allowed",
   "permissions": [
     "sessions",
+    "storage",
     "tabGroups",
     "tabs"
   ],
@@ -19,7 +20,9 @@
     "default_panel": "src/sidebar/sidebar.html"
   },
   "background": {
-    "scripts": ["src/background/background.js"],
+    "scripts": [
+      "src/background/background.js"
+    ],
     "persistent": false,
     "type": "module"
   },
