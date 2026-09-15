@@ -9,27 +9,30 @@
   --accent: AccentColor;
   --accent-text: AccentColorText;
 }
-
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: CanvasText; }
-button, input { font: inherit; }
-button { color: inherit; }
+button, input, select { font: inherit; }
+button, select { color: inherit; }
 .shell { min-height: 100vh; padding: 12px; }
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .eyebrow { margin: 0 0 2px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
 h1 { margin: 0; font-size: 17px; line-height: 1.2; }
-.icon-button, .row-action { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; cursor: pointer; }
+.icon-button, .row-action, .view-field select { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; cursor: pointer; }
 .icon-button { width: 34px; height: 34px; }
-.search-field { display: block; margin: 12px 0 8px; }
+.controls { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; align-items: center; margin: 12px 0 8px; }
+.search-field { display: block; min-width: 0; }
 .search-field input { width: 100%; border: 1px solid var(--border); background: var(--surface); color: inherit; border-radius: 12px; padding: 10px 12px; outline: none; }
-.search-field input:focus-visible, button:focus-visible, .tab-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.view-field select { height: 38px; padding: 0 9px; }
+.search-field input:focus-visible, button:focus-visible, select:focus-visible, .tab-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .summary { color: var(--muted); font-size: 12px; margin: 8px 2px 12px; }
 .window { margin: 0 0 14px; }
 .window-heading { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 6px; font-size: 12px; color: var(--muted); }
-.group { margin: 7px 0; border: 1px solid var(--border); background: var(--surface); border-radius: 14px; overflow: hidden; }
+.group, .tree { margin: 7px 0; border: 1px solid var(--border); background: var(--surface); border-radius: 14px; overflow: hidden; }
 .group-title { padding: 8px 10px; background: var(--surface-strong); font-size: 12px; font-weight: 700; }
-.tab-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; align-items: center; padding: 8px 8px 8px 10px; border-top: 1px solid var(--border); cursor: pointer; }
+.tab-row { --tree-depth: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; align-items: center; padding: 8px 8px 8px 10px; border-top: 1px solid var(--border); cursor: pointer; }
 .tab-row:first-child { border-top: 0; }
+.tree .tab-row { padding-left: calc(10px + (var(--tree-depth) * 18px)); }
+.tree .tab-row[data-tree-status="orphaned"], .tree .tab-row[data-tree-status="cycle"] { box-shadow: inset 3px 0 0 Mark; }
 .tab-row[data-active="true"] { box-shadow: inset 3px 0 0 var(--accent); }
 .tab-main { min-width: 0; }
 .tab-title, .tab-url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -41,10 +44,6 @@ h1 { margin: 0; font-size: 17px; line-height: 1.2; }
 .row-action { min-width: 30px; height: 30px; padding: 0 7px; }
 .empty { padding: 20px 10px; text-align: center; color: var(--muted); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-
-@media (prefers-reduced-transparency: reduce) {
-  :root { --bg: Canvas; --surface: Canvas; --surface-strong: color-mix(in srgb, Canvas 90%, CanvasText 10%); }
-}
-@media (forced-colors: active) {
-  .group, .icon-button, .row-action, .search-field input { border: 1px solid ButtonText; }
-}
+@media (max-width: 360px) { .controls { grid-template-columns: 1fr; } .view-field select { width: 100%; } .actions { flex-direction: column; } }
+@media (prefers-reduced-transparency: reduce) { :root { --bg: Canvas; --surface: Canvas; --surface-strong: color-mix(in srgb, Canvas 90%, CanvasText 10%); } }
+@media (forced-colors: active) { .group, .tree, .icon-button, .row-action, .search-field input, .view-field select { border: 1px solid ButtonText; } }

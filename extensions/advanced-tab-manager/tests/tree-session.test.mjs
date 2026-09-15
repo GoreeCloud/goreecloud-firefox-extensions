@@ -1,0 +1,7 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { persistVerifiedTabString } from "../src/core/tree-session.js";
+function fakeSessions(initialValue = undefined, { failWrite = false } = {}) { let value=initialValue; return { async getTabValue(){return value;}, async setTabValue(_tabId,_key,next){if(failWrite){failWrite=false;throw new Error("simulated write failure");} value=next;}, async removeTabValue(){if(failWrite){failWrite=false;throw new Error("simulated remove failure");} value=undefined;}, peek(){return value;} }; }
+test("verified tree-parent persistence commits a new value", async()=>{const sessions=fakeSessions("old-parent"); const result=await persistVerifiedTabString({sessions,tabId:1,key:"tree",value:"new-parent"}); assert.equal(result.ok,true); assert.equal(result.previousValue,"old-parent"); assert.equal(sessions.peek(),"new-parent");});
+test("verified tree-parent persistence supports transactional detach", async()=>{const sessions=fakeSessions("old-parent"); const result=await persistVerifiedTabString({sessions,tabId:1,key:"tree",value:null}); assert.equal(result.ok,true); assert.equal(sessions.peek(),undefined);});
+test("write failure restores the previous tree parent", async()=>{const sessions=fakeSessions("old-parent",{failWrite:true}); const result=await persistVerifiedTabString({sessions,tabId:1,key:"tree",value:"new-parent"}); assert.equal(result.ok,false); assert.equal(result.rolledBack,true); assert.equal(sessions.peek(),"old-parent");});
