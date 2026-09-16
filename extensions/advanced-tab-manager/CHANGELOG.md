@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.7 — Source candidate
+
+- Added a keyboard-first sidebar command palette with a visible top-bar trigger and `Ctrl/⌘+K` shortcut.
+- Added a pure browser-API-independent command catalog with nine bounded commands and deterministic local query ranking.
+- Added case-insensitive AND-token matching, stable authored tie ordering, and exact fail-closed command lookup.
+- Added bounded commands for Tree, Native groups, Duplicates, Saved items, Snoozed, and Rules navigation plus local search focus, state refresh, and focused-window Tab Set capture.
+- Routed command execution through existing sidebar controls rather than adding direct Firefox API authority to the palette.
+- Added Arrow Up/Down, Enter, Escape, pointer selection, dialog/listbox semantics, focus restoration, and a no-match state.
+- Added Reduced Transparency and Forced Colors fallbacks for the command overlay.
+- Added focused command-catalog/search tests and expanded the source validator to require the 0.1.7 command boundary.
+- Corrected repository architecture/source-state documentation to reflect the already-implemented 0.1.6 ATM-008A rule-action layer.
+- Added no new manifest permission; the existing `alarms`, `sessions`, `storage`, `tabGroups`, and `tabs` boundary remains unchanged.
+- Full manager/settings UI, import/export, richer command actions, representative Firefox command-palette runtime/accessibility acceptance, signing, and Stable qualification remain outside this source-candidate milestone.
+
 ## 0.1.6 — Source candidate
 
 - Added a bounded rule-action vocabulary: `pin`, `unpin`, `mute`, `unmute`, and `discard`.

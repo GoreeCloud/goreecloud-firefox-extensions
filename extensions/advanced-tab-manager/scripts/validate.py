@@ -7,7 +7,7 @@ manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
 assert manifest["manifest_version"] == 3
 assert manifest["name"] == "GoreeCloud Advanced Tab Manager"
-assert manifest["version"] == "0.1.6"
+assert manifest["version"] == "0.1.7"
 assert manifest["browser_specific_settings"]["gecko"]["id"] == "advanced-tab-manager@goreecloud.com"
 assert manifest["browser_specific_settings"]["gecko"]["strict_min_version"] == "139.0"
 assert manifest["incognito"] == "not_allowed"
@@ -25,14 +25,14 @@ required = [
     "src/core/state.js", "src/core/tree.js", "src/core/tree-session.js", "src/core/duplicates.js",
     "src/core/persistent-state.js", "src/core/tab-sets.js", "src/core/stash-transaction.js",
     "src/core/snooze-store.js", "src/core/snooze.js", "src/core/snooze-transaction.js",
-    "src/core/rule-state.js", "src/core/rules.js",
-    "src/sidebar/sidebar.html", "src/sidebar/sidebar.js", "src/sidebar/open-tabs-view.js", "src/sidebar/saved-view.js", "src/sidebar/duplicates-view.js", "src/sidebar/snoozed-view.js", "src/sidebar/rules-view.js", "src/sidebar/rules.css", "src/sidebar/ui.js", "src/sidebar/sidebar.css",
+    "src/core/rule-state.js", "src/core/rules.js", "src/core/commands.js",
+    "src/sidebar/sidebar.html", "src/sidebar/sidebar.js", "src/sidebar/open-tabs-view.js", "src/sidebar/saved-view.js", "src/sidebar/duplicates-view.js", "src/sidebar/snoozed-view.js", "src/sidebar/rules-view.js", "src/sidebar/command-palette.js", "src/sidebar/command-palette.css", "src/sidebar/rules.css", "src/sidebar/ui.js", "src/sidebar/sidebar.css",
     "src/popup/popup.html", "src/popup/popup.js", "src/popup/popup.css",
     "tests/state.test.mjs", "tests/tree.test.mjs", "tests/tree-session.test.mjs",
     "tests/persistent-state.test.mjs", "tests/tab-sets.test.mjs", "tests/stash-transaction.test.mjs", "tests/background-storage.test.mjs",
     "tests/duplicates.test.mjs", "tests/duplicate-cleanup.test.mjs",
     "tests/snooze-store.test.mjs", "tests/snooze.test.mjs", "tests/snooze-transaction.test.mjs", "tests/background-snooze.test.mjs",
-    "tests/rule-state.test.mjs", "tests/rules.test.mjs", "tests/background-rules.test.mjs"
+    "tests/rule-state.test.mjs", "tests/rules.test.mjs", "tests/background-rules.test.mjs", "tests/commands.test.mjs"
 ]
 for relative in required:
     assert (ROOT / relative).is_file(), f"missing required source-candidate file: {relative}"
@@ -43,6 +43,10 @@ rule_state = (ROOT / "src/core/rule-state.js").read_text(encoding="utf-8")
 rules_core = (ROOT / "src/core/rules.js").read_text(encoding="utf-8")
 rules_view = (ROOT / "src/sidebar/rules-view.js").read_text(encoding="utf-8")
 sidebar = (ROOT / "src/sidebar/sidebar.js").read_text(encoding="utf-8")
+commands_core = (ROOT / "src/core/commands.js").read_text(encoding="utf-8")
+palette = (ROOT / "src/sidebar/command-palette.js").read_text(encoding="utf-8")
+palette_css = (ROOT / "src/sidebar/command-palette.css").read_text(encoding="utf-8")
+sidebar_html = (ROOT / "src/sidebar/sidebar.html").read_text(encoding="utf-8")
 
 assert "createRuleManager" in background
 assert "atm:get-rule-state" in background and "atm:set-rule-engine-enabled" in background
@@ -64,4 +68,13 @@ assert "browser.tabs.remove" not in rule_background, "ATM-008A rule actions must
 assert "tabs.create" not in rule_background and "url:" not in rule_background, "ATM-008A rule actions must not navigate or create tabs"
 assert "rule-create-form" in rules_view and "apply-rule-actions" in rules_view
 assert "atm:apply-rule-actions" in sidebar
-print("Validated Advanced Tab Manager 0.1.6 conflict-safe explicit rule-action source candidate.")
+
+assert "COMMANDS" in commands_core and "searchCommands" in commands_core and "commandById" in commands_core
+for command_id in ("view-tree", "view-groups", "view-duplicates", "view-saved", "view-snoozed", "view-rules", "focus-search", "refresh-state", "save-window"):
+    assert f'id: "{command_id}"' in commands_core, f"missing bounded command: {command_id}"
+assert "browser." not in commands_core, "command catalog must remain browser-API independent"
+assert "browser." not in palette, "command palette must route through established sidebar controls rather than direct browser APIs"
+assert "Control+K Meta+K" in palette and "aria-modal" in palette and "role=\"listbox\"" in palette
+assert 'href="command-palette.css"' in sidebar_html and 'src="command-palette.js"' in sidebar_html
+assert "prefers-reduced-transparency" in palette_css and "forced-colors" in palette_css
+print("Validated Advanced Tab Manager 0.1.7 bounded command-palette source candidate.")
