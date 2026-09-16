@@ -1,6 +1,6 @@
 # GoreeCloud Advanced Tab Manager — Feature Roadmap
 
-**Lifecycle:** source-candidate 0.1.6  
+**Lifecycle:** source-candidate 0.1.7  
 **Authoritative project record:** `GoreeCloud/Projects/Project Specification — Advanced Tab Manager.md`
 
 | ID | Obligation | Priority | State |
@@ -15,8 +15,9 @@
 | ATM-006A | Add optional conservative normalized-URL matching and durable protected-tab cleanup exclusions. | Medium | Planned |
 | ATM-007 | Add restart-safe snoozing and deadline reconstruction. | High | Implemented in 0.1.4+ source candidate with one-shot local deadlines, restart alarm reconstruction, rescheduling, and source-preserving restore; runtime acceptance pending |
 | ATM-007A | Add richer arbitrary-date/time snooze scheduling and optional recurring schedules only after a separate policy/UX design. | Medium | Planned |
-| ATM-008 | Add rule engine, command palette, full manager, import/export, and large-session performance qualification. | Medium | In progress — deterministic local rule engine and explicit rule-action slice implemented through 0.1.6; remaining surfaces/qualification planned |
-| ATM-008A | Add explicit rule-action execution and user-facing rule management after separate mutation-safety and UX acceptance. | Medium | Implemented in 0.1.6 source candidate with bounded actions, conflict-safe planning, live-state recheck, Rules sidebar, and explicit Apply now; representative runtime acceptance pending |
+| ATM-008 | Add rule engine, command palette, full manager, import/export, and large-session performance qualification. | Medium | In progress — deterministic local rule engine, explicit rule actions, and bounded command palette implemented through 0.1.7; remaining surfaces/qualification planned |
+| ATM-008A | Add explicit rule-action execution and user-facing rule management after separate mutation-safety and UX acceptance. | Medium | Implemented in 0.1.6 source candidate; representative runtime acceptance pending |
+| ATM-008B | Add a keyboard-first command-palette foundation without widening browser authority. | Medium | Implemented in 0.1.7 source candidate with deterministic local command search/navigation; representative runtime acceptance pending |
 | ATM-009 | Complete privacy/security review, Firefox runtime acceptance, Mozilla signing, and later Stable qualification. | High | Planned |
 
 No roadmap entry is a release or Stable claim without exact implementation and acceptance evidence.

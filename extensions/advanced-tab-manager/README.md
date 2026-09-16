@@ -4,7 +4,7 @@ GoreeCloud Advanced Tab Manager is a local-first Firefox WebExtension for high-s
 
 ## Current source state
 
-- Version: `0.1.6`
+- Version: `0.1.7`
 - Lifecycle: `source-candidate`
 - Firefox add-on ID: `advanced-tab-manager@goreecloud.com`
 - Minimum Firefox version: `139.0`
@@ -14,7 +14,7 @@ GoreeCloud Advanced Tab Manager is a local-first Firefox WebExtension for high-s
 - Content scripts: none
 - Private browsing: explicitly not allowed by manifest
 
-The current source implements live window/tab/native-group synchronization, durable logical-ID trees, persistent Tab Sets, transactional tab stashing, reviewed exact-URL duplicate cleanup, restart-safe one-shot snoozing, a deterministic local rule engine, and the bounded ATM-008A explicit rule-action layer.
+The current source implements live window/tab/native-group synchronization, durable logical-ID trees, persistent Tab Sets, transactional tab stashing, reviewed exact-URL duplicate cleanup, restart-safe one-shot snoozing, a deterministic local rule engine, bounded explicit rule actions, and a keyboard-first command-palette foundation.
 
 Tree relationships remain keyed by extension-owned logical tab identity rather than Firefox runtime tab IDs. Tab Sets, stashed items, snoozed recovery records, and rule definitions remain local to the extension. The Tab Set/stash, snooze, and rule stores are independently versioned so new capabilities do not silently migrate or reinterpret unrelated saved-state data.
 
@@ -30,7 +30,7 @@ Firefox alarms are session-scoped, so persisted snooze deadlines—not alarms—
 
 Due restoration creates the replacement tab before consuming the snooze record, reapplies supported pin/native-group metadata, attempts tree-parent restoration when the logical parent is live in the target window, and removes recovery state only after replacement succeeds. Failure to consume stored recovery state rolls the replacement back.
 
-The current snooze UI exposes **Snooze 1 hour**, a dedicated **Snoozed** view, exact local wake times, **Open now**, and **+1h** rescheduling. Recurring snoozes, notifications, and remote synchronization are not part of 0.1.6.
+The current snooze UI exposes **Snooze 1 hour**, a dedicated **Snoozed** view, exact local wake times, **Open now**, and **+1h** rescheduling. Recurring snoozes, notifications, and remote synchronization are not part of 0.1.7.
 
 Duplicate cleanup remains review-first and exact-URL-only. Active, pinned, audible, hidden/private, tree-linked, and explicitly excluded tabs are not eligible for duplicate cleanup.
 
@@ -38,17 +38,17 @@ Duplicate cleanup remains review-first and exact-URL-only. Active, pinned, audib
 
 The local rule store remains `goreecloud.advancedTabManager.ruleState.v1`. The rule engine is globally disabled by default and each rule has its own enabled state, explicit integer priority, stable ID, timestamps, and one to eight conditions.
 
-The evaluator matches locally available tab metadata only: hostname, title, URL, native-group title, pinned, audible, muted, discarded, and tree-child state. Text comparisons are deterministic and case-insensitive; boolean comparisons use explicit `is` conditions. Rules use all-condition matching, higher numeric priority first, and stable rule-ID ordering for evaluation.
+Version 0.1.6 added optional rule actions without changing the storage schema version. New actions remain restricted to **pin**, **unpin**, **mute**, **unmute**, and **discard**. Unsupported, duplicate, or contradictory actions fail closed. **Apply now is explicit and user-triggered** and performs fresh-plan/live-tab rechecks before bounded mutations.
 
-Version 0.1.6 adds optional rule actions without changing the storage schema version. Older rules with no action remain valid and preview-only. New actions are restricted to **pin**, **unpin**, **mute**, **unmute**, and **discard**. Unsupported, duplicate, or contradictory actions fail closed.
+### Command palette — 0.1.7
 
-For each tab, the highest matching priority controls the action plan. If equal-priority matching rules disagree on the action list, the tab is marked conflicted and is not mutated. Preview exposes these plans and conflicts without changing Firefox.
+Version 0.1.7 adds a sidebar-local command palette opened by the toolbar button or `Ctrl/⌘+K`. Its catalog and query ranking are pure, deterministic, and browser-API independent. Multi-token matching is AND-based and stable authored order resolves equal scores.
 
-**Apply now is explicit and user-triggered.** The background manager computes the plan from a fresh Firefox snapshot, reconstructs Firefox state again and recomputes it, then aborts if the plan changed or a conflict appeared. Each target tab is also re-read before mutation. The rule path can only pin/unpin, mute/unmute, or discard; it cannot close tabs, navigate tabs, create tabs, inspect page content, or widen permissions.
+The palette deliberately exposes only existing bounded sidebar actions: open Tree, Native groups, Duplicates, Saved items, Snoozed, or Rules views; focus the main local search field; refresh live/saved state; and save the focused window as a local Tab Set. It routes through established sidebar controls instead of introducing direct browser APIs or new permissions. It does not close, navigate, pin, mute, discard, or otherwise mutate live tabs by itself.
 
-The sidebar includes a dedicated **Rules** view with engine enable/disable, a bounded hostname-rule creation form, rule enable/disable/delete, preview, conflict counts, and an Apply now confirmation. Event-driven automatic rule application and richer rule editing remain future work.
+Keyboard interaction supports up/down selection, Enter execution, Escape close, and `Ctrl/⌘+K` toggle. The overlay includes Reduced Transparency and Forced Colors fallbacks.
 
-It does **not** yet implement tree drag-and-drop/bulk tree operations, normalized duplicate matching, durable protected-tab rules, event-driven automatic rule application, automatic discard policy, import/export, the full manager/settings interface, command palette, Webspaces integration, representative Firefox runtime acceptance, Mozilla signing, or Stable release acceptance.
+It does **not** yet implement tree drag-and-drop/bulk tree operations, normalized duplicate matching, durable protected-tab rules, event-driven automatic rule application, automatic discard policy, import/export, the full manager/settings interface, richer command actions, Webspaces integration, representative Firefox runtime acceptance, Mozilla signing, or Stable release acceptance.
 
 ## Development validation
 
