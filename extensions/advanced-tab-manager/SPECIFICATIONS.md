@@ -1,36 +1,27 @@
 # GoreeCloud Advanced Tab Manager — Repository Specifications
 
-This repository document describes the implemented source boundary for version `0.1.3`. The broader product direction is governed by the canonical Drive project specification.
+This repository document describes the implemented source boundary for version `0.1.4`. The broader product direction is governed by the canonical Drive project specification.
 
 ## Implemented source contract
 
-- Firefox Manifest V3 extension.
-- Add-on ID `advanced-tab-manager@goreecloud.com`.
-- Firefox 139+ baseline because the `tabGroups` API became available in Firefox 139.
-- Non-persistent Firefox background scripts loaded as ES modules.
-- `tabs`, `tabGroups`, `sessions`, and `storage` permissions only.
-- `storage` is used for extension-owned persistent Tab Set and stash state. No `unlimitedStorage` permission is requested.
-- No host permissions, content scripts, remote telemetry, or page-content inspection.
-- Firefox is authoritative for whether tabs, windows, and native groups exist.
-- Every live UI snapshot is reconstructed from Firefox APIs rather than trusted from a durable mirror.
-- Extension-owned logical tab IDs and tree-parent relationships use Firefox session tab values rather than persisted runtime Firefox tab IDs.
-- Persistent Tab Set/stash state uses a versioned schema in `storage.local` and fails closed on unsupported/corrupt schema rather than silently replacing it.
-- Tab Sets store set-local item/group identities; they do not persist Firefox runtime tab IDs or runtime group IDs.
-- Save-focused-window capture includes only URLs that current extension APIs can safely recreate: `http:`, `https:`, and `about:blank`.
-- Stashing follows persist → readback verify → close source. Close failure attempts to restore the exact previous persistent-state record.
-- Stash restore follows create replacement → apply supported metadata → remove stored record. Stored-state removal failure attempts to remove the newly created replacement.
-- Restoring a Tab Set leaves the saved Tab Set intact and creates a new Firefox window containing the captured restorable state.
-- Native groups are reconstructed from set-local group descriptors for unpinned restored tabs; pin state is applied after grouping because Firefox grouping can unpin tabs.
-- Tree relationships are reconstructed from set-local item IDs after restored runtime tabs exist.
-- Persistent operations are serialized so dashboard/saved-state reads wait for in-flight save/stash transactions.
-- User deletion operations can remove individual or all extension-owned Tab Set/stash records without deleting unrelated live browser state.
-- Duplicate matching is exact URL only. Fragment or tracking-parameter normalization is not performed in 0.1.3.
-- Duplicate cleanup is review-before-destruction: the sidebar exposes every exact-match set, requires a selected keeper, and requires explicit confirmation.
-- The background re-reads live Firefox state immediately before cleanup. A stale set or keeper fails closed.
-- Active, pinned, audible, hidden/private, tree-linked, and explicitly excluded tabs are never eligible for duplicate cleanup. Guarded tabs may coexist with the selected keeper and remain open.
-- Duplicate cleanup uses only existing `tabs` authority and adds no new permission.
-- UI actions remain bounded to Firefox-supported operations and extension-owned metadata changes.
+- Firefox Manifest V3 extension; add-on ID `advanced-tab-manager@goreecloud.com`; Firefox 139+ baseline.
+- Non-persistent ES-module background scripts.
+- Permissions only: `alarms`, `sessions`, `storage`, `tabGroups`, and `tabs`.
+- `alarms` exists only for one-shot snooze wake scheduling; snooze deadlines are persisted separately because Firefox alarms do not survive browser sessions.
+- No `unlimitedStorage`, host permissions, content scripts, remote telemetry, page-content inspection, or private-browsing access.
+- Firefox remains authoritative for live tabs/windows/native groups; UI snapshots are reconstructed from Firefox APIs.
+- Runtime Firefox tab/group IDs are not durable persistent identity.
+- Existing Tab Set/stash state remains under its existing versioned key; snooze recovery uses a separate versioned `storage.local` record and fails closed on invalid/unsupported state.
+- Restorable URLs remain limited to `http:`, `https:`, and `about:blank`.
+- Snooze creation follows prepare → persist/readback verify → create/readback verify one-shot alarm → close source.
+- Snooze scheduling or close failure attempts to clear the alarm and restore the exact prior snooze record.
+- Background startup reconstructs all expected ATM snooze alarms from persisted deadlines and clears stale ATM snooze alarm names.
+- Overdue persisted items receive a small startup grace before restore is attempted; failed due restoration preserves recovery state and schedules a bounded retry.
+- Due restore follows create replacement → restore supported pin/group/tree metadata → verified recovery-record removal. Recovery removal failure removes the replacement as rollback.
+- Snooze rescheduling writes/verifies the new deadline before replacing its alarm; alarm replacement failure restores prior storage and attempts to recreate the previous alarm.
+- Initial UI supports Snooze 1 hour, Snoozed view, Open now, and +1h rescheduling. Arbitrary-date/recurring UI is not claimed.
+- Existing tree, Tab Set, stash, exact-duplicate, and guarded-cleanup contracts remain in force.
 
 ## Release boundary
 
-`0.1.3` is a source candidate. Source tests, CI, deterministic packaging, or merge do not establish representative Firefox runtime acceptance, Mozilla signing, signed-XPI acceptance, or Stable qualification.
+`0.1.4` is a source candidate. Source tests, CI, deterministic packaging, or merge do not establish representative Firefox runtime acceptance, browser-restart acceptance, Mozilla signing, signed-XPI acceptance, or Stable qualification.

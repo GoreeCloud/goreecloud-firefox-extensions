@@ -1,6 +1,7 @@
 import { createBrowserState } from "./browser-state.js";
 import { createDuplicateCleanup } from "./duplicate-cleanup.js";
 import { createSavedState } from "./saved-state.js";
+import { createSnoozeManager } from "./snooze.js";
 
 const CHANGE_MESSAGE = "atm:state-changed";
 
@@ -30,6 +31,14 @@ const duplicateCleanup = createDuplicateCleanup({
   readLiveSnapshot: browserState.readLiveSnapshot,
   broadcastChange
 });
+const snoozeManager = createSnoozeManager({
+  browser,
+  readLiveSnapshot: browserState.readLiveSnapshot,
+  setTreeParent: browserState.setTreeParent,
+  ensureLogicalId: browserState.ensureLogicalId,
+  broadcastChange,
+  idFactory: newId
+});
 
 browser.tabs.onCreated.addListener((tab) => {
   browserState.adoptOpenerRelationship(tab)
@@ -53,6 +62,20 @@ registerEvent(browser.tabGroups.onRemoved, "group-removed");
 registerEvent(browser.tabGroups.onMoved, "group-moved");
 registerEvent(browser.sessions.onChanged, "session-changed");
 
+if (browser.alarms?.onAlarm) {
+  browser.alarms.onAlarm.addListener((alarm) => {
+    snoozeManager.handleAlarm(alarm).catch((error) => {
+      console.error("Advanced Tab Manager could not process a snooze alarm", error);
+    });
+  });
+
+  void snoozeManager.reconcileSnoozeAlarms().then((result) => {
+    if (!result?.ok) console.warn("Advanced Tab Manager could not fully reconstruct snooze alarms", result?.reason || result);
+  }).catch((error) => {
+    console.error("Advanced Tab Manager snooze alarm reconstruction failed", error);
+  });
+}
+
 browser.runtime.onMessage.addListener(async (message) => {
   switch (message?.type) {
     case "atm:get-snapshot":
@@ -61,6 +84,8 @@ browser.runtime.onMessage.addListener(async (message) => {
       return savedState.readOrganizationalState();
     case "atm:get-dashboard-state":
       return savedState.readDashboardState();
+    case "atm:get-snooze-state":
+      return snoozeManager.readSnoozeState();
     case "atm:save-focused-window-tab-set":
       return savedState.saveFocusedWindowAsTabSet(message.name || "");
     case "atm:restore-tab-set":
@@ -75,6 +100,12 @@ browser.runtime.onMessage.addListener(async (message) => {
       return savedState.deleteStashedItem(message.stashedItemId);
     case "atm:clear-saved-items":
       return savedState.clearSavedItems();
+    case "atm:snooze-tab":
+      return snoozeManager.snoozeTab(message.tabId, message.wakeAt);
+    case "atm:restore-snoozed-item":
+      return snoozeManager.restoreSnoozedItem(message.snoozedItemId);
+    case "atm:reschedule-snoozed-item":
+      return snoozeManager.rescheduleSnoozedItem(message.snoozedItemId, message.wakeAt);
     case "atm:cleanup-exact-duplicates":
       return duplicateCleanup.cleanupExactDuplicates({ url: message.url, keepTabId: message.keepTabId });
     case "atm:activate-tab": {
