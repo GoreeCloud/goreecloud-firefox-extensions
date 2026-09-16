@@ -25,7 +25,8 @@ function memoryStorage(initial = {}) {
 
 const rule = {
   id: "rule-1", name: "Docs", enabled: true, priority: 5, createdAt: 10, updatedAt: 10,
-  conditions: [{ field: "hostname", operator: "equals", value: "docs.example.com" }]
+  conditions: [{ field: "hostname", operator: "equals", value: "docs.example.com" }],
+  actions: ["pin"]
 };
 
 test("empty rule state is globally disabled", () => {
@@ -38,8 +39,19 @@ test("valid rule state round-trips from storage", async () => {
   assert.deepEqual((await readRuleStateRecord(storage)).state, state);
 });
 
+test("pre-0.1.6 rules without actions remain valid and preview-only", () => {
+  const legacyRule = { ...rule };
+  delete legacyRule.actions;
+  assert.equal(validateRuleState({ schemaVersion: 1, revision: 2, enabled: true, rules: [legacyRule] }).rules[0].actions, undefined);
+});
+
 test("invalid unsupported field fails closed", () => {
   assert.throws(() => validateRuleState({ schemaVersion: 1, revision: 0, enabled: true, rules: [{ ...rule, conditions: [{ field: "pageContent", operator: "contains", value: "secret" }] }] }), /unsupported/);
+});
+
+test("unsupported or contradictory actions fail closed", () => {
+  assert.throws(() => validateRuleState({ schemaVersion: 1, revision: 0, enabled: true, rules: [{ ...rule, actions: ["close"] }] }), /action/);
+  assert.throws(() => validateRuleState({ schemaVersion: 1, revision: 0, enabled: true, rules: [{ ...rule, actions: ["pin", "unpin"] }] }), /conflict/);
 });
 
 test("verified mutation increments revision", async () => {
