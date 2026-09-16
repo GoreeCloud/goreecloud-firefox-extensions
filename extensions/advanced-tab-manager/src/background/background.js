@@ -103,6 +103,8 @@ browser.runtime.onMessage.addListener(async (message) => {
       return ruleManager.deleteRule(message.ruleId);
     case "atm:preview-rule-evaluation":
       return ruleManager.previewRuleEvaluation();
+    case "atm:apply-rule-actions":
+      return ruleManager.applyRuleActions();
     case "atm:save-focused-window-tab-set":
       return savedState.saveFocusedWindowAsTabSet(message.name || "");
     case "atm:restore-tab-set":
