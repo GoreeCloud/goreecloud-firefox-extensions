@@ -3,7 +3,15 @@ import {
   commitRuleStateMutation,
   readRuleStateRecord
 } from "../core/rule-state.js";
-import { evaluateRules, normalizeRuleInput } from "../core/rules.js";
+import { evaluateRules, normalizeRuleInput, planRuleActions } from "../core/rules.js";
+
+function planSignature(plan) {
+  return JSON.stringify({
+    engineEnabled: plan.engineEnabled,
+    actions: plan.actions,
+    conflicts: plan.conflicts
+  });
+}
 
 export function createRuleManager({ browser, readLiveSnapshot, broadcastChange, idFactory, now = () => Date.now() }) {
   let operationTail = Promise.resolve();
@@ -105,12 +113,126 @@ export function createRuleManager({ browser, readLiveSnapshot, broadcastChange, 
           readRuleStateRecord(browser.storage.local),
           readLiveSnapshot()
         ]);
-        return { ok: true, previewOnly: true, evaluation: evaluateRules({ ruleState: record.state, snapshot }) };
+        return {
+          ok: true,
+          previewOnly: true,
+          evaluation: evaluateRules({ ruleState: record.state, snapshot }),
+          plan: planRuleActions({ ruleState: record.state, snapshot })
+        };
       } catch (error) {
-        return { ok: false, reason: reasonFromError(error), previewOnly: true, evaluation: null };
+        return { ok: false, reason: reasonFromError(error), previewOnly: true, evaluation: null, plan: null };
       }
     });
   }
 
-  return { deleteRule, previewRuleEvaluation, readRuleState, setRuleEngineEnabled, upsertRule };
+  async function applyOneAction(tabId, action, current) {
+    switch (action) {
+      case "pin":
+        if (!current.pinned) {
+          await browser.tabs.update(tabId, { pinned: true });
+          current.pinned = true;
+          return true;
+        }
+        return false;
+      case "unpin":
+        if (current.pinned) {
+          await browser.tabs.update(tabId, { pinned: false });
+          current.pinned = false;
+          return true;
+        }
+        return false;
+      case "mute":
+        if (!current.mutedInfo?.muted && !current.muted) {
+          await browser.tabs.update(tabId, { muted: true });
+          current.muted = true;
+          current.mutedInfo = { ...(current.mutedInfo || {}), muted: true };
+          return true;
+        }
+        return false;
+      case "unmute":
+        if (current.mutedInfo?.muted || current.muted) {
+          await browser.tabs.update(tabId, { muted: false });
+          current.muted = false;
+          current.mutedInfo = { ...(current.mutedInfo || {}), muted: false };
+          return true;
+        }
+        return false;
+      case "discard":
+        if (!current.discarded) {
+          await browser.tabs.discard(tabId);
+          current.discarded = true;
+          return true;
+        }
+        return false;
+      default:
+        throw new Error("unsupported rule action");
+    }
+  }
+
+  async function applyRuleActions() {
+    return serialize(async () => {
+      try {
+        const record = await readRuleStateRecord(browser.storage.local);
+        if (!record.state.enabled) return { ok: false, reason: "rule-engine-disabled", applied: [], conflicts: [] };
+
+        const firstSnapshot = await readLiveSnapshot();
+        const firstPlan = planRuleActions({ ruleState: record.state, snapshot: firstSnapshot });
+        if (firstPlan.conflicts.length) {
+          return { ok: false, reason: "rule-action-conflict", applied: [], conflicts: firstPlan.conflicts };
+        }
+
+        const confirmationSnapshot = await readLiveSnapshot();
+        const confirmedPlan = planRuleActions({ ruleState: record.state, snapshot: confirmationSnapshot });
+        if (planSignature(firstPlan) !== planSignature(confirmedPlan)) {
+          return { ok: false, reason: "browser-state-changed", applied: [], conflicts: confirmedPlan.conflicts };
+        }
+        if (confirmedPlan.conflicts.length) {
+          return { ok: false, reason: "rule-action-conflict", applied: [], conflicts: confirmedPlan.conflicts };
+        }
+
+        const applied = [];
+        for (const item of confirmedPlan.actions) {
+          let current;
+          try {
+            current = await browser.tabs.get(item.tabId);
+          } catch {
+            return { ok: false, reason: "browser-state-changed", applied, conflicts: [], failedTabId: item.tabId };
+          }
+          if (current.incognito || current.windowId !== item.windowId) {
+            return { ok: false, reason: "browser-state-changed", applied, conflicts: [], failedTabId: item.tabId };
+          }
+
+          const executedActions = [];
+          try {
+            for (const action of item.actions) {
+              if (await applyOneAction(item.tabId, action, current)) executedActions.push(action);
+            }
+          } catch {
+            return { ok: false, reason: "browser-mutation-failed", applied, conflicts: [], failedTabId: item.tabId };
+          }
+          applied.push({ ...item, executedActions });
+        }
+
+        if (applied.some((item) => item.executedActions.length)) broadcastChange("rule-actions-applied");
+        return {
+          ok: true,
+          applied,
+          conflicts: [],
+          plannedTabCount: confirmedPlan.actions.length,
+          changedTabCount: applied.filter((item) => item.executedActions.length).length
+        };
+      } catch (error) {
+        return { ok: false, reason: reasonFromError(error), applied: [], conflicts: [] };
+      }
+    });
+  }
+
+  return {
+    applyRuleActions,
+    deleteRule,
+    previewRuleEvaluation,
+    readRuleState,
+    setRuleEngineEnabled,
+    upsertRule
+  };
 }

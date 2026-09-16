@@ -1,0 +1,13 @@
+.rule-view { display: grid; gap: 10px; }
+.rule-tools { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 10px; border: 1px solid var(--border); background: var(--surface); border-radius: 12px; }
+.rule-tools .duplicate-policy { flex: 1 1 100%; margin: 0 0 2px; }
+.rule-form { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; padding: 10px; border: 1px solid var(--border); background: var(--surface); border-radius: 12px; }
+.rule-form h2 { grid-column: 1 / -1; margin: 0; }
+.rule-form label { display: grid; gap: 4px; color: var(--muted); font-size: 11px; }
+.rule-form input, .rule-form select { width: 100%; min-width: 0; border: 1px solid var(--border); background: var(--surface-strong); color: inherit; border-radius: 9px; padding: 8px; }
+.rule-submit { grid-column: 1 / -1; justify-self: end; min-width: 90px; }
+.rule-preview { padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-size: 11px; }
+.rule-list { display: grid; gap: 8px; }
+.rule-card .saved-meta { white-space: normal; line-height: 1.35; }
+@media (max-width: 420px) { .rule-form { grid-template-columns: 1fr; } .rule-form h2, .rule-submit { grid-column: 1; } .rule-submit { justify-self: stretch; } }
+@media (forced-colors: active) { .rule-tools, .rule-form, .rule-preview { border: 1px solid ButtonText; } }

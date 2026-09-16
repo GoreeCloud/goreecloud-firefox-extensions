@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "GoreeCloud Advanced Tab Manager",
-  "version": "0.1.5",
-  "description": "Local-first Firefox tab organization with durable recovery and deterministic explainable rule evaluation.",
+  "version": "0.1.6",
+  "description": "Local-first Firefox tab organization with durable recovery, explainable rules, and explicit conflict-safe rule actions.",
   "homepage_url": "https://github.com/GoreeCloud/goreecloud-firefox-extensions",
   "incognito": "not_allowed",
   "permissions": [

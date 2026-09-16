@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { evaluateRules, normalizeRuleInput } from "../src/core/rules.js";
+import { evaluateRules, normalizeRuleInput, planRuleActions } from "../src/core/rules.js";
 
 const snapshot = {
   groups: [{ id: 7, windowId: 1, title: "Development", color: "blue", collapsed: false }],
@@ -12,17 +12,31 @@ const snapshot = {
 };
 
 function state(rules, enabled = true) { return { schemaVersion: 1, revision: 1, enabled, rules }; }
-function rule(id, priority, conditions, enabled = true) { return { id, name: id, enabled, priority, createdAt: 1, updatedAt: 1, conditions }; }
+function rule(id, priority, conditions, enabled = true, actions = []) { return { id, name: id, enabled, priority, createdAt: 1, updatedAt: 1, conditions, actions }; }
 
-test("normalizes a bounded rule definition", () => {
-  const result = normalizeRuleInput({ name: " Docs ", priority: 3, conditions: [{ field: "hostname", operator: "equals", value: " DOCS.EXAMPLE.COM " }] }, { idFactory: () => "r1", now: 10 });
+test("normalizes a bounded rule definition and canonical action order", () => {
+  const result = normalizeRuleInput({
+    name: " Docs ",
+    priority: 3,
+    conditions: [{ field: "hostname", operator: "equals", value: " DOCS.EXAMPLE.COM " }],
+    actions: ["discard", "pin"]
+  }, { idFactory: () => "r1", now: 10 });
   assert.equal(result.ok, true);
   assert.equal(result.rule.name, "Docs");
   assert.equal(result.rule.conditions[0].value, "DOCS.EXAMPLE.COM");
+  assert.deepEqual(result.rule.actions, ["pin", "discard"]);
 });
 
 test("rejects unsupported fields", () => {
   assert.deepEqual(normalizeRuleInput({ name: "Bad", conditions: [{ field: "pageContent", operator: "contains", value: "x" }] }, { idFactory: () => "r1" }), { ok: false, reason: "unsupported-rule-field" });
+});
+
+test("rejects contradictory rule actions", () => {
+  assert.deepEqual(normalizeRuleInput({
+    name: "Conflict",
+    conditions: [{ field: "hostname", operator: "contains", value: "example" }],
+    actions: ["pin", "unpin"]
+  }, { idFactory: () => "r1" }), { ok: false, reason: "conflicting-rule-actions" });
 });
 
 test("matches hostname and native group title case-insensitively with explanations", () => {
@@ -67,4 +81,32 @@ test("higher priority evaluates first with stable rule-id tie break", () => {
 test("incognito tabs are excluded from local rule evaluation", () => {
   const evaluation = evaluateRules({ ruleState: state([rule("all", 1, [{ field: "hostname", operator: "contains", value: "example" }])]), snapshot });
   assert.deepEqual(evaluation.matches.map((match) => match.tabId), [11, 12]);
+});
+
+test("plans the highest-priority compatible action for each tab", () => {
+  const plan = planRuleActions({
+    ruleState: state([
+      rule("low", 1, [{ field: "hostname", operator: "contains", value: "docs" }], true, ["mute"]),
+      rule("high", 5, [{ field: "hostname", operator: "contains", value: "docs" }], true, ["pin"])
+    ]),
+    snapshot
+  });
+  assert.equal(plan.conflicts.length, 0);
+  assert.equal(plan.actions.length, 1);
+  assert.equal(plan.actions[0].tabId, 11);
+  assert.deepEqual(plan.actions[0].actions, ["pin"]);
+  assert.deepEqual(plan.actions[0].ruleIds, ["high"]);
+});
+
+test("fails closed on equal-priority action disagreement", () => {
+  const plan = planRuleActions({
+    ruleState: state([
+      rule("a", 5, [{ field: "hostname", operator: "contains", value: "docs" }], true, ["pin"]),
+      rule("b", 5, [{ field: "hostname", operator: "contains", value: "docs" }], true, ["mute"])
+    ]),
+    snapshot
+  });
+  assert.equal(plan.actions.length, 0);
+  assert.equal(plan.conflicts.length, 1);
+  assert.equal(plan.conflicts[0].reason, "equal-priority-action-conflict");
 });

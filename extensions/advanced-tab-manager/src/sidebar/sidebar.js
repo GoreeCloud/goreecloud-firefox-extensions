@@ -2,6 +2,7 @@ import { flattenTabs } from "../core/state.js";
 import { analyzeTree } from "../core/tree.js";
 import { renderDuplicateView } from "./duplicates-view.js";
 import { renderOpenTabs } from "./open-tabs-view.js";
+import { renderRulesView } from "./rules-view.js";
 import { renderSavedView } from "./saved-view.js";
 import { renderSnoozedView } from "./snoozed-view.js";
 
@@ -15,6 +16,8 @@ const viewMode = document.querySelector("#view-mode");
 let snapshot = null;
 let organizationalState = null;
 let snoozeState = null;
+let ruleState = null;
+let rulePreview = null;
 
 function render() {
   content.replaceChildren();
@@ -31,7 +34,8 @@ function render() {
   const savedSetCount = organizationalState?.tabSets.length ?? 0;
   const stashCount = organizationalState?.stashedItems.length ?? 0;
   const snoozedCount = snoozeState?.items.length ?? 0;
-  summary.textContent = `${allTabs.length} tabs · ${snapshot.windows.length} windows · ${snapshot.groups.length} native groups · ${attached} tree children · ${savedSetCount} Tab Sets · ${stashCount} stashed · ${snoozedCount} snoozed · ${pinned} pinned · ${discarded} discarded`;
+  const ruleCount = ruleState?.rules.length ?? 0;
+  summary.textContent = `${allTabs.length} tabs · ${snapshot.windows.length} windows · ${snapshot.groups.length} native groups · ${attached} tree children · ${savedSetCount} Tab Sets · ${stashCount} stashed · ${snoozedCount} snoozed · ${ruleCount} rules · ${pinned} pinned · ${discarded} discarded`;
 
   if (viewMode.value === "saved") {
     content.append(renderSavedView({ organizationalState, needle }));
@@ -45,20 +49,26 @@ function render() {
     content.append(renderDuplicateView({ snapshot, needle }));
     return;
   }
+  if (viewMode.value === "rules") {
+    content.append(renderRulesView({ ruleState, rulePreview, needle }));
+    return;
+  }
 
   renderOpenTabs({ snapshot, needle, viewMode: viewMode.value, content });
 }
 
 async function load() {
   summary.textContent = "Reading live Firefox and saved state…";
-  const [dashboard, snooze] = await Promise.all([
+  const [dashboard, snooze, rules] = await Promise.all([
     browser.runtime.sendMessage({ type: "atm:get-dashboard-state" }),
-    browser.runtime.sendMessage({ type: "atm:get-snooze-state" })
+    browser.runtime.sendMessage({ type: "atm:get-snooze-state" }),
+    browser.runtime.sendMessage({ type: "atm:get-rule-state" })
   ]);
   if (!dashboard?.ok) {
     snapshot = dashboard?.snapshot;
     organizationalState = null;
     snoozeState = snooze?.ok ? snooze.state : null;
+    ruleState = rules?.ok ? rules.state : null;
     summary.textContent = `Saved state is unavailable (${dashboard?.reason || "unknown error"}).`;
     if (snapshot) render();
     return;
@@ -66,6 +76,7 @@ async function load() {
   snapshot = dashboard.snapshot;
   organizationalState = dashboard.state;
   snoozeState = snooze?.ok ? snooze.state : null;
+  ruleState = rules?.ok ? rules.state : null;
   render();
 }
 
@@ -137,11 +148,77 @@ async function handleDuplicateCleanup(button) {
   await load();
 }
 
+async function handleRuleAction(button) {
+  if (button.dataset.action === "toggle-rule-engine") {
+    const result = await browser.runtime.sendMessage({
+      type: "atm:set-rule-engine-enabled",
+      enabled: !Boolean(ruleState?.enabled)
+    });
+    if (!result?.ok) summary.textContent = `Rule engine state was not changed (${result?.reason || "unknown error"}).`;
+    rulePreview = null;
+    await load();
+    return;
+  }
+
+  if (button.dataset.action === "preview-rule-actions") {
+    rulePreview = await browser.runtime.sendMessage({ type: "atm:preview-rule-evaluation" });
+    if (!rulePreview?.ok) summary.textContent = `Rule preview failed (${rulePreview?.reason || "unknown error"}).`;
+    render();
+    return;
+  }
+
+  if (button.dataset.action === "apply-rule-actions") {
+    if (!window.confirm("Apply the current conflict-free rule plan to live non-private tabs? No tabs will be closed or navigated.")) return;
+    const result = await browser.runtime.sendMessage({ type: "atm:apply-rule-actions" });
+    if (!result?.ok) {
+      summary.textContent = `Rule actions were not fully applied (${result?.reason || "unknown error"}). Refresh and preview again.`;
+    } else {
+      summary.textContent = `${result.changedTabCount} tab${result.changedTabCount === 1 ? "" : "s"} changed from ${result.plannedTabCount} planned rule target${result.plannedTabCount === 1 ? "" : "s"}.`;
+    }
+    rulePreview = null;
+    await load();
+    return;
+  }
+
+  const rule = ruleState?.rules.find((candidate) => candidate.id === button.dataset.ruleId);
+  if (!rule) {
+    summary.textContent = "That rule is no longer available. Refresh and try again.";
+    return;
+  }
+
+  if (button.dataset.action === "toggle-rule") {
+    const result = await browser.runtime.sendMessage({
+      type: "atm:upsert-rule",
+      rule: { ...rule, enabled: !rule.enabled }
+    });
+    if (!result?.ok) summary.textContent = `Rule was not updated (${result?.reason || "unknown error"}).`;
+    rulePreview = null;
+    await load();
+    return;
+  }
+
+  if (button.dataset.action === "delete-rule") {
+    if (!window.confirm(`Delete rule "${rule.name}"?`)) return;
+    const result = await browser.runtime.sendMessage({ type: "atm:delete-rule", ruleId: rule.id });
+    if (!result?.ok) summary.textContent = `Rule was not deleted (${result?.reason || "unknown error"}).`;
+    rulePreview = null;
+    await load();
+  }
+}
+
 content.addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-action]");
   if (button) {
     event.stopPropagation();
 
+    if (button.dataset.action === "toggle-rule-engine"
+      || button.dataset.action === "preview-rule-actions"
+      || button.dataset.action === "apply-rule-actions"
+      || button.dataset.action === "toggle-rule"
+      || button.dataset.action === "delete-rule") {
+      await handleRuleAction(button);
+      return;
+    }
     if (button.dataset.action === "cleanup-duplicates") {
       await handleDuplicateCleanup(button);
       return;
@@ -185,6 +262,32 @@ content.addEventListener("click", async (event) => {
 
   const row = event.target.closest(".tab-row");
   if (row) await activate(Number(row.dataset.tabId));
+});
+
+content.addEventListener("submit", async (event) => {
+  if (event.target.id !== "rule-create-form") return;
+  event.preventDefault();
+  const data = new FormData(event.target);
+  const name = String(data.get("name") || "").trim();
+  const hostname = String(data.get("hostname") || "").trim();
+  const action = String(data.get("action") || "");
+  const priority = Number(data.get("priority"));
+  const result = await browser.runtime.sendMessage({
+    type: "atm:upsert-rule",
+    rule: {
+      name,
+      priority,
+      conditions: [{ field: "hostname", operator: "contains", value: hostname }],
+      actions: [action]
+    }
+  });
+  if (!result?.ok) {
+    summary.textContent = `Rule was not created (${result?.reason || "unknown error"}).`;
+    return;
+  }
+  event.target.reset();
+  rulePreview = null;
+  await load();
 });
 
 content.addEventListener("keydown", async (event) => {
