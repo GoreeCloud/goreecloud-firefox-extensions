@@ -18,40 +18,29 @@ Eligible tabs use extension-owned logical IDs in Firefox session tab values. Par
 
 ## Restart-safe snooze state
 
-Snoozing deliberately uses a separate record owned by `src/core/snooze-store.js`:
+Snoozing deliberately uses a separate record owned by `src/core/snooze-store.js`. Firefox alarms are treated as ephemeral wake signals, not durable truth. The persisted `wakeAt` value is authoritative, and `src/background/snooze.js` reconstructs alarms from storage whenever the event page starts.
+
+## Deterministic rule-engine foundation
+
+Rules use a third independent record owned by `src/core/rule-state.js`:
 
 ```text
 schemaVersion: 1
 revision: integer
-items: [
-  id, url, title, pinned, createdAt, wakeAt,
-  treeParentLogicalId, nativeGroup
+enabled: boolean
+rules: [
+  id, name, enabled, priority, createdAt, updatedAt,
+  conditions: [field, operator, value]
 ]
 ```
 
-This separation prevents a snooze release from silently migrating or reinterpreting the established Tab Set/stash schema.
+The rule store is globally disabled by default and uses the same source-preserving verified-write pattern as other durable extension-owned state. Invalid or unsupported state fails closed instead of being guessed or migrated implicitly.
 
-Firefox alarms are treated as ephemeral wake signals, not durable truth. The persisted `wakeAt` value is authoritative. `src/background/snooze.js` reconstructs alarms from storage whenever the event page starts and clears stale ATM snooze alarms with no corresponding recovery item.
+`src/core/rules.js` is a pure evaluator. It accepts validated rule state plus a fresh normalized Firefox snapshot and can inspect only locally available tab metadata: hostname, title, URL, native-group title, pinned/audible/muted/discarded state, and whether a durable tree parent is present. It does not inspect webpage contents, cookies, forms, network requests, or remote data.
 
-### Snooze transaction
+Rules use explicit integer priority, deterministic rule-ID tie ordering, and all-condition matching. Every successful match includes per-condition expected/observed/matched data for explainability. Private/incognito tabs are excluded.
 
-**prepare → persist/readback verify recovery record → create/readback verify alarm → close source tab.**
-
-If scheduling or verification fails, the candidate alarm is cleared best-effort and prior storage is restored. If source closure fails, the alarm is cleared and prior storage is restored.
-
-### Restore transaction
-
-**read persisted recovery item → create replacement → restore supported metadata → remove/readback verify recovery record → clear alarm.**
-
-If recovery-record consumption fails, the created replacement is removed so the persistent record remains the single recovery source. A failed due restore keeps the item and schedules a bounded retry.
-
-### Restart and overdue handling
-
-Because Firefox alarms do not survive browser sessions, startup reconciliation recreates every expected alarm. Future deadlines use their persisted absolute `wakeAt`. Already-due items receive a small startup grace so the browser can establish a usable normal window before restore is attempted.
-
-### Rescheduling
-
-A reschedule first commits/verifies the new `wakeAt`, then replaces and verifies the named one-shot alarm. If alarm replacement fails, storage is rolled back and the prior deadline alarm is recreated when possible.
+`src/background/rules.js` serializes rule storage operations and exposes rule-state CRUD plus preview evaluation. Preview always obtains a fresh Firefox snapshot. Version 0.1.5 contains no rule-action executor and the rule manager does not mutate live tabs; this keeps the first ATM-008 slice observational and independently reviewable before action semantics and user-facing management are designed.
 
 ## Source modules
 
@@ -59,18 +48,19 @@ A reschedule first commits/verifies the new `wakeAt`, then replaces and verifies
 - `src/core/tree.js`, `tree-session.js` — durable tree reconciliation/persistence.
 - `src/core/persistent-state.js`, `tab-sets.js`, `stash-transaction.js` — Tab Set/stash persistence and source-preserving transactions.
 - `src/core/duplicates.js` — exact duplicate review/cleanup planning.
-- `src/core/snooze-store.js` — versioned snooze recovery schema and verified mutation.
-- `src/core/snooze.js` — snooze metadata preparation, alarm naming, retry/grace timing.
-- `src/core/snooze-transaction.js` — persist/schedule/verify/close transaction.
+- `src/core/snooze-store.js`, `snooze.js`, `snooze-transaction.js` — restart-safe snooze recovery and transactions.
+- `src/core/rule-state.js` — versioned rule schema, verified persistence, rollback.
+- `src/core/rules.js` — pure deterministic local metadata evaluation and explanation.
 - `src/background/browser-state.js` — live Firefox/session state.
 - `src/background/saved-state.js` — Tab Set/stash operations.
 - `src/background/duplicate-cleanup.js` — fresh-state guarded duplicate mutation.
 - `src/background/snooze.js` — snooze operations, due restore, retries, and restart alarm reconstruction.
+- `src/background/rules.js` — serialized rule CRUD and preview evaluation.
 - `src/background/background.js` — event registration and message routing.
 - `src/sidebar/` — Tree, Groups, Duplicates, Saved Items, and Snoozed surfaces.
 - `src/popup/` — fast counts and focused-window capture.
-- `tests/` — deterministic state, transaction, policy, and background integration tests.
+- `tests/` — deterministic state, transaction, policy, evaluation, and background integration tests.
 
 ## Next architecture layers
 
-Richer arbitrary-date/recurring snooze UX, tree branch operations, conservative normalized duplicate policy/protected-tab rules, automatic discard policy, rules, import/export, and optional integrations remain future work behind explicit policies and source-preserving transitions.
+Rule-action execution and rule-management UI require a separate mutation-safety/UX boundary. Command palette, full manager, import/export, large-session qualification, richer arbitrary-date/recurring snooze UX, tree branch operations, conservative normalized duplicate policy/protected-tab rules, automatic discard policy, and optional integrations remain future work behind explicit source-preserving transitions and acceptance evidence.

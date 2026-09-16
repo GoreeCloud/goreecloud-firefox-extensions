@@ -1,6 +1,6 @@
 # GoreeCloud Advanced Tab Manager — Features
 
-## Implemented in source candidate 0.1.4
+## Implemented in source candidate 0.1.5
 
 - Manifest V3 Firefox identity and canonical component directory.
 - Non-persistent ES-module background event page with cold-start live-state reconstruction.
@@ -14,6 +14,12 @@
 - Overdue startup grace and bounded retry after failed due restoration.
 - Due restoration that creates a replacement before consuming recovery state and restores supported pin, native-group, and live tree-parent metadata.
 - Snooze deadline rescheduling with verified storage mutation and alarm replacement rollback.
+- Independently versioned local rule state with exact readback verification and rollback on persistence failure.
+- Rule engine globally disabled by default plus per-rule enable/disable controls.
+- Bounded rule definitions with stable IDs, explicit priority, timestamps, and one-to-eight local metadata conditions.
+- Deterministic all-condition evaluation over fresh Firefox snapshots using hostname, title, URL, native-group title, pinned, audible, muted, discarded, and tree-child metadata.
+- Explainable rule matches with per-condition expected/observed values and deterministic priority/tie ordering.
+- Preview-only rule evaluation with no automatic live-tab mutation in 0.1.5.
 - Sidebar Tree, Native Groups, Duplicates, Saved Items, and Snoozed views.
 - Snooze 1 hour, Open now, and +1h delay controls.
 - Toolbar popup counts for open tabs, native groups, tree children, Tab Sets, stashed items, snoozed items, and exact duplicates.
@@ -22,4 +28,4 @@
 
 ## Planned / not yet implemented
 
-Tree drag-and-drop and branch bulk actions, normalized duplicate matching, durable protected-tab rules, richer arbitrary-date snooze scheduling UI, recurring snoozes, automatic organization rules, automatic discard policy, session snapshots, import/export, command palette, full manager/settings UI, Webspaces integration, optional hidden-tab Focus Mode, representative Firefox runtime acceptance, signing, and Stable qualification remain future work.
+Tree drag-and-drop and branch bulk actions, normalized duplicate matching, durable protected-tab rules, richer arbitrary-date snooze scheduling UI, recurring snoozes, automatic rule actions and rule-management UI, automatic discard policy, session snapshots, import/export, command palette, full manager/settings UI, Webspaces integration, optional hidden-tab Focus Mode, large-session qualification, representative Firefox runtime acceptance, signing, and Stable qualification remain future work.

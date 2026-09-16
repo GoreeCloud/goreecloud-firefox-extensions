@@ -4,7 +4,7 @@ GoreeCloud Advanced Tab Manager is a local-first Firefox WebExtension for high-s
 
 ## Current source state
 
-- Version: `0.1.4`
+- Version: `0.1.5`
 - Lifecycle: `source-candidate`
 - Firefox add-on ID: `advanced-tab-manager@goreecloud.com`
 - Minimum Firefox version: `139.0`
@@ -14,9 +14,9 @@ GoreeCloud Advanced Tab Manager is a local-first Firefox WebExtension for high-s
 - Content scripts: none
 - Private browsing: explicitly not allowed by manifest
 
-The current source implements live window/tab/native-group synchronization, durable logical-ID trees, persistent Tab Sets, transactional tab stashing, reviewed exact-URL duplicate cleanup, and restart-safe one-shot snoozing.
+The current source implements live window/tab/native-group synchronization, durable logical-ID trees, persistent Tab Sets, transactional tab stashing, reviewed exact-URL duplicate cleanup, restart-safe one-shot snoozing, and a bounded deterministic local rule-engine foundation.
 
-Tree relationships remain keyed by extension-owned logical tab identity rather than Firefox runtime tab IDs. Tab Sets, stashed items, and snoozed recovery records remain local to the extension. The Tab Set/stash store and snooze store are independently versioned so snoozing does not silently migrate or reinterpret existing saved-state data.
+Tree relationships remain keyed by extension-owned logical tab identity rather than Firefox runtime tab IDs. Tab Sets, stashed items, snoozed recovery records, and rule definitions remain local to the extension. The Tab Set/stash, snooze, and rule stores are independently versioned so new capabilities do not silently migrate or reinterpret unrelated saved-state data.
 
 The current restorable URL boundary is `http:`, `https:`, and `about:blank`; privileged or executable schemes are not persisted for reconstruction.
 
@@ -30,11 +30,21 @@ Firefox alarms are session-scoped, so persisted snooze deadlines—not alarms—
 
 Due restoration creates the replacement tab before consuming the snooze record, reapplies supported pin/native-group metadata, attempts tree-parent restoration when the logical parent is live in the target window, and removes recovery state only after replacement succeeds. Failure to consume stored recovery state rolls the replacement back.
 
-The first snooze UI exposes **Snooze 1 hour**, a dedicated **Snoozed** view, exact local wake times, **Open now**, and **+1h** rescheduling. Recurring snoozes, notifications, and remote synchronization are not part of 0.1.4.
+The first snooze UI exposes **Snooze 1 hour**, a dedicated **Snoozed** view, exact local wake times, **Open now**, and **+1h** rescheduling. Recurring snoozes, notifications, and remote synchronization are not part of 0.1.5.
 
 Duplicate cleanup remains review-first and exact-URL-only. Active, pinned, audible, hidden/private, tree-linked, and explicitly excluded tabs are not eligible for duplicate cleanup.
 
-It does **not** yet implement tree drag-and-drop/bulk tree operations, normalized duplicate matching, durable protected-tab rules, automatic organization rules, automatic discard policy, import/export, the full manager/settings interface, Webspaces integration, representative Firefox runtime acceptance, Mozilla signing, or Stable release acceptance.
+### Rule-engine foundation
+
+Version 0.1.5 adds an independently versioned `storage.local` rule record. The rule engine is globally disabled by default and each rule has its own enabled state, explicit integer priority, stable ID, timestamps, and one to eight conditions.
+
+The initial evaluator can match locally available tab metadata only: hostname, title, URL, native-group title, pinned, audible, muted, discarded, and tree-child state. Text comparisons are deterministic and case-insensitive; boolean comparisons use explicit `is` conditions. Rules use all-condition matching, higher numeric priority first, and stable rule-ID ordering for ties.
+
+Evaluation returns per-condition observed values and match results so a future UI can explain why a rule matched. Private/incognito tabs are excluded.
+
+**0.1.5 is preview-only:** persisted rules can be created, updated, deleted, enabled/disabled, and evaluated against a fresh Firefox snapshot, but the rule manager does not automatically mutate tabs. Rule-action execution and user-facing rule management remain separate follow-up work.
+
+It does **not** yet implement tree drag-and-drop/bulk tree operations, normalized duplicate matching, durable protected-tab rules, automatic rule actions, automatic discard policy, import/export, the full manager/settings interface, command palette, Webspaces integration, representative Firefox runtime acceptance, Mozilla signing, or Stable release acceptance.
 
 ## Development validation
 

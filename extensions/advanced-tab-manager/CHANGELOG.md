@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.5 — Source candidate
+
+- Added a separately versioned local rule-state record with strict validation, revisioning, readback verification, and exact previous-record rollback on failed persistence.
+- Added global rule-engine enable/disable state defaulting disabled plus per-rule enabled state.
+- Added bounded rule definitions with stable IDs, names, explicit integer priority, timestamps, and one-to-eight conditions.
+- Added deterministic local metadata matching for hostname, title, URL, native-group title, pinned, audible, muted, discarded, and tree-child state.
+- Added explainable per-condition expected/observed/matched results and deterministic higher-priority-first evaluation with stable rule-ID tie ordering.
+- Added fresh-snapshot rule preview routing plus create/update/delete/read operations.
+- Kept 0.1.5 preview-only: no automatic browser mutation, rule-action executor, rule-management UI, command palette, or full manager is claimed.
+- Added no new manifest permission; the existing `alarms`, `sessions`, `storage`, `tabGroups`, and `tabs` boundary remains unchanged.
+- Added deterministic rule-state, evaluator, and background-manager tests.
+
 ## 0.1.4 — Source candidate
 
 - Added restart-safe one-shot tab snoozing backed by a separately versioned local recovery store.

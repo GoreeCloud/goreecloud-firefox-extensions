@@ -1,6 +1,6 @@
 # GoreeCloud Advanced Tab Manager — Feature Roadmap
 
-**Lifecycle:** source-candidate 0.1.4  
+**Lifecycle:** source-candidate 0.1.5  
 **Authoritative project record:** `GoreeCloud/Projects/Project Specification — Advanced Tab Manager.md`
 
 | ID | Obligation | Priority | State |
@@ -13,9 +13,10 @@
 | ATM-005 | Add persistent Tab Sets and transactional stashing. | High | Implemented in 0.1.2+ source candidate; runtime acceptance pending |
 | ATM-006 | Add duplicate review and policy-controlled cleanup. | Medium | Implemented in 0.1.3+ source candidate with exact-URL review and guarded cleanup; runtime acceptance pending |
 | ATM-006A | Add optional conservative normalized-URL matching and durable protected-tab cleanup exclusions. | Medium | Planned |
-| ATM-007 | Add restart-safe snoozing and deadline reconstruction. | High | Implemented in 0.1.4 source candidate with one-shot local deadlines, restart alarm reconstruction, rescheduling, and source-preserving restore; runtime acceptance pending |
+| ATM-007 | Add restart-safe snoozing and deadline reconstruction. | High | Implemented in 0.1.4+ source candidate with one-shot local deadlines, restart alarm reconstruction, rescheduling, and source-preserving restore; runtime acceptance pending |
 | ATM-007A | Add richer arbitrary-date/time snooze scheduling and optional recurring schedules only after a separate policy/UX design. | Medium | Planned |
-| ATM-008 | Add rule engine, command palette, full manager, import/export, and large-session performance qualification. | Medium | Planned |
+| ATM-008 | Add rule engine, command palette, full manager, import/export, and large-session performance qualification. | Medium | In progress — bounded deterministic local rule-engine foundation implemented in 0.1.5; remaining surfaces/qualification planned |
+| ATM-008A | Add explicit rule-action execution and user-facing rule management after separate mutation-safety and UX acceptance. | Medium | Planned |
 | ATM-009 | Complete privacy/security review, Firefox runtime acceptance, Mozilla signing, and later Stable qualification. | High | Planned |
 
 No roadmap entry is a release or Stable claim without exact implementation and acceptance evidence.
