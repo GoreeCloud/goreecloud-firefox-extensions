@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.6 — Source candidate
+
+- Added a bounded rule-action vocabulary: `pin`, `unpin`, `mute`, `unmute`, and `discard`.
+- Kept rule-state schema version 1 compatible with existing 0.1.5 rules; rules without an `actions` field remain valid and preview-only until explicitly updated.
+- Added validation that rejects unsupported, duplicate, and contradictory rule actions.
+- Added deterministic action planning in which the highest matching priority controls each tab and differing equal-priority action plans fail closed as explicit conflicts.
+- Expanded rule preview to report actionable targets and conflicts without browser mutation.
+- Added explicit **Apply now** execution only after two independently reconstructed live Firefox snapshots produce the same conflict-free plan.
+- Added a final live tab read before each target mutation and fail-closed handling for missing/private/window-moved targets.
+- Added only bounded pin/mute updates and tab discard as rule mutations; no rule path closes, navigates, or creates tabs.
+- Added a Rules sidebar view with engine enable/disable, bounded hostname-rule creation, per-rule enable/disable/delete, preview, conflict visibility, and explicit Apply now confirmation.
+- Added focused tests for action validation, deterministic planning, equal-priority conflicts, two-snapshot drift rejection, explicit mutation, and legacy rule-state compatibility.
+- Expanded source validation to enforce the 0.1.6 mutation boundary and unchanged permission/privacy posture.
+- Added no new manifest permission; the existing `alarms`, `sessions`, `storage`, `tabGroups`, and `tabs` boundary remains unchanged.
+- Event-driven automatic rule application, richer rule editing, representative Firefox runtime acceptance, signing, and Stable qualification remain outside this source-candidate milestone.
+
 ## 0.1.5 — Source candidate
 
 - Added a separately versioned local rule-state record with strict validation, revisioning, readback verification, and exact previous-record rollback on failed persistence.
