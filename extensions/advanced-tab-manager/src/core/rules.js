@@ -1,6 +1,9 @@
+import { RULE_ACTION_TYPES } from "./rule-state.js";
+
 const STRING_FIELDS = new Set(["hostname", "title", "url", "nativeGroupTitle"]);
 const BOOLEAN_FIELDS = new Set(["pinned", "audible", "muted", "discarded", "treeChild"]);
 const STRING_OPERATORS = new Set(["equals", "contains", "starts-with", "ends-with"]);
+const ACTION_ORDER = ["pin", "unpin", "mute", "unmute", "discard"];
 
 function normalizeText(value) {
   return String(value ?? "").toLowerCase();
@@ -49,6 +52,19 @@ function compareString(actual, operator, expected) {
   }
 }
 
+function normalizeActions(actions) {
+  if (!Array.isArray(actions) || actions.length > 3) return { ok: false, reason: "invalid-rule-actions" };
+  const unique = new Set();
+  for (const action of actions) {
+    if (!RULE_ACTION_TYPES.has(action) || unique.has(action)) return { ok: false, reason: "invalid-rule-actions" };
+    unique.add(action);
+  }
+  if ((unique.has("pin") && unique.has("unpin")) || (unique.has("mute") && unique.has("unmute"))) {
+    return { ok: false, reason: "conflicting-rule-actions" };
+  }
+  return { ok: true, actions: ACTION_ORDER.filter((action) => unique.has(action)) };
+}
+
 export function normalizeRuleInput(input, { existing = null, idFactory, now = Date.now() } = {}) {
   if (!input || typeof input !== "object" || Array.isArray(input)) return { ok: false, reason: "invalid-rule" };
   const name = typeof input.name === "string" ? input.name.trim() : "";
@@ -77,6 +93,9 @@ export function normalizeRuleInput(input, { existing = null, idFactory, now = Da
     }
   }
 
+  const preparedActions = normalizeActions(input.actions === undefined ? (existing?.actions ?? []) : input.actions);
+  if (!preparedActions.ok) return preparedActions;
+
   const createdAt = existing?.createdAt ?? now;
   return {
     ok: true,
@@ -87,7 +106,8 @@ export function normalizeRuleInput(input, { existing = null, idFactory, now = Da
       priority,
       createdAt,
       updatedAt: now,
-      conditions
+      conditions,
+      actions: preparedActions.actions
     }
   };
 }
@@ -131,10 +151,68 @@ export function evaluateRules({ ruleState, snapshot }) {
         tabId: tab.id,
         logicalId: tab.logicalId || null,
         windowId: tab.windowId,
+        actions: [...(rule.actions ?? [])],
         explanation
       });
     }
   }
 
   return { engineEnabled: true, evaluatedRuleCount: rules.length, matches };
+}
+
+function actionSignature(actions) {
+  return JSON.stringify(actions);
+}
+
+export function planRuleActions({ ruleState, snapshot }) {
+  const evaluation = evaluateRules({ ruleState, snapshot });
+  if (!evaluation.engineEnabled) {
+    return { engineEnabled: false, evaluatedRuleCount: 0, actions: [], conflicts: [], matches: [] };
+  }
+
+  const byTab = new Map();
+  for (const match of evaluation.matches) {
+    if (!match.actions.length) continue;
+    if (!byTab.has(match.tabId)) byTab.set(match.tabId, []);
+    byTab.get(match.tabId).push(match);
+  }
+
+  const actions = [];
+  const conflicts = [];
+  for (const [tabId, matches] of byTab.entries()) {
+    const highestPriority = Math.max(...matches.map((match) => match.priority));
+    const top = matches.filter((match) => match.priority === highestPriority);
+    const signatures = new Set(top.map((match) => actionSignature(match.actions)));
+
+    if (signatures.size !== 1) {
+      conflicts.push({
+        tabId,
+        windowId: top[0].windowId,
+        priority: highestPriority,
+        ruleIds: top.map((match) => match.ruleId).sort(),
+        reason: "equal-priority-action-conflict"
+      });
+      continue;
+    }
+
+    actions.push({
+      tabId,
+      windowId: top[0].windowId,
+      logicalId: top[0].logicalId,
+      priority: highestPriority,
+      ruleIds: top.map((match) => match.ruleId).sort(),
+      ruleNames: top.map((match) => match.ruleName).sort(),
+      actions: [...top[0].actions]
+    });
+  }
+
+  actions.sort((left, right) => left.windowId - right.windowId || left.tabId - right.tabId);
+  conflicts.sort((left, right) => left.windowId - right.windowId || left.tabId - right.tabId);
+  return {
+    engineEnabled: true,
+    evaluatedRuleCount: evaluation.evaluatedRuleCount,
+    actions,
+    conflicts,
+    matches: evaluation.matches
+  };
 }
