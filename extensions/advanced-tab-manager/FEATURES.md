@@ -1,6 +1,6 @@
 # GoreeCloud Advanced Tab Manager — Features
 
-## Implemented in source candidate 0.1.2
+## Implemented in source candidate 0.1.3
 
 - Manifest V3 Firefox identity and canonical component directory.
 - Non-persistent ES-module background event page.
@@ -19,11 +19,14 @@
 - Explicit safe-restoration URL boundary: `http:`, `https:`, and `about:blank`; privileged/executable schemes are not stashed or captured for restoration.
 - Serialized persistent operations so UI state reads do not observe half-completed save/stash transactions.
 - User-controlled deletion for individual Tab Sets, individual stashed items, and all saved Tab Set/stash state without closing unrelated live Firefox tabs.
-- Sidebar tree view, native-group view, and Saved Items view with accessible actions.
+- Exact-URL duplicate review in the sidebar with user-selected keeper controls and explicit confirmation before cleanup.
+- Conservative duplicate-cleanup policy that rechecks live Firefox state and excludes active, pinned, audible, hidden/private, tree-linked, and explicitly excluded tabs from destructive cleanup.
+- Stale duplicate reviews fail closed when the selected keeper or duplicate set is no longer current.
+- Sidebar tree view, native-group view, Duplicates view, and Saved Items view with accessible actions.
 - Toolbar popup showing live and saved-state counts plus Save Focused Window.
 - No host permissions, no content scripts, and private browsing explicitly disallowed by the manifest.
-- Component validation, pure state/tree/storage transaction tests, background integration tests, and deterministic repository packaging integration.
+- Component validation, pure state/tree/storage/duplicate-policy tests, background integration tests, and deterministic repository packaging integration.
 
 ## Planned / not yet implemented
 
-Tree drag-and-drop, branch bulk actions, snoozing, rules, normalized duplicate cleanup, automatic discard policy, session snapshots, import/export, command palette, full manager/settings UI, Webspaces integration, optional hidden-tab Focus Mode, representative Firefox runtime acceptance, signing, and Stable qualification remain future work.
+Tree drag-and-drop, branch bulk actions, normalized duplicate matching, durable protected-tab rules, snoozing, rules, automatic discard policy, session snapshots, import/export, command palette, full manager/settings UI, Webspaces integration, optional hidden-tab Focus Mode, representative Firefox runtime acceptance, signing, and Stable qualification remain future work.

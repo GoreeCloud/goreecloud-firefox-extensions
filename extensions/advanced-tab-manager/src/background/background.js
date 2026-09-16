@@ -1,4 +1,5 @@
 import { createBrowserState } from "./browser-state.js";
+import { createDuplicateCleanup } from "./duplicate-cleanup.js";
 import { createSavedState } from "./saved-state.js";
 
 const CHANGE_MESSAGE = "atm:state-changed";
@@ -23,6 +24,11 @@ const savedState = createSavedState({
   ensureLogicalId: browserState.ensureLogicalId,
   broadcastChange,
   idFactory: newId
+});
+const duplicateCleanup = createDuplicateCleanup({
+  browser,
+  readLiveSnapshot: browserState.readLiveSnapshot,
+  broadcastChange
 });
 
 browser.tabs.onCreated.addListener((tab) => {
@@ -69,6 +75,8 @@ browser.runtime.onMessage.addListener(async (message) => {
       return savedState.deleteStashedItem(message.stashedItemId);
     case "atm:clear-saved-items":
       return savedState.clearSavedItems();
+    case "atm:cleanup-exact-duplicates":
+      return duplicateCleanup.cleanupExactDuplicates({ url: message.url, keepTabId: message.keepTabId });
     case "atm:activate-tab": {
       const tab = await browser.tabs.get(message.tabId);
       await browser.windows.update(tab.windowId, { focused: true });

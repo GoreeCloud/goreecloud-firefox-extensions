@@ -24,7 +24,7 @@ h1 { margin: 0; font-size: 17px; line-height: 1.2; }
 .search-field { display: block; min-width: 0; }
 .search-field input { width: 100%; border: 1px solid var(--border); background: var(--surface); color: inherit; border-radius: 12px; padding: 10px 12px; outline: none; }
 .view-field select { height: 38px; padding: 0 9px; }
-.search-field input:focus-visible, button:focus-visible, select:focus-visible, .tab-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.search-field input:focus-visible, button:focus-visible, select:focus-visible, .tab-row:focus-visible, .duplicate-member:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
 .summary { color: var(--muted); font-size: 12px; margin: 8px 2px 12px; }
 .window { margin: 0 0 14px; }
 .window-heading { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 6px; font-size: 12px; color: var(--muted); }
@@ -35,20 +35,29 @@ h1 { margin: 0; font-size: 17px; line-height: 1.2; }
 .tree .tab-row { padding-left: calc(10px + (var(--tree-depth) * 18px)); }
 .tree .tab-row[data-tree-status="orphaned"], .tree .tab-row[data-tree-status="cycle"] { box-shadow: inset 3px 0 0 Mark; }
 .tab-row[data-active="true"] { box-shadow: inset 3px 0 0 var(--accent); }
-.tab-main, .saved-main { min-width: 0; }
-.tab-title, .tab-url, .saved-title, .saved-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tab-title, .saved-title { font-size: 13px; font-weight: 650; }
+.tab-main, .saved-main, .duplicate-main { min-width: 0; }
+.tab-title, .tab-url, .saved-title, .saved-meta, .duplicate-url { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tab-title, .saved-title, .duplicate-url { font-size: 13px; font-weight: 650; }
 .tab-url, .saved-meta { margin-top: 2px; color: var(--muted); font-size: 11px; }
 .badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
 .badge { border: 1px solid var(--border); border-radius: 999px; padding: 1px 6px; font-size: 10px; color: var(--muted); }
 .actions { display: flex; gap: 4px; }
 .row-action { min-width: 30px; height: 30px; padding: 0 7px; }
-.saved-view { display: grid; gap: 8px; }
+.saved-view, .duplicate-view { display: grid; gap: 8px; }
 .saved-heading { margin: 8px 2px 2px; font-size: 12px; color: var(--muted); }
 .saved-tools { display: flex; justify-content: flex-end; }
-.saved-card { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 8px; border: 1px solid var(--border); background: var(--surface); border-radius: 12px; padding: 9px 8px 9px 10px; }
+.saved-card, .duplicate-card { border: 1px solid var(--border); background: var(--surface); border-radius: 12px; }
+.saved-card { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 8px; padding: 9px 8px 9px 10px; }
+.duplicate-intro, .duplicate-policy { color: var(--muted); font-size: 11px; line-height: 1.4; }
+.duplicate-heading { padding: 9px 10px; background: var(--surface-strong); border-radius: 11px 11px 0 0; }
+.duplicate-members { display: grid; }
+.duplicate-member { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 8px; align-items: center; padding: 8px 10px; border-top: 1px solid var(--border); cursor: pointer; }
+.duplicate-member input { margin: 0; }
+.duplicate-tools { display: grid; gap: 8px; padding: 9px 10px; border-top: 1px solid var(--border); }
+.duplicate-cleanup { justify-self: end; min-height: 32px; }
+.row-action:disabled { cursor: not-allowed; opacity: .55; }
 .empty { padding: 20px 10px; text-align: center; color: var(--muted); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-@media (max-width: 360px) { .controls { grid-template-columns: 1fr; } .view-field select { width: 100%; } .actions { flex-direction: column; } }
+@media (max-width: 360px) { .controls { grid-template-columns: 1fr; } .view-field select { width: 100%; } .actions { flex-direction: column; } .duplicate-cleanup { justify-self: stretch; } }
 @media (prefers-reduced-transparency: reduce) { :root { --bg: Canvas; --surface: Canvas; --surface-strong: color-mix(in srgb, Canvas 90%, CanvasText 10%); } }
-@media (forced-colors: active) { .group, .tree, .saved-card, .icon-button, .row-action, .search-field input, .view-field select { border: 1px solid ButtonText; } }
+@media (forced-colors: active) { .group, .tree, .saved-card, .duplicate-card, .icon-button, .row-action, .search-field input, .view-field select { border: 1px solid ButtonText; } }

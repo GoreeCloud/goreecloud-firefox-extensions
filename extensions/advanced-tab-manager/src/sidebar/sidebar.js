@@ -1,5 +1,6 @@
 import { flattenTabs } from "../core/state.js";
 import { analyzeTree } from "../core/tree.js";
+import { renderDuplicateView } from "./duplicates-view.js";
 import { renderOpenTabs } from "./open-tabs-view.js";
 import { renderSavedView } from "./saved-view.js";
 
@@ -31,6 +32,10 @@ function render() {
 
   if (viewMode.value === "saved") {
     content.append(renderSavedView({ organizationalState, needle }));
+    return;
+  }
+  if (viewMode.value === "duplicates") {
+    content.append(renderDuplicateView({ snapshot, needle }));
     return;
   }
 
@@ -82,11 +87,39 @@ async function handleSavedAction(button) {
   await load();
 }
 
+async function handleDuplicateCleanup(button) {
+  const card = button.closest(".duplicate-card");
+  const selected = card?.querySelector('input[type="radio"]:checked');
+  const keepTabId = Number(selected?.value);
+  if (!Number.isInteger(keepTabId)) {
+    summary.textContent = "Choose one reviewed tab to keep before duplicate cleanup.";
+    return;
+  }
+  if (!window.confirm("Close only the currently eligible exact-URL duplicates in this reviewed set? Guarded tabs will remain open.")) return;
+
+  const result = await browser.runtime.sendMessage({
+    type: "atm:cleanup-exact-duplicates",
+    url: button.dataset.duplicateUrl,
+    keepTabId
+  });
+  if (!result?.ok) {
+    summary.textContent = `Duplicate cleanup did not run (${result?.reason || "unknown error"}). Refresh and review the set again.`;
+    await load();
+    return;
+  }
+  summary.textContent = `${result.closed} eligible duplicate tab${result.closed === 1 ? "" : "s"} closed. Guarded tabs were preserved.`;
+  await load();
+}
+
 content.addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-action]");
   if (button) {
     event.stopPropagation();
 
+    if (button.dataset.action === "cleanup-duplicates") {
+      await handleDuplicateCleanup(button);
+      return;
+    }
     if (button.dataset.savedId) {
       await handleSavedAction(button);
       return;
