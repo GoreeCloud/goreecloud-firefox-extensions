@@ -6,7 +6,10 @@ const openSidebar = document.querySelector("#open-sidebar");
 const refreshButton = document.querySelector("#refresh");
 
 async function refresh() {
-  const dashboard = await browser.runtime.sendMessage({ type: "atm:get-dashboard-state" });
+  const [dashboard, snooze] = await Promise.all([
+    browser.runtime.sendMessage({ type: "atm:get-dashboard-state" }),
+    browser.runtime.sendMessage({ type: "atm:get-snooze-state" })
+  ]);
   if (!dashboard?.ok) throw new Error(dashboard?.reason || "dashboard state unavailable");
   const snapshot = dashboard.snapshot;
   const tabs = flattenTabs(snapshot);
@@ -14,7 +17,8 @@ async function refresh() {
   const treeChildren = tabs.filter((tab) => tab.treeParentLogicalId).length;
   const tabSets = dashboard.state.tabSets.length;
   const stashed = dashboard.state.stashedItems.length;
-  summary.textContent = `${tabs.length} open tabs · ${snapshot.groups.length} native groups · ${treeChildren} tree children · ${tabSets} Tab Sets · ${stashed} stashed · ${duplicates.duplicateTabs} exact duplicate tabs`;
+  const snoozed = snooze?.ok ? snooze.state.items.length : 0;
+  summary.textContent = `${tabs.length} open tabs · ${snapshot.groups.length} native groups · ${treeChildren} tree children · ${tabSets} Tab Sets · ${stashed} stashed · ${snoozed} snoozed · ${duplicates.duplicateTabs} exact duplicate tabs`;
 }
 
 saveWindow.addEventListener("click", async () => {

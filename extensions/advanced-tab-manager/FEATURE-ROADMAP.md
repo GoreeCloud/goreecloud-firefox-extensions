@@ -1,6 +1,6 @@
 # GoreeCloud Advanced Tab Manager — Feature Roadmap
 
-**Lifecycle:** source-candidate 0.1.3  
+**Lifecycle:** source-candidate 0.1.4  
 **Authoritative project record:** `GoreeCloud/Projects/Project Specification — Advanced Tab Manager.md`
 
 | ID | Obligation | Priority | State |
@@ -11,9 +11,10 @@
 | ATM-004 | Add durable tree relationships and restoration behavior. | High | Implemented in 0.1.1+ source candidate; runtime acceptance pending |
 | ATM-004A | Add tree drag-and-drop, branch move/close/discard operations, and richer manual reparenting UX. | Medium | Planned |
 | ATM-005 | Add persistent Tab Sets and transactional stashing. | High | Implemented in 0.1.2+ source candidate; runtime acceptance pending |
-| ATM-006 | Add duplicate review and policy-controlled cleanup. | Medium | Implemented in 0.1.3 source candidate with exact-URL review and guarded cleanup; runtime acceptance pending |
+| ATM-006 | Add duplicate review and policy-controlled cleanup. | Medium | Implemented in 0.1.3+ source candidate with exact-URL review and guarded cleanup; runtime acceptance pending |
 | ATM-006A | Add optional conservative normalized-URL matching and durable protected-tab cleanup exclusions. | Medium | Planned |
-| ATM-007 | Add restart-safe snoozing and deadline reconstruction. | High | Planned |
+| ATM-007 | Add restart-safe snoozing and deadline reconstruction. | High | Implemented in 0.1.4 source candidate with one-shot local deadlines, restart alarm reconstruction, rescheduling, and source-preserving restore; runtime acceptance pending |
+| ATM-007A | Add richer arbitrary-date/time snooze scheduling and optional recurring schedules only after a separate policy/UX design. | Medium | Planned |
 | ATM-008 | Add rule engine, command palette, full manager, import/export, and large-session performance qualification. | Medium | Planned |
 | ATM-009 | Complete privacy/security review, Firefox runtime acceptance, Mozilla signing, and later Stable qualification. | High | Planned |
 

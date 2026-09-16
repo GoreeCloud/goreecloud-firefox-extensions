@@ -3,6 +3,7 @@ import { analyzeTree } from "../core/tree.js";
 import { renderDuplicateView } from "./duplicates-view.js";
 import { renderOpenTabs } from "./open-tabs-view.js";
 import { renderSavedView } from "./saved-view.js";
+import { renderSnoozedView } from "./snoozed-view.js";
 
 const search = document.querySelector("#search");
 const summary = document.querySelector("#summary");
@@ -13,6 +14,7 @@ const viewMode = document.querySelector("#view-mode");
 
 let snapshot = null;
 let organizationalState = null;
+let snoozeState = null;
 
 function render() {
   content.replaceChildren();
@@ -28,10 +30,15 @@ function render() {
   );
   const savedSetCount = organizationalState?.tabSets.length ?? 0;
   const stashCount = organizationalState?.stashedItems.length ?? 0;
-  summary.textContent = `${allTabs.length} tabs · ${snapshot.windows.length} windows · ${snapshot.groups.length} native groups · ${attached} tree children · ${savedSetCount} Tab Sets · ${stashCount} stashed · ${pinned} pinned · ${discarded} discarded`;
+  const snoozedCount = snoozeState?.items.length ?? 0;
+  summary.textContent = `${allTabs.length} tabs · ${snapshot.windows.length} windows · ${snapshot.groups.length} native groups · ${attached} tree children · ${savedSetCount} Tab Sets · ${stashCount} stashed · ${snoozedCount} snoozed · ${pinned} pinned · ${discarded} discarded`;
 
   if (viewMode.value === "saved") {
     content.append(renderSavedView({ organizationalState, needle }));
+    return;
+  }
+  if (viewMode.value === "snoozed") {
+    content.append(renderSnoozedView({ snoozeState, needle }));
     return;
   }
   if (viewMode.value === "duplicates") {
@@ -44,16 +51,21 @@ function render() {
 
 async function load() {
   summary.textContent = "Reading live Firefox and saved state…";
-  const dashboard = await browser.runtime.sendMessage({ type: "atm:get-dashboard-state" });
+  const [dashboard, snooze] = await Promise.all([
+    browser.runtime.sendMessage({ type: "atm:get-dashboard-state" }),
+    browser.runtime.sendMessage({ type: "atm:get-snooze-state" })
+  ]);
   if (!dashboard?.ok) {
     snapshot = dashboard?.snapshot;
     organizationalState = null;
+    snoozeState = snooze?.ok ? snooze.state : null;
     summary.textContent = `Saved state is unavailable (${dashboard?.reason || "unknown error"}).`;
     if (snapshot) render();
     return;
   }
   snapshot = dashboard.snapshot;
   organizationalState = dashboard.state;
+  snoozeState = snooze?.ok ? snooze.state : null;
   render();
 }
 
@@ -84,6 +96,20 @@ async function handleSavedAction(button) {
   if (button.dataset.action === "clear-saved-items" && !window.confirm("Delete all saved Tab Sets and stashed items? Open Firefox tabs will not be closed.")) return;
   const result = await browser.runtime.sendMessage(messages[button.dataset.action]);
   if (!result?.ok) summary.textContent = `Saved-item operation failed (${result?.reason || "unknown error"}).`;
+  await load();
+}
+
+async function handleSnoozedAction(button) {
+  const snoozedItemId = button.dataset.snoozeId;
+  const message = button.dataset.action === "reschedule-snoozed-item"
+    ? { type: "atm:reschedule-snoozed-item", snoozedItemId, wakeAt: Date.now() + 60 * 60 * 1000 }
+    : { type: "atm:restore-snoozed-item", snoozedItemId };
+  const result = await browser.runtime.sendMessage(message);
+  if (!result?.ok) {
+    summary.textContent = button.dataset.action === "reschedule-snoozed-item"
+      ? `Snoozed tab could not be rescheduled (${result?.reason || "unknown error"}).`
+      : `Snoozed tab could not be opened (${result?.reason || "unknown error"}).`;
+  }
   await load();
 }
 
@@ -120,6 +146,10 @@ content.addEventListener("click", async (event) => {
       await handleDuplicateCleanup(button);
       return;
     }
+    if (button.dataset.snoozeId) {
+      await handleSnoozedAction(button);
+      return;
+    }
     if (button.dataset.savedId) {
       await handleSavedAction(button);
       return;
@@ -128,6 +158,17 @@ content.addEventListener("click", async (event) => {
     const tabId = Number(button.dataset.tabId);
     if (button.dataset.action === "indent" || button.dataset.action === "outdent") {
       await handleTreeAction(button);
+      return;
+    }
+    if (button.dataset.action === "snooze") {
+      const wakeAt = Date.now() + 60 * 60 * 1000;
+      const result = await browser.runtime.sendMessage({ type: "atm:snooze-tab", tabId, wakeAt });
+      if (!result?.ok) summary.textContent = `Tab was not snoozed (${result?.reason || "unknown error"}).`;
+      else {
+        viewMode.value = "snoozed";
+        summary.textContent = `${result.title} snoozed until ${new Date(result.wakeAt).toLocaleString()}.`;
+      }
+      await load();
       return;
     }
     if (button.dataset.action === "stash") {

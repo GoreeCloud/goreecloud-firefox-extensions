@@ -53,6 +53,7 @@ function createTabRow(tab, { depth = 0, treeStatus = "root", groupsById, window 
   }
   if (tab.treeParentLogicalId) actions.append(actionButton("↰", "Remove tree parent", "outdent", tab.id));
   if (isRestorableUrl(tab.url)) {
+    actions.append(actionButton("◷", "Snooze tab for 1 hour after its recovery record and alarm are verified", "snooze", tab.id));
     actions.append(actionButton("▣", "Stash tab locally and close it after persistence is verified", "stash", tab.id));
   }
   if (!tab.active && !tab.pinned && !tab.audible) actions.append(actionButton("◌", "Discard tab", "discard", tab.id));

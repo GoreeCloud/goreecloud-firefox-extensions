@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.4 — Source candidate
+
+- Added restart-safe one-shot tab snoozing backed by a separately versioned local recovery store.
+- Added `alarms` as the only new permission for local wake scheduling; no host/content/private-browsing expansion.
+- Added source-preserving snooze transaction: persist/verify recovery → create/verify alarm → close source.
+- Added startup alarm reconstruction from persisted deadlines because Firefox alarms do not survive browser sessions.
+- Added overdue startup grace and bounded retry after failed due restoration.
+- Added due restore that creates a replacement before consuming recovery state and restores supported pin, native-group, and live tree-parent metadata.
+- Added verified +1h deadline rescheduling with storage/alarm rollback behavior.
+- Added Snooze 1 hour row action, Snoozed view, Open now, +1h delay, and popup/sidebar snoozed counts.
+- Added deterministic snooze-store, alarm/deadline, transaction, and background-manager tests.
+- Recurring snoozes, notifications, and richer arbitrary-date scheduling UI remain outside 0.1.4.
+
 ## 0.1.3 — Source candidate
 
 - Added exact-URL duplicate review as a dedicated sidebar view.
@@ -14,36 +27,15 @@
 
 - Added versioned persistent Tab Set and stash state in Firefox `storage.local`.
 - Added verified complete-record storage mutation with schema validation, revisioning, readback verification, and rollback.
-- Added Save Focused Window as Tab Set with safe-URL filtering and set-local group/tree identities.
-- Added reusable Tab Set restoration into a new Firefox window with supported group, pin, tree, and active-tab reconstruction.
-- Added transactional tab stashing that persists recovery state before closing the source tab and restores prior persistent state if close fails.
-- Added transactional stash restoration that creates a replacement before consuming stored state and rolls the replacement back if storage consumption fails.
-- Added conservative restoration URL allowlist for `http:`, `https:`, and `about:blank`.
-- Added serialized persistent operations and consistent dashboard reads.
-- Added Saved Items sidebar controls, individual deletion, and clear-all saved-state control.
-- Added focused-window Tab Set capture to the popup and saved-state counts to popup/sidebar summaries.
+- Added Save Focused Window as Tab Set, reusable restoration, transactional stashing/restoration, safe URL filtering, and saved-state UI.
 - Added `storage` as the only new manifest permission; no host permissions, content scripts, or `unlimitedStorage` permission were added.
-- Expanded deterministic tests with persistent-state, Tab Set, stash transaction, and background message-flow coverage.
 
 ## 0.1.1 — Source candidate
 
-- Added durable parent/child tree relationships using Firefox session tab values keyed by logical tab identity.
-- Added restoration-safe tree reconstruction that does not depend on Firefox runtime tab IDs.
-- Added opener-based child adoption without overwriting restored parent metadata.
-- Added orphan and malformed-cycle reconciliation without fabricating live browser state.
-- Added fail-closed cycle prevention for new reparent operations.
-- Added transactional tree-parent persistence with readback verification and rollback.
-- Added tree/native-group sidebar modes with indentation, relationship-state badges, attach-to-previous-tab, and detach actions.
-- Expanded pure-state and transactional tests for tree restoration, orphan/cycle behavior, and rollback.
+- Added durable logical-ID tree relationships, reconciliation/cycle prevention, transactional session metadata persistence, and tree/native-group sidebar modes.
 
 ## 0.1.0 — Source candidate
 
-- Established the canonical Advanced Tab Manager extension directory and Firefox identity.
-- Added non-persistent Manifest V3 background architecture with live Firefox reconciliation.
-- Added logical tab IDs through Firefox session tab values.
-- Added live tab/window/native-group event invalidation.
-- Added the first sidebar and popup surfaces.
-- Added exact duplicate counting and bounded tab actions.
-- Added component validation, unit tests, inventory registration, CI, and deterministic packaging integration.
+- Established canonical identity, live Firefox reconciliation, logical IDs, initial sidebar/popup, tests, inventory, CI, and deterministic packaging.
 
 No Stable release is declared.

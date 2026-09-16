@@ -1,17 +1,17 @@
 # GoreeCloud Advanced Tab Manager — Privacy
 
-Version `0.1.3` is local-first and has no remote service dependency.
+Version `0.1.4` remains local-first and has no remote service dependency.
 
 The source candidate requests no host permissions and injects no content scripts. It does not inspect page contents, cookies, form contents, authentication data, or network requests.
 
-The `tabs` permission permits access to privileged tab metadata such as title and URL so the extension can present and organize open tabs. `tabGroups` provides native Firefox tab-group metadata. `sessions` stores only extension-owned tab-session metadata used for durable logical/tree identity. `storage` supports persistent Tab Sets and stash records in extension-local persistence.
+The `tabs` permission supplies tab metadata required for organization; `tabGroups` supplies native group metadata; `sessions` stores extension-owned logical/tree identity; `storage` stores user-invoked local recovery/organizational state; `alarms` schedules local one-shot snooze wakeups. Firefox alarms are not treated as durable storage.
 
-`storage.local` contains only data required by saved features the user invokes: safe restorable URLs, titles, timestamps, ordering, pin state, extension-owned local identifiers, tree relationships, and native-group presentation metadata. The extension does not store page contents, cookies, authentication tokens, passwords, form contents, private keys, or reusable credentials.
+`storage.local` contains only metadata required by implemented features: safe restorable URLs, titles, timestamps/deadlines, ordering, pin state, extension-owned identifiers, tree relationships, and native-group presentation metadata. The extension does not store page contents, cookies, authentication tokens, passwords, form contents, private keys, or reusable credentials.
 
-The current restorable URL boundary is intentionally conservative: `http:`, `https:`, and `about:blank`. Privileged or executable URLs such as `about:config`, `file:`, `data:`, `javascript:`, and `chrome:` are not persisted for Tab Set/stash restoration and are not closed by the stash action.
+Snooze records use a separate versioned key. Deadlines stay on-device; no notification, cloud service, telemetry service, analytics service, or remote scheduling system receives them. The extension rebuilds browser-session alarms locally after restart.
 
-Duplicate review uses only metadata already available in the live Firefox snapshot. Version `0.1.3` performs exact-URL matching only and does not transmit or persist a duplicate index. Cleanup is user-initiated after review, and the background rechecks current live state before closing any eligible duplicate. No additional permission, host access, page inspection, telemetry, or remote lookup is introduced for duplicate management.
+The restorable URL boundary remains `http:`, `https:`, and `about:blank`. Privileged/executable URLs are not persisted for Tab Set, stash, or snooze restoration and therefore are not closed by those recovery-backed operations.
 
-Users can delete individual Tab Sets, individual stashed items, or all Tab Set/stash persistent state from the extension UI. These actions affect extension-owned saved state only; they do not erase Firefox history or unrelated browser data.
+Duplicate review remains exact-URL-only and ephemeral; no persistent duplicate index is created.
 
-The source candidate does not implement telemetry, advertising, analytics, remote synchronization, or Webspaces identity inference. The manifest explicitly sets `incognito: "not_allowed"`, so private tabs and windows are outside the extension's intended operating boundary; duplicate cleanup also treats any private-state record surfaced defensively as ineligible.
+The manifest explicitly sets `incognito: "not_allowed"`. Private tabs/windows are outside the intended operating boundary.
