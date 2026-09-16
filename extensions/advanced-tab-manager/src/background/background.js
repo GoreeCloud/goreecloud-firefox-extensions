@@ -1,5 +1,6 @@
 import { createBrowserState } from "./browser-state.js";
 import { createDuplicateCleanup } from "./duplicate-cleanup.js";
+import { createRuleManager } from "./rules.js";
 import { createSavedState } from "./saved-state.js";
 import { createSnoozeManager } from "./snooze.js";
 
@@ -36,6 +37,12 @@ const snoozeManager = createSnoozeManager({
   readLiveSnapshot: browserState.readLiveSnapshot,
   setTreeParent: browserState.setTreeParent,
   ensureLogicalId: browserState.ensureLogicalId,
+  broadcastChange,
+  idFactory: newId
+});
+const ruleManager = createRuleManager({
+  browser,
+  readLiveSnapshot: browserState.readLiveSnapshot,
   broadcastChange,
   idFactory: newId
 });
@@ -86,6 +93,16 @@ browser.runtime.onMessage.addListener(async (message) => {
       return savedState.readDashboardState();
     case "atm:get-snooze-state":
       return snoozeManager.readSnoozeState();
+    case "atm:get-rule-state":
+      return ruleManager.readRuleState();
+    case "atm:set-rule-engine-enabled":
+      return ruleManager.setRuleEngineEnabled(message.enabled);
+    case "atm:upsert-rule":
+      return ruleManager.upsertRule(message.rule);
+    case "atm:delete-rule":
+      return ruleManager.deleteRule(message.ruleId);
+    case "atm:preview-rule-evaluation":
+      return ruleManager.previewRuleEvaluation();
     case "atm:save-focused-window-tab-set":
       return savedState.saveFocusedWindowAsTabSet(message.name || "");
     case "atm:restore-tab-set":
