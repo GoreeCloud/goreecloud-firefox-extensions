@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.3 — Source candidate
+
+- Added exact-URL duplicate review as a dedicated sidebar view.
+- Added explicit user-selected keeper controls and confirmation before destructive duplicate cleanup.
+- Added conservative cleanup exclusions for active, pinned, audible, hidden/private, tree-child, tree-parent, and explicitly excluded tabs.
+- Added fresh-state background verification immediately before cleanup so stale duplicate sets or keeper selections fail closed.
+- Added guarded batch tab closure using existing `tabs` authority with no new manifest permission.
+- Kept normalized URL matching and durable protected-tab policy out of the 0.1.3 boundary for a later explicit policy milestone.
+- Expanded deterministic tests with duplicate grouping, guard-reason, keeper-selection, cleanup-plan, stale-review, and background cleanup coverage.
+
 ## 0.1.2 — Source candidate
 
 - Added versioned persistent Tab Set and stash state in Firefox `storage.local`.

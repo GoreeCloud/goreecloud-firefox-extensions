@@ -1,6 +1,6 @@
 # GoreeCloud Advanced Tab Manager — Repository Specifications
 
-This repository document describes the implemented source boundary for version `0.1.2`. The broader product direction is governed by the canonical Drive project specification.
+This repository document describes the implemented source boundary for version `0.1.3`. The broader product direction is governed by the canonical Drive project specification.
 
 ## Implemented source contract
 
@@ -24,8 +24,13 @@ This repository document describes the implemented source boundary for version `
 - Tree relationships are reconstructed from set-local item IDs after restored runtime tabs exist.
 - Persistent operations are serialized so dashboard/saved-state reads wait for in-flight save/stash transactions.
 - User deletion operations can remove individual or all extension-owned Tab Set/stash records without deleting unrelated live browser state.
+- Duplicate matching is exact URL only. Fragment or tracking-parameter normalization is not performed in 0.1.3.
+- Duplicate cleanup is review-before-destruction: the sidebar exposes every exact-match set, requires a selected keeper, and requires explicit confirmation.
+- The background re-reads live Firefox state immediately before cleanup. A stale set or keeper fails closed.
+- Active, pinned, audible, hidden/private, tree-linked, and explicitly excluded tabs are never eligible for duplicate cleanup. Guarded tabs may coexist with the selected keeper and remain open.
+- Duplicate cleanup uses only existing `tabs` authority and adds no new permission.
 - UI actions remain bounded to Firefox-supported operations and extension-owned metadata changes.
 
 ## Release boundary
 
-`0.1.2` is a source candidate. Source tests, CI, deterministic packaging, or merge do not establish representative Firefox runtime acceptance, Mozilla signing, signed-XPI acceptance, or Stable qualification.
+`0.1.3` is a source candidate. Source tests, CI, deterministic packaging, or merge do not establish representative Firefox runtime acceptance, Mozilla signing, signed-XPI acceptance, or Stable qualification.

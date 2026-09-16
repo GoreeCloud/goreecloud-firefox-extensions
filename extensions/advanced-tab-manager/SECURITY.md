@@ -19,6 +19,11 @@
 - Persistent operations are serialized so reads do not observe partial save/stash transactions.
 - No `unlimitedStorage` permission is requested.
 - Manual discard remains suppressed in the UI for active, pinned, or audible tabs.
+- Duplicate cleanup is never automatic in 0.1.3 and requires an explicit reviewed set, selected keeper, and confirmation.
+- Exact duplicate cleanup re-reads Firefox immediately before mutation and fails closed if the duplicate set or selected keeper is stale.
+- Active, pinned, audible, hidden/private, tree-child, tree-parent, and explicitly excluded tabs are ineligible for duplicate cleanup.
+- Duplicate cleanup adds no new manifest permission and does not perform normalized URL heuristics.
+- Browser tab closure is not falsely described as rollback-safe: if Firefox rejects a multi-tab removal after partial browser-side effects, the UI is invalidated and reconciled from fresh Firefox truth.
 
 ## Release boundary
 

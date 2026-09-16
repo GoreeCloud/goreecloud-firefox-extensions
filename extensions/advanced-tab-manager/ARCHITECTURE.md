@@ -69,6 +69,16 @@ Stash restoration uses the reverse source-preserving sequence:
 
 If consuming the stored record fails, the newly created replacement tab is removed as rollback. A prior tree parent is reattached only if its logical identity currently maps to a live tab in the selected target window.
 
+## Duplicate review and cleanup model
+
+`src/core/duplicates.js` derives an ephemeral review model from the current Firefox snapshot. It groups only byte-for-byte equal non-empty URLs; it does not normalize fragments, query parameters, hosts, or tracking parameters.
+
+Each duplicate member receives cleanup exclusion reasons from current browser/tree state. Active, pinned, audible, hidden/private, tree-child, tree-parent, and explicitly excluded tabs are guarded. The review chooses a conservative default keeper, preferring a guarded tab when one exists, while still allowing the user to choose any reviewed set member as the operation-local keeper.
+
+Duplicate cleanup is not scheduled or automatic. The sidebar requires review plus explicit confirmation. `src/background/duplicate-cleanup.js` then discards the UI's earlier assumptions and reconstructs a fresh duplicate set from Firefox immediately before mutation. If the requested exact URL is no longer duplicated or the selected keeper no longer belongs to the current set, the operation fails closed. Only the fresh plan's unguarded, non-keeper tab IDs are passed to `tabs.remove()`.
+
+A browser removal error triggers state invalidation and a fresh UI reconciliation; the source does not claim transactional rollback for browser tabs that Firefox may already have closed.
+
 ## Source modules
 
 - `src/core/state.js` — browser-object normalization, snapshot construction, and exact duplicate counting.
@@ -77,16 +87,19 @@ If consuming the stored record fails, the newly created replacement tab is remov
 - `src/core/persistent-state.js` — versioned Tab Set/stash schema, validation, URL restoration boundary, verified storage mutation, and rollback.
 - `src/core/tab-sets.js` — safe live-window capture and stash-record preparation.
 - `src/core/stash-transaction.js` — source-preserving persist/close and create/consume transaction primitives.
+- `src/core/duplicates.js` — exact duplicate review, guard-reason analysis, deterministic keeper selection, and cleanup planning.
 - `src/background/background.js` — event registration and message routing for bounded browser/organizational commands.
 - `src/background/browser-state.js` — live Firefox reconciliation, logical/session metadata, opener adoption, and tree-parent mutation.
 - `src/background/saved-state.js` — serialized Tab Set/stash persistence, restoration, deletion, and recovery transactions.
+- `src/background/duplicate-cleanup.js` — fresh-state duplicate cleanup verification and guarded `tabs.remove()` dispatch.
 - `src/sidebar/sidebar.js` — sidebar state loading, command dispatch, and high-level view coordination.
 - `src/sidebar/open-tabs-view.js` — live tree/native-group rendering and tab-row actions.
 - `src/sidebar/saved-view.js` — Tab Set/stash presentation and saved-item actions.
+- `src/sidebar/duplicates-view.js` — exact duplicate review, keeper selection, guard disclosure, and cleanup action surface.
 - `src/sidebar/ui.js` — shared accessible sidebar action/badge primitives.
 - `src/popup/` — fast live/saved status and focused-window Tab Set capture.
-- `tests/` — deterministic state, tree, storage-transaction, and background integration tests.
+- `tests/` — deterministic state, tree, storage-transaction, duplicate-policy, cleanup, and background integration tests.
 
 ## Next architecture layers
 
-Duplicate review/cleanup, snoozing, richer tree operations, rules, import/export, and optional integrations remain future work behind explicit schemas and source-preserving mutation sequences.
+Conservative normalized duplicate matching/protected-tab policy, snoozing, richer tree operations, rules, import/export, and optional integrations remain future work behind explicit policies, schemas where needed, and source-preserving mutation sequences.
