@@ -1,5 +1,6 @@
 export const RULE_STATE_KEY = "goreecloud.advancedTabManager.ruleState.v1";
 export const RULE_STATE_SCHEMA_VERSION = 1;
+export const RULE_ACTION_TYPES = new Set(["pin", "unpin", "mute", "unmute", "discard"]);
 
 const RULE_FIELDS = new Set([
   "hostname",
@@ -55,6 +56,23 @@ function validateCondition(condition, path) {
   }
 }
 
+function validateActions(actions, path) {
+  if (actions === undefined) return;
+  if (!Array.isArray(actions) || actions.length > 3) {
+    throw new RuleStateError("invalid-rule-state", `${path} actions are invalid`);
+  }
+  const unique = new Set();
+  for (const action of actions) {
+    if (!RULE_ACTION_TYPES.has(action) || unique.has(action)) {
+      throw new RuleStateError("invalid-rule-state", `${path} action is invalid`);
+    }
+    unique.add(action);
+  }
+  if ((unique.has("pin") && unique.has("unpin")) || (unique.has("mute") && unique.has("unmute"))) {
+    throw new RuleStateError("invalid-rule-state", `${path} actions conflict`);
+  }
+}
+
 function validateRule(rule, index) {
   const path = `rules[${index}]`;
   if (!isObject(rule)) throw new RuleStateError("invalid-rule-state", `${path} must be an object`);
@@ -65,6 +83,7 @@ function validateRule(rule, index) {
   if (!isTimestamp(rule.createdAt) || !isTimestamp(rule.updatedAt) || rule.updatedAt < rule.createdAt) throw new RuleStateError("invalid-rule-state", `${path} timestamps are invalid`);
   if (!Array.isArray(rule.conditions) || rule.conditions.length < 1 || rule.conditions.length > 8) throw new RuleStateError("invalid-rule-state", `${path}.conditions is invalid`);
   rule.conditions.forEach((condition, conditionIndex) => validateCondition(condition, `${path}.conditions[${conditionIndex}]`));
+  validateActions(rule.actions, path);
 }
 
 export function createEmptyRuleState() {
