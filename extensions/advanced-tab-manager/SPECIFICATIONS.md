@@ -1,38 +1,41 @@
 # GoreeCloud Advanced Tab Manager — Repository Specifications
 
-This repository document describes the implemented source boundary for version `0.1.7`. The broader product direction is governed by the canonical Drive project specification.
+This repository document describes the implemented source boundary for version `0.1.8`. The broader product direction is governed by the canonical Drive project specification.
+
+## Component and dependency contract
+
+- Component class: browser extension.
+- Supported platform: Firefox 139+.
+- Source state: `source-candidate`; product lifecycle: In Development.
+- Required GoreeCloud runtime dependencies: none.
+- Optional/planned integrations such as Webspaces are not implemented dependencies in 0.1.8.
+- Browser-surface presentation follows current GoreeCloud Glaze principles where practical without claiming a separate Glaze runtime-package or product-level acceptance state.
 
 ## Implemented source contract
 
-- Firefox Manifest V3 extension; add-on ID `advanced-tab-manager@goreecloud.com`; Firefox 139+ baseline.
+- Manifest V3 add-on ID `advanced-tab-manager@goreecloud.com`.
 - Non-persistent ES-module background scripts.
 - Permissions only: `alarms`, `sessions`, `storage`, `tabGroups`, and `tabs`.
 - No `unlimitedStorage`, host permissions, content scripts, remote telemetry, page-content inspection, or private-browsing access.
-- Firefox remains authoritative for live tabs/windows/native groups; UI/rule snapshots are reconstructed from Firefox APIs.
+- Firefox remains authoritative for live tabs/windows/native groups; extension UI and automation snapshots are reconstructed from Firefox APIs.
 - Runtime Firefox tab/group IDs are not durable persistent identity.
-- Existing Tab Set/stash state, snooze recovery state, and rule definitions remain in separate versioned `storage.local` records.
+- Tab Set/stash, snooze recovery, and rule definitions remain in separate versioned `storage.local` records.
 - Restorable URLs remain limited to `http:`, `https:`, and `about:blank`.
-- Existing tree, Tab Set, stash, exact-duplicate, guarded-cleanup, restart-safe snooze, and explicit rule-action contracts remain in force.
+- Existing tree, Tab Set/stash, duplicate-cleanup, snooze, rule-action, and command-palette contracts remain in force.
 
-### 0.1.6 ATM-008A rule-action boundary retained
+### ATM-008C manager/diagnostics boundary — 0.1.8
 
-- Rule state remains schema version 1 and globally disabled by default.
-- Rules use deterministic all-condition matching, explicit integer priority, stable ties, explainable expected/observed/matched data, and private-tab exclusion.
-- Optional actions remain restricted to `pin`, `unpin`, `mute`, `unmute`, and `discard`; unsupported, duplicate, or contradictory actions fail closed.
-- Equal-priority differing action plans conflict and block mutation for the affected tab.
-- Preview does not mutate Firefox. **Apply now** is a separate explicit user operation with two fresh snapshot plans plus a final target-tab read before mutation.
-- Rule action execution does not close, navigate, or create tabs and does not widen manifest permissions.
-
-### 0.1.7 ATM-008B command-palette boundary
-
-- `src/core/commands.js` owns a browser-API-independent, immutable catalog of nine bounded commands plus deterministic local query matching and exact lookup.
-- Empty queries preserve authored order. Non-empty queries use case-insensitive AND token matching; title and keyword matches produce deterministic ranking with authored order as the tie-break.
-- The palette can only request existing sidebar behavior: open Tree, Native groups, Duplicates, Saved items, Snoozed, or Rules views; focus the local sidebar search; refresh current state; or invoke the existing focused-window Tab Set save control.
-- `src/sidebar/command-palette.js` contains no direct `browser.*` calls. Execution is routed through existing sidebar controls so the palette does not create a parallel browser-authority path.
-- The palette opens from a visible top-bar control or `Ctrl/⌘+K`, supports keyboard result traversal and Enter execution, closes with Escape, and supports pointer selection.
-- The overlay exposes dialog/listbox semantics and includes Reduced Transparency and Forced Colors CSS fallbacks.
-- The command palette does not add automatic behavior, close/navigate/mutate tabs directly, inspect page content, or request any new permission.
+- `src/core/manager-model.js` is a pure aggregation layer. It has no browser API dependency.
+- The manager model contains source/lifecycle/component metadata, live/saved counts, local-store availability/schema/revision metadata, and manifest-declared permission posture.
+- The manager model deliberately omits tab titles, tab URLs, Tab Set/stash/snooze URLs, rule contents, and browsing-history records.
+- `src/background/manager.js` reads the already-established dashboard, snooze, and rule-state interfaces. A failed store read is converted to a degraded availability state so one broken local store does not suppress the remaining diagnostics.
+- `atm:get-manager-state` is read-only. It does not mutate Firefox or extension-owned saved state.
+- `src/manager/manager.html`, `.css`, and `.js` provide the full-window read-only diagnostic surface with Refresh and Open sidebar actions only.
+- The manager can be opened from the sidebar, popup, or command palette. The command palette still routes through an existing UI control and contains no direct browser API calls.
+- The manager adds no new manifest permission, host permission, content script, remote dependency, telemetry, or private-browsing access.
+- Reduced Transparency, responsive layout, keyboard focus indication, and Forced Colors fallbacks are included in source.
+- Import/export, snapshots, bulk organization, destructive settings, automatic rule execution, remote management, and synchronization remain outside the 0.1.8 boundary.
 
 ## Release boundary
 
-`0.1.7` is a source candidate. Source tests, CI, deterministic packaging, or merge do not establish representative Firefox runtime acceptance, browser-restart acceptance, event-driven automatic-rule acceptance, command-palette runtime/accessibility acceptance, Mozilla signing, signed-XPI acceptance, production release, or Stable qualification.
+`0.1.8` is a source candidate. Source tests, CI, deterministic packaging, or merge do not establish representative Firefox manager runtime/accessibility acceptance, browser-restart acceptance, Mozilla signing, signed-XPI acceptance, production release, or Stable qualification.
