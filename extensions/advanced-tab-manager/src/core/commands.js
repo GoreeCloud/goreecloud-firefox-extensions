@@ -42,6 +42,13 @@ export const COMMANDS = Object.freeze([
     action: Object.freeze({ type: "view", value: "rules" })
   }),
   Object.freeze({
+    id: "open-manager",
+    title: "Open Manager",
+    description: "Open the read-only full-window source and state diagnostics surface.",
+    keywords: ["manager", "diagnostics", "settings", "status", "health"],
+    action: Object.freeze({ type: "open-manager" })
+  }),
+  Object.freeze({
     id: "focus-search",
     title: "Focus sidebar search",
     description: "Move keyboard focus to the existing local search field.",
