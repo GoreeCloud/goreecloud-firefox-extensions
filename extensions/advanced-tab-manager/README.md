@@ -4,8 +4,10 @@ GoreeCloud Advanced Tab Manager is a local-first Firefox WebExtension for high-s
 
 ## Current source state
 
-- Version: `0.1.7`
-- Lifecycle: `source-candidate`
+- Version: `0.1.8`
+- Source state: `source-candidate`
+- Product lifecycle: In Development
+- Component class: Browser extension
 - Firefox add-on ID: `advanced-tab-manager@goreecloud.com`
 - Minimum Firefox version: `139.0`
 - Stable release: none
@@ -14,41 +16,47 @@ GoreeCloud Advanced Tab Manager is a local-first Firefox WebExtension for high-s
 - Content scripts: none
 - Private browsing: explicitly not allowed by manifest
 
-The current source implements live window/tab/native-group synchronization, durable logical-ID trees, persistent Tab Sets, transactional tab stashing, reviewed exact-URL duplicate cleanup, restart-safe one-shot snoozing, a deterministic local rule engine, bounded explicit rule actions, and a keyboard-first command-palette foundation.
+The current source implements live Firefox tab/window/native-group reconstruction, durable logical-ID trees, persistent Tab Sets, transactional tab stashing, reviewed exact-URL duplicate cleanup, restart-safe one-shot snoozing, deterministic local rules with bounded explicit actions, a keyboard-first command palette, and the ATM-008C read-only manager/diagnostics foundation.
 
-Tree relationships remain keyed by extension-owned logical tab identity rather than Firefox runtime tab IDs. Tab Sets, stashed items, snoozed recovery records, and rule definitions remain local to the extension. The Tab Set/stash, snooze, and rule stores are independently versioned so new capabilities do not silently migrate or reinterpret unrelated saved-state data.
+Firefox runtime tab/group IDs remain transient. Tree relationships use extension-owned logical IDs. Tab Set/stash, snooze, and rule data remain in separate versioned local records so one capability does not silently reinterpret another capability's saved state.
 
-The current restorable URL boundary is `http:`, `https:`, and `about:blank`; privileged or executable schemes are not persisted for reconstruction.
+The restorable URL boundary is `http:`, `https:`, and `about:blank`. Privileged or executable schemes are not persisted for reconstruction.
 
 ### Source-preserving operations
 
-Stashing uses: **persist recovery state → verify persistence → close source tab**.
+Stashing uses **persist recovery state → verify persistence → close source tab**.
 
-Snoozing uses: **persist snooze recovery state → verify persistence → create and verify a one-shot Firefox alarm → close source tab**. If alarm scheduling/verification or tab closure fails, the implementation attempts to restore the exact previous snooze record and clears the attempted alarm.
+Snoozing uses **persist snooze recovery state → verify persistence → create and verify a one-shot Firefox alarm → close source tab**. Persisted deadlines are authoritative because Firefox alarms do not survive browser restarts. Startup reconstructs alarms from local storage; failed due restoration retains recovery state and schedules a bounded retry.
 
-Firefox alarms are session-scoped, so persisted snooze deadlines—not alarms—are authoritative. When the non-persistent background page starts, Advanced Tab Manager rebuilds its expected alarms from `storage.local`; overdue items receive a short startup grace before restore is attempted. A failed due restore keeps recovery state and schedules a bounded retry rather than dropping the item.
+### Rule and command boundaries
 
-Due restoration creates the replacement tab before consuming the snooze record, reapplies supported pin/native-group metadata, attempts tree-parent restoration when the logical parent is live in the target window, and removes recovery state only after replacement succeeds. Failure to consume stored recovery state rolls the replacement back.
+Rules are local, globally disabled by default, priority-ordered, explainable, and limited to local tab/group metadata. Explicit actions remain restricted to pin/unpin, mute/unmute, and discard. Apply now re-reads live Firefox state and fails closed on drift or conflict.
 
-The current snooze UI exposes **Snooze 1 hour**, a dedicated **Snoozed** view, exact local wake times, **Open now**, and **+1h** rescheduling. Recurring snoozes, notifications, and remote synchronization are not part of 0.1.7.
+The command palette is sidebar-local and opened by its visible control or `Ctrl/⌘+K`. Its pure command catalog/search layer has no browser API dependency. Commands route through established sidebar controls instead of creating a second browser-authority path.
 
-Duplicate cleanup remains review-first and exact-URL-only. Active, pinned, audible, hidden/private, tree-linked, and explicitly excluded tabs are not eligible for duplicate cleanup.
+### ATM-008C manager/diagnostics foundation — 0.1.8
 
-### Rule engine and ATM-008A
+Version 0.1.8 adds a full-window Manager surface reachable from the sidebar, toolbar popup, and command palette. This first manager slice is intentionally read-only.
 
-The local rule store remains `goreecloud.advancedTabManager.ruleState.v1`. The rule engine is globally disabled by default and each rule has its own enabled state, explicit integer priority, stable ID, timestamps, and one to eight conditions.
+The background aggregates a privacy-minimized manager model containing only live/saved counts, store availability/schema/revision metadata, source/lifecycle metadata, and manifest-declared permission posture. It does **not** serialize tab titles, tab URLs, saved-item URLs, rule contents, or browsing history into the manager model.
 
-Version 0.1.6 added optional rule actions without changing the storage schema version. New actions remain restricted to **pin**, **unpin**, **mute**, **unmute**, and **discard**. Unsupported, duplicate, or contradictory actions fail closed. **Apply now is explicit and user-triggered** and performs fresh-plan/live-tab rechecks before bounded mutations.
+The Manager displays:
 
-### Command palette — 0.1.7
+- current source version/lifecycle/component class and Firefox baseline;
+- live tab/window/native-group/tree/pinned/discarded counts;
+- Tab Set, stash, snooze, and rule counts;
+- organizational/snooze/rule store schema/revision availability;
+- extension permissions, host-permission count/list, content-script count, and private-browsing boundary.
 
-Version 0.1.7 adds a sidebar-local command palette opened by the toolbar button or `Ctrl/⌘+K`. Its catalog and query ranking are pure, deterministic, and browser-API independent. Multi-token matching is AND-based and stable authored order resolves equal scores.
+A failure in one extension-owned store degrades that section without preventing the remaining diagnostics from rendering. The surface includes Reduced Transparency and Forced Colors fallbacks and uses native Firefox/system color semantics consistent with the existing constrained-browser Glaze presentation approach.
 
-The palette deliberately exposes only existing bounded sidebar actions: open Tree, Native groups, Duplicates, Saved items, Snoozed, or Rules views; focus the main local search field; refresh live/saved state; and save the focused window as a local Tab Set. It routes through established sidebar controls instead of introducing direct browser APIs or new permissions. It does not close, navigate, pin, mute, discard, or otherwise mutate live tabs by itself.
+The Manager does not yet provide import/export, session snapshots, bulk organization, destructive settings, automatic rule execution, remote management, synchronization, or new Firefox permissions.
 
-Keyboard interaction supports up/down selection, Enter execution, Escape close, and `Ctrl/⌘+K` toggle. The overlay includes Reduced Transparency and Forced Colors fallbacks.
+## GoreeCloud platform dependency posture
 
-It does **not** yet implement tree drag-and-drop/bulk tree operations, normalized duplicate matching, durable protected-tab rules, event-driven automatic rule application, automatic discard policy, import/export, the full manager/settings interface, richer command actions, Webspaces integration, representative Firefox runtime acceptance, Mozilla signing, or Stable release acceptance.
+Required GoreeCloud runtime dependencies: none. Core tab management remains local and Firefox-native.
+
+The current UI follows GoreeCloud Glaze presentation principles where practical for a Firefox extension surface, but 0.1.8 does not claim a separate Glaze runtime-package integration or product-level Glaze V1.5 acceptance. Webspaces integration and other platform-system integrations remain optional/planned and are not represented as implemented.
 
 ## Development validation
 
@@ -59,4 +67,4 @@ python shared/scripts/validate_repository.py
 python shared/scripts/package_extension.py advanced-tab-manager
 ```
 
-Packaging produces a deterministic unsigned XPI under `dist/`. An unsigned package is not a Stable release.
+Packaging produces a deterministic unsigned XPI under `dist/`. Source/CI/package evidence does not establish representative Firefox runtime acceptance, Mozilla signing, production release, or Stable qualification.
