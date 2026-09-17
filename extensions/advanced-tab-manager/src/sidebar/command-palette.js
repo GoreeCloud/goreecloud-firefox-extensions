@@ -5,6 +5,7 @@ const viewMode = document.querySelector("#view-mode");
 const search = document.querySelector("#search");
 const refresh = document.querySelector("#refresh");
 const saveWindow = document.querySelector("#save-window");
+const openManager = document.querySelector("#open-manager");
 const topbarActions = document.querySelector(".topbar-actions");
 const shell = document.querySelector(".shell");
 
@@ -108,6 +109,10 @@ async function executeCommand(id) {
       viewMode.value = command.action.value;
       viewMode.dispatchEvent(new Event("change", { bubbles: true }));
       viewMode.focus();
+      return;
+    case "open-manager":
+      openManager?.click();
+      openManager?.focus();
       return;
     case "focus-search":
       search.focus();
