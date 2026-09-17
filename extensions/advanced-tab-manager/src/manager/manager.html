@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GoreeCloud Advanced Tab Manager — Manager</title>
+  <link rel="stylesheet" href="manager.css">
+</head>
+<body>
+  <main class="manager-shell">
+    <header class="manager-topbar">
+      <div>
+        <p class="eyebrow">GoreeCloud Advanced Tab Manager</p>
+        <h1>Manager</h1>
+        <p class="lede">Read-only source and state diagnostics for the current Firefox profile.</p>
+      </div>
+      <div class="topbar-actions">
+        <button id="open-sidebar" type="button">Open sidebar</button>
+        <button id="refresh" class="primary" type="button">Refresh</button>
+      </div>
+    </header>
+
+    <p id="status" class="status" aria-live="polite">Reading current state…</p>
+
+    <section class="grid" aria-label="Manager diagnostics">
+      <article class="panel">
+        <h2>Source</h2>
+        <dl>
+          <div><dt>Version</dt><dd id="source-version">—</dd></div>
+          <div><dt>Lifecycle</dt><dd id="source-lifecycle">—</dd></div>
+          <div><dt>Component</dt><dd id="component-class">—</dd></div>
+          <div><dt>Firefox baseline</dt><dd id="firefox-baseline">—</dd></div>
+        </dl>
+      </article>
+
+      <article class="panel">
+        <h2>Live browser</h2>
+        <dl class="metrics">
+          <div><dt>Tabs</dt><dd id="count-tabs">—</dd></div>
+          <div><dt>Windows</dt><dd id="count-windows">—</dd></div>
+          <div><dt>Native groups</dt><dd id="count-groups">—</dd></div>
+          <div><dt>Tree children</dt><dd id="count-tree">—</dd></div>
+          <div><dt>Pinned</dt><dd id="count-pinned">—</dd></div>
+          <div><dt>Discarded</dt><dd id="count-discarded">—</dd></div>
+        </dl>
+      </article>
+
+      <article class="panel">
+        <h2>Saved organization</h2>
+        <dl class="metrics">
+          <div><dt>Tab Sets</dt><dd id="count-tab-sets">—</dd></div>
+          <div><dt>Stashed</dt><dd id="count-stashed">—</dd></div>
+          <div><dt>Snoozed</dt><dd id="count-snoozed">—</dd></div>
+          <div><dt>Rules</dt><dd id="count-rules">—</dd></div>
+        </dl>
+      </article>
+
+      <article class="panel">
+        <h2>Store health</h2>
+        <div id="store-health" class="store-health"></div>
+      </article>
+
+      <article class="panel">
+        <h2>Permission boundary</h2>
+        <dl>
+          <div><dt>Extension permissions</dt><dd id="extension-permissions">—</dd></div>
+          <div><dt>Host permissions</dt><dd id="host-permissions">—</dd></div>
+          <div><dt>Content scripts</dt><dd id="content-scripts">—</dd></div>
+          <div><dt>Private browsing</dt><dd id="private-browsing">—</dd></div>
+        </dl>
+      </article>
+
+      <article class="panel">
+        <h2>Current boundary</h2>
+        <p>This 0.1.8 manager foundation is intentionally diagnostic and read-only. It does not add import/export, session snapshots, bulk organization, destructive settings, remote management, or new Firefox permissions.</p>
+        <p>Firefox remains authoritative for live tabs, windows, and native groups. The manager displays counts and store revisions; it does not expose saved URLs, tab titles, rule contents, or browsing history.</p>
+      </article>
+    </section>
+
+    <footer>
+      <p>Development source only. Representative Firefox runtime/accessibility acceptance, signing, production release, and Stable qualification remain separate gates.</p>
+    </footer>
+  </main>
+  <script type="module" src="manager.js"></script>
+</body>
+</html>

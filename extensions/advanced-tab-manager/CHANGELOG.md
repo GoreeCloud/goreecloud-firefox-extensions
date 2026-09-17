@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.8 — Source candidate
+
+- Added ATM-008C, a privacy-minimized full-window Manager/diagnostics foundation.
+- Added a pure manager model that aggregates only source/lifecycle metadata, live/saved counts, store availability/schema/revision metadata, and manifest permission posture.
+- Deliberately excluded tab titles, tab URLs, saved-item URLs, snoozed URLs, rule contents, and browsing-history records from the manager model.
+- Added a read-only background manager route that composes established dashboard, snooze, and rule-state reads and degrades individual unavailable stores without fabricating data.
+- Added a responsive Manager surface with Source, Live browser, Saved organization, Store health, Permission boundary, and current-boundary diagnostics.
+- Added Manager entry points from the sidebar, toolbar popup, and command palette while preserving the command palette's no-direct-browser-API boundary.
+- Added Reduced Transparency, Forced Colors, keyboard focus, and responsive layout fallbacks for the new full-window surface.
+- Updated the command catalog to ten bounded commands with an explicit Open Manager command.
+- Corrected stale popup version text and stale privacy/security documentation from earlier source-candidate milestones.
+- Added focused manager-model/background tests and expanded the source validator to enforce the 0.1.8 read-only privacy boundary.
+- Added no new manifest permission; permissions remain exactly `alarms`, `sessions`, `storage`, `tabGroups`, and `tabs`, with no host permissions or content scripts and private browsing disabled.
+- Full manager mutation/settings workflows, import/export, session snapshots, large-session qualification, representative Firefox manager runtime/accessibility acceptance, Mozilla signing, signed-XPI acceptance, production release, and Stable qualification remain outside this milestone.
+
 ## 0.1.7 — Source candidate
 
 - Added a keyboard-first sidebar command palette with a visible top-bar trigger and `Ctrl/⌘+K` shortcut.
