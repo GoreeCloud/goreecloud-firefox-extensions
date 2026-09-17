@@ -36,7 +36,7 @@
       "slug": "redirector",
       "name": "GoreeCloud Redirector",
       "directory": "extensions/redirector",
-      "gecko_id": "goreecloud-redirector@goreecloud.com",
+      "gecko_id": "redirector@goreecloud.com",
       "source_version": "0.2.1",
       "source_state": "canonical-source",
       "accepted_stable_version": "0.2.0",
