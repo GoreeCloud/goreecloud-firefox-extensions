@@ -3,6 +3,7 @@ import { countExactUrlDuplicates, flattenTabs } from "../core/state.js";
 const summary = document.querySelector("#summary");
 const saveWindow = document.querySelector("#save-window");
 const openSidebar = document.querySelector("#open-sidebar");
+const openManager = document.querySelector("#open-manager");
 const refreshButton = document.querySelector("#refresh");
 
 async function refresh() {
@@ -32,6 +33,11 @@ saveWindow.addEventListener("click", async () => {
 
 openSidebar.addEventListener("click", async () => {
   await browser.sidebarAction.open();
+  window.close();
+});
+
+openManager.addEventListener("click", async () => {
+  await browser.tabs.create({ url: browser.runtime.getURL("src/manager/manager.html") });
   window.close();
 });
 
