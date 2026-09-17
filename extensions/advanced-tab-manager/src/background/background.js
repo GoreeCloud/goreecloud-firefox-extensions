@@ -1,5 +1,6 @@
 import { createBrowserState } from "./browser-state.js";
 import { createDuplicateCleanup } from "./duplicate-cleanup.js";
+import { createManagerState } from "./manager.js";
 import { createRuleManager } from "./rules.js";
 import { createSavedState } from "./saved-state.js";
 import { createSnoozeManager } from "./snooze.js";
@@ -46,6 +47,12 @@ const ruleManager = createRuleManager({
   broadcastChange,
   idFactory: newId
 });
+const managerState = createManagerState({
+  getManifest: () => browser.runtime.getManifest(),
+  readDashboardState: savedState.readDashboardState,
+  readSnoozeState: snoozeManager.readSnoozeState,
+  readRuleState: ruleManager.readRuleState
+});
 
 browser.tabs.onCreated.addListener((tab) => {
   browserState.adoptOpenerRelationship(tab)
@@ -91,6 +98,8 @@ browser.runtime.onMessage.addListener(async (message) => {
       return savedState.readOrganizationalState();
     case "atm:get-dashboard-state":
       return savedState.readDashboardState();
+    case "atm:get-manager-state":
+      return managerState.readManagerState();
     case "atm:get-snooze-state":
       return snoozeManager.readSnoozeState();
     case "atm:get-rule-state":
