@@ -4,31 +4,31 @@
 
 Firefox owns live browser state. Advanced Tab Manager owns only extension metadata, saved organizational/recovery intent, presentation, and requested browser operations.
 
-## Runtime
+The manager does not become a second state authority. It reads established background interfaces and presents a privacy-minimized diagnostic projection.
 
-The Manifest V3 background event page is non-persistent and treats every wake as a potential cold start. Live window/tab/native-group state is re-read from Firefox. Extension-owned saved state is separately validated from `storage.local`.
+## Runtime and durable state
 
-## Durable state layers
+The Manifest V3 background event page is non-persistent and treats every wake as a potential cold start. Live window/tab/native-group state is re-read from Firefox. Extension-owned saved state is independently validated from `storage.local`.
 
-Eligible tabs use extension-owned logical IDs in Firefox session tab values. Parent relationships store the parent logical ID rather than a runtime tab ID. Fresh snapshots reconcile missing/cross-window parents and malformed cycles without fabricating browser state.
+Eligible tabs use extension-owned logical IDs in Firefox session tab values. Parent relationships store logical identity rather than runtime tab IDs. Tab Set/stash, snooze, and rule state use separate versioned records. Firefox alarms are ephemeral snooze wake signals; persisted deadlines are authoritative.
 
-Tab Set/stash state, snooze state, and rule state use separate extension-owned records so one capability does not silently reinterpret another capability's persistent data. Verified-write paths preserve exact prior records for rollback where the operation contract supports it.
+## Rule and command layers
 
-Firefox alarms are treated as ephemeral snooze wake signals, not durable truth; persisted snooze deadlines are authoritative and are reconstructed on event-page startup.
+`src/core/rule-state.js` owns rule persistence. `src/core/rules.js` performs deterministic local evaluation/action planning. `src/background/rules.js` serializes CRUD/preview/apply operations; Apply now revalidates live state before bounded mutation.
 
-## Deterministic rule engine and bounded actions
+`src/core/commands.js` is a browser-API-independent command catalog/search layer. `src/sidebar/command-palette.js` renders the palette and routes execution through existing sidebar controls.
 
-`src/core/rule-state.js` owns the versioned rule schema and persistence contract. `src/core/rules.js` is a pure evaluator/action planner over locally available Firefox metadata. Private tabs are excluded, conditions are explainable, explicit priority controls ordering, and equal-priority differing action plans fail closed.
+## Manager/diagnostics layer — 0.1.8
 
-`src/background/rules.js` serializes rule CRUD/preview/apply operations. Apply now is explicitly user-triggered and revalidates a fresh plan before bounded pin/unpin, mute/unmute, or discard mutations. It does not close, navigate, or create tabs.
+`src/core/manager-model.js` produces a privacy-minimized immutable-style diagnostic projection from existing dashboard/snooze/rule responses plus manifest metadata. It returns counts and health metadata rather than user browsing content.
 
-## Command-palette foundation
+`src/background/manager.js` composes the three existing read paths and fails soft per store. A local-store read exception becomes `available: false`; other diagnostics remain usable.
 
-`src/core/commands.js` is a pure command catalog and deterministic search layer. It has no browser API dependency and exposes only bounded command descriptors/actions.
+`src/background/background.js` exposes one new read-only message route: `atm:get-manager-state`.
 
-`src/sidebar/command-palette.js` renders the keyboard-first palette and routes execution through existing sidebar controls rather than calling Firefox APIs directly. This preserves one browser-authority path for existing operations while allowing `Ctrl/⌘+K`, keyboard traversal, Enter execution, Escape close, and pointer activation.
+`src/manager/manager.*` is a full-window presentation surface. It has no mutation controls beyond opening the existing sidebar and refreshing diagnostics. The manager page reads only the bounded manager model.
 
-The 0.1.7 palette is intentionally limited to view navigation, local search focus, refresh, and focused-window Tab Set capture. It does not introduce automatic browser mutation or a generalized command dispatcher.
+Sidebar and popup entry points open the extension-owned manager page. The command palette triggers the established sidebar manager button, preserving its no-direct-browser-API command boundary.
 
 ## Source modules
 
@@ -39,16 +39,19 @@ The 0.1.7 palette is intentionally limited to view navigation, local search focu
 - `src/core/snooze-store.js`, `snooze.js`, `snooze-transaction.js` — restart-safe snooze recovery and transactions.
 - `src/core/rule-state.js`, `rules.js` — rule persistence, deterministic evaluation, explanation, and action planning.
 - `src/core/commands.js` — pure command catalog/search/lookup.
+- `src/core/manager-model.js` — privacy-minimized manager aggregation.
 - `src/background/browser-state.js` — live Firefox/session state.
 - `src/background/saved-state.js` — Tab Set/stash operations.
 - `src/background/duplicate-cleanup.js` — fresh-state guarded duplicate mutation.
 - `src/background/snooze.js` — snooze operations, due restore, retries, and restart alarm reconstruction.
 - `src/background/rules.js` — serialized rule CRUD, preview, and explicit apply.
+- `src/background/manager.js` — bounded manager-state composition.
 - `src/background/background.js` — event registration and message routing.
-- `src/sidebar/` — Tree, Groups, Duplicates, Saved Items, Snoozed, Rules, and command-palette surfaces.
-- `src/popup/` — fast counts and focused-window capture.
-- `tests/` — deterministic state, transaction, policy, evaluation, command-search, and background integration tests.
+- `src/sidebar/` — operational sidebar and command palette.
+- `src/popup/` — fast counts, focused-window capture, and manager/sidebar entry points.
+- `src/manager/` — read-only full-window diagnostics surface.
+- `tests/` — deterministic state, transaction, policy, evaluation, command, manager-model, and background integration tests.
 
 ## Next architecture layers
 
-Full manager/settings UI, import/export, large-session qualification, richer command actions, event-driven automatic rule application, richer arbitrary-date/recurring snooze UX, tree branch operations, conservative normalized duplicate policy/protected-tab rules, automatic discard policy, and optional integrations remain future work behind explicit source-preserving transitions and acceptance evidence.
+Full manager/settings mutation workflows, import/export, local session snapshots, large-session qualification, richer command actions, event-driven automatic rule application, richer snooze UX, tree branch operations, conservative normalized duplicate/protected-tab policy, automatic discard policy, and optional integrations remain future work behind explicit source-preserving transitions and acceptance evidence.
