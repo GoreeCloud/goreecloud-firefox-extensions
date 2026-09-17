@@ -4,7 +4,7 @@ import test from "node:test";
 import { COMMANDS, commandById, searchCommands } from "../src/core/commands.js";
 
 test("catalog has stable unique command ids", () => {
-  assert.equal(COMMANDS.length, 9);
+  assert.equal(COMMANDS.length, 10);
   assert.equal(new Set(COMMANDS.map((command) => command.id)).size, COMMANDS.length);
 });
 
@@ -28,8 +28,14 @@ test("keyword search finds duplicate review without adding destructive command s
   assert.equal(results[0].action.type, "view");
 });
 
-test("catalog exposes only bounded non-destructive palette action types", () => {
-  const allowed = new Set(["view", "focus-search", "refresh", "save-window"]);
+test("manager discovery is explicit and remains a bounded UI-routing command", () => {
+  const results = searchCommands("diagnostics");
+  assert.deepEqual(results.map((command) => command.id), ["open-manager"]);
+  assert.equal(results[0].action.type, "open-manager");
+});
+
+test("catalog exposes only bounded palette action types", () => {
+  const allowed = new Set(["view", "open-manager", "focus-search", "refresh", "save-window"]);
   for (const command of COMMANDS) assert.ok(allowed.has(command.action.type), command.id);
 });
 
