@@ -12,7 +12,11 @@ function recordSchemaVersion(record) {
   return Number.isInteger(record.schemaVersion) ? record.schemaVersion : null;
 }
 
-export function buildManagerModel({ dashboard, snooze, rules, manifest }) {
+function manifestArray(manifest, key) {
+  return asArray(manifest?.[key]).map(String).sort();
+}
+
+export function buildManagerModel({ dashboard, snooze, rules, manifest, generatedAt = Date.now() }) {
   const snapshot = dashboard?.snapshot ?? { windows: [], groups: [] };
   const windows = asArray(snapshot.windows);
   const groups = asArray(snapshot.groups);
@@ -20,12 +24,31 @@ export function buildManagerModel({ dashboard, snooze, rules, manifest }) {
   const organizationalState = dashboard?.ok ? dashboard.state : null;
   const snoozeState = snooze?.ok ? snooze.state : null;
   const ruleState = rules?.ok ? rules.state : null;
+  const permissions = manifestArray(manifest, "permissions");
+  const hostPermissions = manifestArray(manifest, "host_permissions");
+  const contentScripts = asArray(manifest?.content_scripts);
 
   return {
-    sourceVersion: String(manifest?.version ?? "unknown"),
-    permissions: asArray(manifest?.permissions).map(String).sort(),
-    hostPermissions: asArray(manifest?.host_permissions).map(String).sort(),
-    incognitoMode: String(manifest?.incognito ?? "unknown"),
+    generatedAt,
+    source: {
+      version: String(manifest?.version ?? "unknown"),
+      state: "source-candidate",
+      lifecycle: "In Development",
+      componentClass: "Browser extension",
+      minimumFirefoxVersion: String(manifest?.browser_specific_settings?.gecko?.strict_min_version ?? "unknown")
+    },
+    permissions: {
+      extension: permissions,
+      hosts: hostPermissions,
+      contentScripts: contentScripts.length,
+      incognitoMode: String(manifest?.incognito ?? "unknown")
+    },
+    availability: {
+      liveBrowserState: Boolean(dashboard?.snapshot),
+      organizationalState: Boolean(dashboard?.ok),
+      snoozeState: Boolean(snooze?.ok),
+      ruleState: Boolean(rules?.ok)
+    },
     counts: {
       tabs: tabs.length,
       windows: windows.length,
