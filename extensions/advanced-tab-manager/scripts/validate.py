@@ -129,6 +129,9 @@ for route in ("atm:create-session-snapshot", "atm:restore-session-snapshot", "at
     assert route in background, f"missing session snapshot route: {route}"
 for control_id in ("create-snapshot", "snapshot-retention", "save-retention", "snapshot-list"):
     assert f'id="{control_id}"' in manager_html, f"missing Manager snapshot control: {control_id}"
+assert 'id="count-snapshot-retention"' in manager_html, "Manager must expose configured snapshot retention"
+assert "renderSnapshotList(model.snapshots)" in manager_page, "Manager must render snapshot retention/list state from the model"
+assert 'model.permissions.contentScripts ? model.permissions.contentScripts : "None"' in manager_page, "zero content scripts should render as human-readable None"
 assert "sessionSnapshots" in manager_model and "snapshotRetention" in manager_model
 assert "snapshot.test" not in manager_model, "manager model must not encode fixture browsing content"
 assert "SIZES = [100, 500, 1000]" in large_session_qualification
