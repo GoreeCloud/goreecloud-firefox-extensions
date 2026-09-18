@@ -78,3 +78,12 @@ A Firefox 156 representative screenshot of the 0.1.12 temporary installation ide
 - The dynamically inserted command-palette trigger caused the narrow sidebar toolbar to wrap Refresh onto a separate row.
 
 The candidate source removes the unsupported manifest property and integrates a compact `⌘K` command trigger into the same no-wrap toolbar layout. These corrections require fresh exact-head qualification and a new representative rendered check; this note is not itself rendered acceptance.
+
+
+### Representative Firefox review note — Manager follow-up
+
+A second owner-supplied Firefox 156 review confirms that the prior Manifest V3 warning is no longer present and the narrow sidebar toolbar remains on one row with the compact `⌘K` trigger.
+
+The same review exposed a separate Manager presentation bug: the session-snapshot retention field appeared empty and the empty snapshot state was not rendered, even though the privacy-minimized Manager model already carried both retention and snapshot metadata. The candidate now explicitly renders `model.snapshots`, adds configured snapshot retention to Saved workspace metrics, presents a visible no-snapshot empty state, renders zero content scripts as `None`, and prevents the recovery card from stretching solely to match the taller portability card.
+
+These source changes require fresh exact-head qualification and a new rendered check before Manager visual acceptance is complete.
