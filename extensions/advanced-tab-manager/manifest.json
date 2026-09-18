@@ -24,7 +24,6 @@
     "scripts": [
       "src/background/background.js"
     ],
-    "persistent": false,
     "type": "module"
   },
   "browser_specific_settings": {
