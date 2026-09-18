@@ -6,6 +6,12 @@ import {
   restorePersistentRecord
 } from "../core/persistent-state.js";
 import { captureWindowAsTabSet, prepareStashedItem } from "../core/tab-sets.js";
+import {
+  captureSessionSnapshot,
+  normalizeSnapshotRetention,
+  snapshotTabCount,
+  trimSessionSnapshots
+} from "../core/session-snapshots.js";
 import { createThenRemoveStored, persistThenClose } from "../core/stash-transaction.js";
 
 export function createSavedState({ browser, readLiveSnapshot, setTreeParent, ensureLogicalId, broadcastChange, idFactory }) {
@@ -270,6 +276,197 @@ async function restoreStashedItem(stashedItemId) {
   });
 }
 
+async function createSessionSnapshot() {
+  return serializePersistentOperation(async () => {
+    try {
+      const snapshot = await readLiveSnapshot();
+      const captured = captureSessionSnapshot({
+        snapshot,
+        idFactory,
+        now: Date.now()
+      });
+      if (!captured.ok) return captured;
+
+      let prunedCount = 0;
+      const committed = await commitPersistentMutation({
+        storage: browser.storage.local,
+        mutate(state) {
+          const next = [captured.sessionSnapshot, ...state.sessionSnapshots];
+          const retained = trimSessionSnapshots(next, state.snapshotRetention);
+          prunedCount = next.length - retained.length;
+          state.sessionSnapshots = retained;
+          return state;
+        }
+      });
+      if (!committed.ok) return { ok: false, reason: "storage-verification-failed", rolledBack: committed.rolledBack };
+
+      broadcastChange("session-snapshot-created");
+      return {
+        ok: true,
+        sessionSnapshotId: captured.sessionSnapshot.id,
+        windowCount: captured.sessionSnapshot.windows.length,
+        tabCount: snapshotTabCount(captured.sessionSnapshot),
+        skippedWindowCount: captured.skippedWindowCount,
+        skippedTabCount: captured.skippedTabCount,
+        prunedCount
+      };
+    } catch (error) {
+      console.error("Advanced Tab Manager could not create a session snapshot", error);
+      return { ok: false, reason: reasonFromError(error) };
+    }
+  });
+}
+
+async function deleteSessionSnapshot(sessionSnapshotId) {
+  return serializePersistentOperation(async () => {
+    try {
+      const record = await readPersistentStateRecord(browser.storage.local);
+      if (!record.state.sessionSnapshots.some((snapshot) => snapshot.id === sessionSnapshotId)) {
+        return { ok: false, reason: "session-snapshot-not-found" };
+      }
+      const committed = await commitPersistentMutation({
+        storage: browser.storage.local,
+        mutate(state) {
+          state.sessionSnapshots = state.sessionSnapshots.filter((snapshot) => snapshot.id !== sessionSnapshotId);
+          return state;
+        }
+      });
+      if (!committed.ok) return { ok: false, reason: "storage-verification-failed", rolledBack: committed.rolledBack };
+      broadcastChange("session-snapshot-deleted");
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, reason: reasonFromError(error) };
+    }
+  });
+}
+
+async function setSnapshotRetention(value) {
+  return serializePersistentOperation(async () => {
+    const normalized = normalizeSnapshotRetention(value);
+    if (!normalized.ok) return normalized;
+    try {
+      let prunedCount = 0;
+      const committed = await commitPersistentMutation({
+        storage: browser.storage.local,
+        mutate(state) {
+          state.snapshotRetention = normalized.value;
+          const retained = trimSessionSnapshots(state.sessionSnapshots, normalized.value);
+          prunedCount = state.sessionSnapshots.length - retained.length;
+          state.sessionSnapshots = retained;
+          return state;
+        }
+      });
+      if (!committed.ok) return { ok: false, reason: "storage-verification-failed", rolledBack: committed.rolledBack };
+      broadcastChange("session-snapshot-retention-updated");
+      return { ok: true, retention: normalized.value, prunedCount };
+    } catch (error) {
+      return { ok: false, reason: reasonFromError(error) };
+    }
+  });
+}
+
+async function restoreCapturedWindow(windowSnapshot) {
+  const items = [...windowSnapshot.items].sort((left, right) => left.sourceIndex - right.sourceIndex);
+  if (!items.length) throw new Error("empty session snapshot window");
+
+  const createdWindow = await browser.windows.create({ url: items[0].url });
+  const restoredWindowId = createdWindow.id;
+  const firstRuntimeTab = createdWindow.tabs?.[0];
+  if (!Number.isInteger(restoredWindowId) || !Number.isInteger(firstRuntimeTab?.id)) {
+    throw new Error("new window did not return a usable tab");
+  }
+
+  const runtimeTabByItemId = new Map([[items[0].id, firstRuntimeTab.id]]);
+  for (const item of items.slice(1)) {
+    const created = await browser.tabs.create({
+      windowId: restoredWindowId,
+      url: item.url,
+      active: false
+    });
+    runtimeTabByItemId.set(item.id, created.id);
+  }
+
+  for (const group of windowSnapshot.groups) {
+    const tabIds = items
+      .filter((item) => item.groupId === group.id && !item.pinned)
+      .map((item) => runtimeTabByItemId.get(item.id))
+      .filter(Number.isInteger);
+    if (!tabIds.length) continue;
+    const runtimeGroupId = await browser.tabs.group({
+      createProperties: { windowId: restoredWindowId },
+      tabIds
+    });
+    await browser.tabGroups.update(runtimeGroupId, {
+      title: group.title,
+      color: group.color,
+      collapsed: group.collapsed
+    });
+  }
+
+  for (const item of items) {
+    if (item.pinned) await browser.tabs.update(runtimeTabByItemId.get(item.id), { pinned: true });
+  }
+
+  for (const item of items) {
+    if (!item.parentItemId) continue;
+    const attached = await setTreeParent(
+      runtimeTabByItemId.get(item.id),
+      runtimeTabByItemId.get(item.parentItemId)
+    );
+    if (!attached.ok) throw new Error(`session snapshot tree restore failed: ${attached.reason}`);
+  }
+
+  const activeTabId = runtimeTabByItemId.get(windowSnapshot.activeItemId) || runtimeTabByItemId.get(items[0].id);
+  await browser.tabs.update(activeTabId, { active: true });
+  return { windowId: restoredWindowId, restoredTabCount: items.length };
+}
+
+async function restoreSessionSnapshot(sessionSnapshotId) {
+  return serializePersistentOperation(async () => {
+    let sessionSnapshot;
+    try {
+      const record = await readPersistentStateRecord(browser.storage.local);
+      sessionSnapshot = record.state.sessionSnapshots.find((snapshot) => snapshot.id === sessionSnapshotId);
+      if (!sessionSnapshot) return { ok: false, reason: "session-snapshot-not-found" };
+    } catch (error) {
+      return { ok: false, reason: reasonFromError(error) };
+    }
+
+    const createdWindowIds = [];
+    let restoredTabCount = 0;
+    try {
+      const runtimeWindowBySavedId = new Map();
+      for (const savedWindow of sessionSnapshot.windows) {
+        const restored = await restoreCapturedWindow(savedWindow);
+        createdWindowIds.push(restored.windowId);
+        runtimeWindowBySavedId.set(savedWindow.id, restored.windowId);
+        restoredTabCount += restored.restoredTabCount;
+      }
+
+      const focusedSavedWindow = sessionSnapshot.windows.find((window) => window.focused) || sessionSnapshot.windows[0];
+      const focusedWindowId = runtimeWindowBySavedId.get(focusedSavedWindow.id);
+      if (Number.isInteger(focusedWindowId)) await browser.windows.update(focusedWindowId, { focused: true });
+
+      broadcastChange("session-snapshot-restored");
+      return {
+        ok: true,
+        restoredWindowCount: createdWindowIds.length,
+        restoredTabCount
+      };
+    } catch (error) {
+      console.error("Advanced Tab Manager could not restore a session snapshot", error);
+      for (const windowId of [...createdWindowIds].reverse()) {
+        try { await browser.windows.remove(windowId); } catch {}
+      }
+      return {
+        ok: false,
+        reason: "session-snapshot-restore-failed",
+        rolledBackWindowCount: createdWindowIds.length
+      };
+    }
+  });
+}
+
 async function restoreTabSet(tabSetId) {
   return serializePersistentOperation(async () => {
     let tabSet;
@@ -357,13 +554,17 @@ async function restoreTabSet(tabSetId) {
 
   return {
     clearSavedItems,
+    createSessionSnapshot,
+    deleteSessionSnapshot,
     deleteStashedItem,
     deleteTabSet,
     readDashboardState,
     readOrganizationalState,
+    restoreSessionSnapshot,
     restoreStashedItem,
     restoreTabSet,
     saveFocusedWindowAsTabSet,
+    setSnapshotRetention,
     stashTab
   };
 }

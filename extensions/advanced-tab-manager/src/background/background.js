@@ -127,6 +127,14 @@ browser.runtime.onMessage.addListener(async (message) => {
       return ruleManager.previewRuleEvaluation();
     case "atm:apply-rule-actions":
       return ruleManager.applyRuleActions();
+    case "atm:create-session-snapshot":
+      return savedState.createSessionSnapshot();
+    case "atm:restore-session-snapshot":
+      return savedState.restoreSessionSnapshot(message.sessionSnapshotId);
+    case "atm:delete-session-snapshot":
+      return savedState.deleteSessionSnapshot(message.sessionSnapshotId);
+    case "atm:set-snapshot-retention":
+      return savedState.setSnapshotRetention(message.retention);
     case "atm:save-focused-window-tab-set":
       return savedState.saveFocusedWindowAsTabSet(message.name || "");
     case "atm:restore-tab-set":

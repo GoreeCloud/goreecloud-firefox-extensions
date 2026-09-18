@@ -9,9 +9,14 @@ const importFile = document.querySelector("#import-file");
 const importPreview = document.querySelector("#import-preview");
 const applyImport = document.querySelector("#apply-import");
 const clearImport = document.querySelector("#clear-import");
+const createSnapshot = document.querySelector("#create-snapshot");
+const snapshotRetention = document.querySelector("#snapshot-retention");
+const saveRetention = document.querySelector("#save-retention");
+const snapshotList = document.querySelector("#snapshot-list");
 
 let pendingImport = null;
 let pendingPreview = null;
+let lastManagerModel = null;
 
 function setText(id, value) {
   const element = document.querySelector(`#${id}`);
@@ -41,7 +46,53 @@ function renderStore(name, store) {
   return row;
 }
 
+function renderSnapshotList(snapshotState) {
+  snapshotList.replaceChildren();
+  const items = Array.isArray(snapshotState?.items) ? snapshotState.items : [];
+  snapshotRetention.value = String(snapshotState?.retention ?? 10);
+
+  if (!items.length) {
+    const empty = document.createElement("p");
+    empty.className = "snapshot-empty";
+    empty.textContent = "No local session snapshots yet.";
+    snapshotList.append(empty);
+    return;
+  }
+
+  for (const item of items) {
+    const card = document.createElement("div");
+    card.className = "snapshot-card";
+
+    const details = document.createElement("div");
+    const title = document.createElement("div");
+    title.className = "snapshot-title";
+    title.textContent = new Date(item.createdAt).toLocaleString();
+    const meta = document.createElement("div");
+    meta.className = "snapshot-meta";
+    meta.textContent = `${item.windows} window${item.windows === 1 ? "" : "s"} · ${item.tabs} tab${item.tabs === 1 ? "" : "s"}`;
+    details.append(title, meta);
+
+    const actions = document.createElement("div");
+    actions.className = "snapshot-actions";
+    const restore = document.createElement("button");
+    restore.type = "button";
+    restore.dataset.action = "restore";
+    restore.dataset.snapshotId = item.id;
+    restore.textContent = "Restore";
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.dataset.action = "delete";
+    remove.dataset.snapshotId = item.id;
+    remove.textContent = "Delete";
+    actions.append(restore, remove);
+
+    card.append(details, actions);
+    snapshotList.append(card);
+  }
+}
+
 function render(model) {
+  lastManagerModel = model;
   setText("source-version", model.source.version);
   setText("source-lifecycle", `${model.source.lifecycle} · ${model.source.state}`);
   setText("component-class", model.source.componentClass);
@@ -108,6 +159,7 @@ function renderImportPreview(preview) {
   counts.append(
     metric("Tab Sets", preview.importedCounts.tabSets),
     metric("Stashed", preview.importedCounts.stashed),
+    metric("Session snapshots", preview.importedCounts.sessionSnapshots),
     metric("Snoozed", preview.importedCounts.snoozed),
     metric("Rules", preview.importedCounts.rules),
     metric("ID conflicts", Object.values(preview.conflictCounts).reduce((sum, value) => sum + value, 0))
@@ -115,7 +167,7 @@ function renderImportPreview(preview) {
 
   const warning = document.createElement("p");
   warning.className = "portability-warning";
-  warning.textContent = "Applying this import replaces Advanced Tab Manager local organizational, snooze, and rule state. It does not open browser tabs. Live Firefox tabs remain untouched.";
+  warning.textContent = "Applying this import replaces Advanced Tab Manager local organizational state (including session snapshots), snooze state, and rule state. It does not open browser tabs. Live Firefox tabs remain untouched.";
   importPreview.append(heading, counts, warning);
   applyImport.disabled = false;
   clearImport.disabled = false;
@@ -129,6 +181,56 @@ async function load() {
     return;
   }
   render(result.model);
+}
+
+async function createCurrentSessionSnapshot() {
+  status.textContent = "Capturing current Firefox session…";
+  const result = await browser.runtime.sendMessage({ type: "atm:create-session-snapshot" });
+  if (!result?.ok) {
+    status.textContent = `Session snapshot failed (${result?.reason || "unknown error"}).`;
+    return;
+  }
+  status.textContent = `Session snapshot captured: ${result.windowCount} window(s), ${result.tabCount} tab(s)${result.prunedCount ? `; pruned ${result.prunedCount} snapshot(s) by retention` : ""}.`;
+  await load();
+}
+
+async function saveSnapshotRetention() {
+  const retention = Number(snapshotRetention.value);
+  if (!Number.isInteger(retention) || retention < 1 || retention > 50) {
+    status.textContent = "Snapshot retention must be an integer from 1 through 50.";
+    return;
+  }
+  const currentCount = lastManagerModel?.counts?.sessionSnapshots ?? 0;
+  if (retention < currentCount && !window.confirm(`Reducing retention to ${retention} will permanently prune ${currentCount - retention} older local snapshot(s). Continue?`)) {
+    return;
+  }
+  const result = await browser.runtime.sendMessage({ type: "atm:set-snapshot-retention", retention });
+  if (!result?.ok) {
+    status.textContent = `Retention update failed (${result?.reason || "unknown error"}).`;
+    return;
+  }
+  status.textContent = `Snapshot retention set to ${result.retention}${result.prunedCount ? `; pruned ${result.prunedCount} older snapshot(s)` : ""}.`;
+  await load();
+}
+
+async function handleSnapshotAction(button) {
+  const sessionSnapshotId = button?.dataset?.snapshotId;
+  if (!sessionSnapshotId) return;
+  if (button.dataset.action === "restore") {
+    if (!window.confirm("Restore this local session snapshot into new Firefox windows? Your current live windows will remain open.")) return;
+    status.textContent = "Restoring session snapshot into new windows…";
+    const result = await browser.runtime.sendMessage({ type: "atm:restore-session-snapshot", sessionSnapshotId });
+    status.textContent = result?.ok
+      ? `Session snapshot restored into ${result.restoredWindowCount} new window(s) with ${result.restoredTabCount} tab(s).`
+      : `Session snapshot restore failed (${result?.reason || "unknown error"})${result?.rolledBackWindowCount ? `; rolled back ${result.rolledBackWindowCount} created window(s)` : ""}.`;
+    return;
+  }
+  if (button.dataset.action === "delete") {
+    if (!window.confirm("Delete this local session snapshot? This cannot be undone except from a prior Advanced Tab Manager backup.")) return;
+    const result = await browser.runtime.sendMessage({ type: "atm:delete-session-snapshot", sessionSnapshotId });
+    status.textContent = result?.ok ? "Session snapshot deleted." : `Snapshot deletion failed (${result?.reason || "unknown error"}).`;
+    if (result?.ok) await load();
+  }
 }
 
 async function exportCurrentBackup() {
@@ -177,7 +279,7 @@ async function previewSelectedImport(file) {
 
 async function applySelectedImport() {
   if (!pendingImport || !pendingPreview) return;
-  const confirmed = window.confirm("Replace Advanced Tab Manager local organizational, snooze, and rule state with this validated backup? Live Firefox tabs will not be opened or closed by the import itself.");
+  const confirmed = window.confirm("Replace Advanced Tab Manager local organizational state (including session snapshots), snooze state, and rule state with this validated backup? Live Firefox tabs will not be opened or closed by the import itself.");
   if (!confirmed) return;
 
   applyImport.disabled = true;
@@ -219,6 +321,22 @@ applyImport.addEventListener("click", () => applySelectedImport().catch((error) 
 clearImport.addEventListener("click", () => {
   importFile.value = "";
   resetImportPreview();
+});
+createSnapshot.addEventListener("click", () => createCurrentSessionSnapshot().catch((error) => {
+  console.error(error);
+  status.textContent = "Unable to create the session snapshot.";
+}));
+saveRetention.addEventListener("click", () => saveSnapshotRetention().catch((error) => {
+  console.error(error);
+  status.textContent = "Unable to update snapshot retention.";
+}));
+snapshotList.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-action][data-snapshot-id]");
+  if (!button) return;
+  handleSnapshotAction(button).catch((error) => {
+    console.error(error);
+    status.textContent = "Unable to complete the snapshot action.";
+  });
 });
 
 resetImportPreview();

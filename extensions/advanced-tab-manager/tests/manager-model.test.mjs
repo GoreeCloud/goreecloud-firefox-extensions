@@ -4,7 +4,7 @@ import test from "node:test";
 import { buildManagerModel } from "../src/core/manager-model.js";
 
 const manifest = {
-  version: "0.1.8",
+  version: "0.1.10",
   permissions: ["tabs", "storage", "sessions", "tabGroups", "alarms"],
   host_permissions: [],
   incognito: "not_allowed",
@@ -30,7 +30,13 @@ test("manager model aggregates counts without exposing tab or saved-item content
         schemaVersion: 1,
         revision: 7,
         tabSets: [{ id: "set", tabs: [{ url: "https://saved.test/" }] }],
-        stashedItems: [{ id: "stash", url: "https://stash.test/" }]
+        stashedItems: [{ id: "stash", url: "https://stash.test/" }],
+        snapshotRetention: 5,
+        sessionSnapshots: [{
+          id: "snapshot-secret",
+          createdAt: 1000,
+          windows: [{ id: "window-secret", items: [{ url: "https://snapshot.test/private" }] }]
+        }]
       }
     },
     snooze: {
@@ -45,7 +51,7 @@ test("manager model aggregates counts without exposing tab or saved-item content
 
   assert.equal(model.generatedAt, 1234);
   assert.deepEqual(model.source, {
-    version: "0.1.8",
+    version: "0.1.10",
     state: "source-candidate",
     lifecycle: "In Development",
     componentClass: "Browser extension",
@@ -61,14 +67,18 @@ test("manager model aggregates counts without exposing tab or saved-item content
     tabSets: 1,
     stashed: 1,
     snoozed: 1,
-    rules: 1
+    rules: 1,
+    sessionSnapshots: 1
   });
+  assert.equal(model.snapshots.retention, 5);
+  assert.deepEqual(model.snapshots.items, [{ id: "snapshot-secret", createdAt: 1000, windows: 1, tabs: 1 }]);
   assert.equal(model.stores.rules.enabled, true);
 
   const serialized = JSON.stringify(model);
   assert.equal(serialized.includes("Secret title"), false);
   assert.equal(serialized.includes("https://"), false);
   assert.equal(serialized.includes("Local rule"), false);
+  assert.equal(serialized.includes("snapshot.test"), false);
 });
 
 test("manager model sorts permission declarations and reports the privacy boundary", () => {

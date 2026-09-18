@@ -1,5 +1,8 @@
 export const PERSISTENT_STATE_KEY = "goreecloud.advancedTabManager.persistentState.v1";
 export const PERSISTENT_STATE_SCHEMA_VERSION = 1;
+export const DEFAULT_SNAPSHOT_RETENTION = 10;
+export const MIN_SNAPSHOT_RETENTION = 1;
+export const MAX_SNAPSHOT_RETENTION = 50;
 
 export class PersistentStateError extends Error {
   constructor(code, message = code) {
@@ -45,7 +48,9 @@ export function createEmptyPersistentState() {
     schemaVersion: PERSISTENT_STATE_SCHEMA_VERSION,
     revision: 0,
     tabSets: [],
-    stashedItems: []
+    stashedItems: [],
+    sessionSnapshots: [],
+    snapshotRetention: DEFAULT_SNAPSHOT_RETENTION
   };
 }
 
@@ -57,8 +62,8 @@ function validateGroup(group, path) {
   if (typeof group.collapsed !== "boolean") throw new PersistentStateError("invalid-persistent-state", `${path}.collapsed is invalid`);
 }
 
-function validateTabSet(tabSet, index) {
-  const path = `tabSets[${index}]`;
+function validateTabSet(tabSet, index, pathOverride = null) {
+  const path = pathOverride || `tabSets[${index}]`;
   if (!isObject(tabSet)) throw new PersistentStateError("invalid-persistent-state", `${path} must be an object`);
   if (!isNonEmptyString(tabSet.id)) throw new PersistentStateError("invalid-persistent-state", `${path}.id is invalid`);
   if (!isNonEmptyString(tabSet.name)) throw new PersistentStateError("invalid-persistent-state", `${path}.name is invalid`);
@@ -103,6 +108,36 @@ function validateTabSet(tabSet, index) {
   }
 }
 
+function validateSessionSnapshot(snapshot, index) {
+  const path = `sessionSnapshots[${index}]`;
+  if (!isObject(snapshot)) throw new PersistentStateError("invalid-persistent-state", `${path} must be an object`);
+  if (!isNonEmptyString(snapshot.id)) throw new PersistentStateError("invalid-persistent-state", `${path}.id is invalid`);
+  if (!isTimestamp(snapshot.createdAt)) throw new PersistentStateError("invalid-persistent-state", `${path}.createdAt is invalid`);
+  if (!Array.isArray(snapshot.windows) || !snapshot.windows.length) throw new PersistentStateError("invalid-persistent-state", `${path}.windows is invalid`);
+
+  const windowIds = new Set();
+  let focusedWindows = 0;
+  snapshot.windows.forEach((window, windowIndex) => {
+    const windowPath = `${path}.windows[${windowIndex}]`;
+    if (!isObject(window) || !isNonEmptyString(window.id)) throw new PersistentStateError("invalid-persistent-state", `${windowPath} is invalid`);
+    if (windowIds.has(window.id)) throw new PersistentStateError("invalid-persistent-state", `${path} has duplicate window IDs`);
+    windowIds.add(window.id);
+    if (typeof window.focused !== "boolean") throw new PersistentStateError("invalid-persistent-state", `${windowPath}.focused is invalid`);
+    if (!Array.isArray(window.items) || !window.items.length) throw new PersistentStateError("invalid-persistent-state", `${windowPath}.items must contain at least one restorable tab`);
+    if (window.focused) focusedWindows += 1;
+    validateTabSet({
+      id: window.id,
+      name: "Session snapshot window",
+      createdAt: snapshot.createdAt,
+      updatedAt: snapshot.createdAt,
+      activeItemId: window.activeItemId ?? null,
+      groups: window.groups,
+      items: window.items
+    }, windowIndex, windowPath);
+  });
+  if (focusedWindows > 1) throw new PersistentStateError("invalid-persistent-state", `${path} has multiple focused windows`);
+}
+
 function validateStashedItem(item, index) {
   const path = `stashedItems[${index}]`;
   if (!isObject(item) || !isNonEmptyString(item.id) || !isRestorableUrl(item.url)) throw new PersistentStateError("invalid-persistent-state", `${path} is invalid`);
@@ -118,24 +153,44 @@ function validateStashedItem(item, index) {
 export function validatePersistentState(value) {
   if (!isObject(value)) throw new PersistentStateError("invalid-persistent-state", "persistent state must be an object");
   if (value.schemaVersion !== PERSISTENT_STATE_SCHEMA_VERSION) throw new PersistentStateError("unsupported-persistent-state-schema");
-  if (!Number.isInteger(value.revision) || value.revision < 0) throw new PersistentStateError("invalid-persistent-state", "revision is invalid");
-  if (!Array.isArray(value.tabSets) || !Array.isArray(value.stashedItems)) throw new PersistentStateError("invalid-persistent-state", "collections are invalid");
+
+  const normalized = clone(value);
+  if (normalized.sessionSnapshots === undefined) normalized.sessionSnapshots = [];
+  if (normalized.snapshotRetention === undefined) normalized.snapshotRetention = DEFAULT_SNAPSHOT_RETENTION;
+
+  if (!Number.isInteger(normalized.revision) || normalized.revision < 0) throw new PersistentStateError("invalid-persistent-state", "revision is invalid");
+  if (!Array.isArray(normalized.tabSets) || !Array.isArray(normalized.stashedItems) || !Array.isArray(normalized.sessionSnapshots)) {
+    throw new PersistentStateError("invalid-persistent-state", "collections are invalid");
+  }
+  if (!Number.isInteger(normalized.snapshotRetention) || normalized.snapshotRetention < MIN_SNAPSHOT_RETENTION || normalized.snapshotRetention > MAX_SNAPSHOT_RETENTION) {
+    throw new PersistentStateError("invalid-persistent-state", "snapshotRetention is invalid");
+  }
+  if (normalized.sessionSnapshots.length > normalized.snapshotRetention) {
+    throw new PersistentStateError("invalid-persistent-state", "sessionSnapshots exceed configured retention");
+  }
 
   const tabSetIds = new Set();
-  value.tabSets.forEach((tabSet, index) => {
+  normalized.tabSets.forEach((tabSet, index) => {
     validateTabSet(tabSet, index);
     if (tabSetIds.has(tabSet.id)) throw new PersistentStateError("invalid-persistent-state", "duplicate Tab Set ID");
     tabSetIds.add(tabSet.id);
   });
 
   const stashIds = new Set();
-  value.stashedItems.forEach((item, index) => {
+  normalized.stashedItems.forEach((item, index) => {
     validateStashedItem(item, index);
     if (stashIds.has(item.id)) throw new PersistentStateError("invalid-persistent-state", "duplicate stash ID");
     stashIds.add(item.id);
   });
 
-  return clone(value);
+  const snapshotIds = new Set();
+  normalized.sessionSnapshots.forEach((snapshot, index) => {
+    validateSessionSnapshot(snapshot, index);
+    if (snapshotIds.has(snapshot.id)) throw new PersistentStateError("invalid-persistent-state", "duplicate session snapshot ID");
+    snapshotIds.add(snapshot.id);
+  });
+
+  return normalized;
 }
 
 export async function readPersistentStateRecord(storage) {

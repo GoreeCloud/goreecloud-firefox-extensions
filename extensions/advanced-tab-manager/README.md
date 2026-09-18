@@ -4,7 +4,7 @@ GoreeCloud Advanced Tab Manager is a local-first Firefox WebExtension for high-s
 
 ## Current source state
 
-- Version: `0.1.9`
+- Version: `0.1.10`
 - Source state: `source-candidate`
 - Product lifecycle: In Development
 - Component class: Browser extension
@@ -16,7 +16,7 @@ GoreeCloud Advanced Tab Manager is a local-first Firefox WebExtension for high-s
 - Content scripts: none
 - Private browsing: explicitly not allowed by manifest
 
-The current source implements live Firefox tab/window/native-group reconstruction, durable logical-ID trees, persistent Tab Sets, transactional tab stashing, reviewed exact-URL duplicate cleanup, restart-safe one-shot snoozing, deterministic local rules with bounded explicit actions, a keyboard-first command palette, and the ATM-008C manager/diagnostics foundation, and ATM-008D source-preserving local backup portability.
+The current source implements live Firefox tab/window/native-group reconstruction, durable logical-ID trees, persistent Tab Sets, transactional tab stashing, reviewed exact-URL duplicate cleanup, restart-safe one-shot snoozing, deterministic local rules with bounded explicit actions, a keyboard-first command palette, the Manager/diagnostics foundation, source-preserving local backup portability, and ATM-008E retained local session snapshots.
 
 Firefox runtime tab/group IDs remain transient. Tree relationships use extension-owned logical IDs. Tab Set/stash, snooze, and rule data remain in separate versioned local records so one capability does not silently reinterpret another capability's saved state.
 
@@ -60,19 +60,30 @@ Imports use **parse → verify envelope/integrity/identity → validate every st
 
 The Manager caps a selected import file at 16 MiB before JSON parsing. Import preview is deliberately privacy-minimized: it returns counts, conflict counts, source version/time, integrity status, and expected current revisions rather than browsing URLs or titles.
 
-Session snapshots, broader settings, bulk organization, automatic rule execution, remote management, synchronization, representative Firefox portability acceptance, and new Firefox permissions remain outside this milestone.
+Broader settings, bulk organization, automatic rule execution, remote management, synchronization, representative Firefox runtime/accessibility acceptance, and new Firefox permissions remain outside this milestone.
+
+### ATM-008E retained session snapshots — 0.1.10
+
+Version 0.1.10 adds explicit local session snapshots to the existing organizational state. A snapshot captures only restorable non-private tabs, window boundaries, native-group presentation metadata, pin state, active-tab identity, ordering, and supported tree relationships. Firefox remains authoritative for the current live session.
+
+Snapshot retention is configurable from 1 through 50 records and defaults to 10. Reducing retention explicitly prunes the oldest local snapshots. Snapshot restore is additive: it creates new Firefox windows and never replaces or closes the user's existing live windows. If a multi-window snapshot restore fails, the operation attempts to remove every newly created window while preserving the saved snapshot as recovery state.
+
+The Manager exposes only snapshot ID, capture time, window count, and tab count. It does not project snapshot URLs or titles into the diagnostic model. Snapshot records are included in the existing versioned local backup/export path, and imports continue to use schema validation, preview, fresh-revision checks, readback verification, and rollback.
+
+CI also runs a deterministic core-scale qualification at 100, 500, and 1,000 synthetic tabs and retains the resulting JSON report with the unsigned XPI and SHA-256 package checksum. This is core-scale evidence only; representative Firefox rendering, interaction latency, accessibility, browser-restart, and device/runtime performance remain separate acceptance gates.
 
 ## GoreeCloud platform dependency posture
 
 Required GoreeCloud runtime dependencies: none. Core tab management remains local and Firefox-native.
 
-The current UI follows GoreeCloud Glaze presentation principles where practical for a Firefox extension surface, but 0.1.9 does not claim a separate Glaze runtime-package integration or product-level Glaze V1.5 acceptance. Webspaces integration and other platform-system integrations remain optional/planned and are not represented as implemented.
+The current UI follows GoreeCloud Glaze presentation principles where practical for a Firefox extension surface, but 0.1.10 does not claim product-level current-Stable Glaze V1.5 / 1.5.1 acceptance. Webspaces integration and other platform-system integrations remain optional/planned and are not represented as implemented.
 
 ## Development validation
 
 ```bash
 python extensions/advanced-tab-manager/scripts/validate.py
 node --test extensions/advanced-tab-manager/tests/*.test.mjs
+node extensions/advanced-tab-manager/scripts/large-session-qualification.mjs
 python shared/scripts/validate_repository.py
 python shared/scripts/package_extension.py advanced-tab-manager
 ```

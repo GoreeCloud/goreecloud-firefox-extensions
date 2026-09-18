@@ -7,7 +7,7 @@ manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
 assert manifest["manifest_version"] == 3
 assert manifest["name"] == "GoreeCloud Advanced Tab Manager"
-assert manifest["version"] == "0.1.9"
+assert manifest["version"] == "0.1.10"
 assert manifest["browser_specific_settings"]["gecko"]["id"] == "advanced-tab-manager@goreecloud.com"
 assert manifest["browser_specific_settings"]["gecko"]["strict_min_version"] == "139.0"
 assert manifest["incognito"] == "not_allowed"
@@ -25,7 +25,7 @@ required = [
     "src/core/state.js", "src/core/tree.js", "src/core/tree-session.js", "src/core/duplicates.js",
     "src/core/persistent-state.js", "src/core/tab-sets.js", "src/core/stash-transaction.js",
     "src/core/snooze-store.js", "src/core/snooze.js", "src/core/snooze-transaction.js",
-    "src/core/rule-state.js", "src/core/rules.js", "src/core/commands.js", "src/core/manager-model.js", "src/core/portability.js",
+    "src/core/rule-state.js", "src/core/rules.js", "src/core/commands.js", "src/core/manager-model.js", "src/core/portability.js", "src/core/session-snapshots.js",
     "src/sidebar/sidebar.html", "src/sidebar/sidebar.js", "src/sidebar/open-tabs-view.js", "src/sidebar/saved-view.js", "src/sidebar/duplicates-view.js", "src/sidebar/snoozed-view.js", "src/sidebar/rules-view.js", "src/sidebar/command-palette.js", "src/sidebar/command-palette.css", "src/sidebar/manager-link.js", "src/sidebar/rules.css", "src/sidebar/ui.js", "src/sidebar/sidebar.css",
     "src/popup/popup.html", "src/popup/popup.js", "src/popup/popup.css",
     "src/manager/manager.html", "src/manager/manager.js", "src/manager/manager.css",
@@ -34,7 +34,9 @@ required = [
     "tests/duplicates.test.mjs", "tests/duplicate-cleanup.test.mjs",
     "tests/snooze-store.test.mjs", "tests/snooze.test.mjs", "tests/snooze-transaction.test.mjs", "tests/background-snooze.test.mjs",
     "tests/rule-state.test.mjs", "tests/rules.test.mjs", "tests/background-rules.test.mjs", "tests/commands.test.mjs",
-    "tests/manager-model.test.mjs", "tests/background-manager.test.mjs", "tests/portability.test.mjs", "tests/background-portability.test.mjs"
+    "tests/manager-model.test.mjs", "tests/background-manager.test.mjs", "tests/portability.test.mjs", "tests/background-portability.test.mjs",
+    "tests/session-snapshots.test.mjs", "tests/background-session-snapshots.test.mjs",
+    "scripts/large-session-qualification.mjs"
 ]
 for relative in required:
     assert (ROOT / relative).is_file(), f"missing required source-candidate file: {relative}"
@@ -47,6 +49,8 @@ manager_html = (ROOT / "src/manager/manager.html").read_text(encoding="utf-8")
 manager_css = (ROOT / "src/manager/manager.css").read_text(encoding="utf-8")
 portability_core = (ROOT / "src/core/portability.js").read_text(encoding="utf-8")
 portability_background = (ROOT / "src/background/portability.js").read_text(encoding="utf-8")
+session_snapshots = (ROOT / "src/core/session-snapshots.js").read_text(encoding="utf-8")
+large_session_qualification = (ROOT / "scripts/large-session-qualification.mjs").read_text(encoding="utf-8")
 rule_background = (ROOT / "src/background/rules.js").read_text(encoding="utf-8")
 rule_state = (ROOT / "src/core/rule-state.js").read_text(encoding="utf-8")
 rules_core = (ROOT / "src/core/rules.js").read_text(encoding="utf-8")
@@ -101,8 +105,19 @@ assert "Local backup and portability" in manager_html and 'id="export-backup"' i
 assert 'id="apply-import"' in manager_html and 'id="clear-import"' in manager_html
 assert "prefers-reduced-transparency" in manager_css and "forced-colors" in manager_css
 assert "browser.tabs.create" in manager_link and "src/manager/manager.html" in manager_link
-assert 'id="open-manager"' in popup_html and "0.1.9 source candidate" in popup_html
+assert 'id="open-manager"' in popup_html and "0.1.10 source candidate" in popup_html
 assert "src/manager/manager.html" in popup_js
+
+assert "captureSessionSnapshot" in session_snapshots and "trimSessionSnapshots" in session_snapshots
+assert "DEFAULT_SNAPSHOT_RETENTION" in (ROOT / "src/core/persistent-state.js").read_text(encoding="utf-8")
+for route in ("atm:create-session-snapshot", "atm:restore-session-snapshot", "atm:delete-session-snapshot", "atm:set-snapshot-retention"):
+    assert route in background, f"missing session snapshot route: {route}"
+for control_id in ("create-snapshot", "snapshot-retention", "save-retention", "snapshot-list"):
+    assert f'id="{control_id}"' in manager_html, f"missing Manager snapshot control: {control_id}"
+assert "sessionSnapshots" in manager_model and "snapshotRetention" in manager_model
+assert "snapshot.test" not in manager_model, "manager model must not encode fixture browsing content"
+assert "SIZES = [100, 500, 1000]" in large_session_qualification
+assert "representative Firefox rendered/runtime performance remains separate" in large_session_qualification
 
 assert "createPortabilityManager" in background
 assert "atm:export-backup" in background and "atm:preview-import" in background and "atm:apply-import" in background
@@ -116,5 +131,6 @@ assert "MAX_IMPORT_BYTES = 16 * 1024 * 1024" in manager_page
 assert "atm:export-backup" in manager_page and "atm:preview-import" in manager_page and "atm:apply-import" in manager_page
 assert "new Blob" in manager_page and "JSON.parse" in manager_page and "window.confirm" in manager_page
 assert "file.size > MAX_IMPORT_BYTES" in manager_page
+assert "sessionSnapshots" in portability_core, "portable organizational state must include snapshot preview accounting"
 assert "prefers-reduced-transparency" in manager_css and "forced-colors" in manager_css
-print("Validated Advanced Tab Manager 0.1.9 source-preserving local portability source candidate.")
+print("Validated Advanced Tab Manager 0.1.10 retained session snapshot source candidate.")

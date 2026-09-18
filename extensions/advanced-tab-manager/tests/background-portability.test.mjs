@@ -37,7 +37,12 @@ function initialState() {
     [ORG]: {
       schemaVersion: 1, revision: 5,
       tabSets: [{ id: "old-set", name: "Saved", createdAt: 10, updatedAt: 10, groups: [], items: [], activeItemId: null }],
-      stashedItems: [{ id: "old-stash", url: "https://example.com/stash", title: "Stash", pinned: false, createdAt: 10, treeParentLogicalId: null, nativeGroup: null }]
+      stashedItems: [{ id: "old-stash", url: "https://example.com/stash", title: "Stash", pinned: false, createdAt: 10, treeParentLogicalId: null, nativeGroup: null }],
+      snapshotRetention: 10,
+      sessionSnapshots: [{
+        id: "old-snapshot", createdAt: 10,
+        windows: [{ id: "snapshot-window", focused: true, activeItemId: "snapshot-item", groups: [], items: [{ id: "snapshot-item", url: "https://example.com/session", title: "Session", pinned: false, sourceIndex: 0, groupId: null, parentItemId: null }] }]
+      }]
     },
     [SNOOZE]: {
       schemaVersion: 1, revision: 6,
@@ -56,7 +61,7 @@ function managerFor(storage, overrides = {}) {
     changes,
     manager: createPortabilityManager({
       browser: { storage: { local: storage } },
-      getManifest: () => ({ version: "0.1.9" }),
+      getManifest: () => ({ version: "0.1.10" }),
       reconcileSnoozeAlarms: overrides.reconcileSnoozeAlarms || (async () => ({ ok: true })),
       broadcastChange: (reason) => changes.push(reason),
       now: () => 1700000000000,
@@ -74,7 +79,7 @@ test("export and preview preserve state but reveal only counts and conflicts", a
   const preview = await manager.previewImport(exported.bundle);
   assert.equal(preview.ok, true);
   assert.deepEqual(preview.preview.expectedRevisions, { organizational: 5, snooze: 6, rules: 7 });
-  assert.deepEqual(preview.preview.conflictCounts, { tabSets: 1, stashed: 1, snoozed: 1, rules: 1 });
+  assert.deepEqual(preview.preview.conflictCounts, { tabSets: 1, stashed: 1, sessionSnapshots: 1, snoozed: 1, rules: 1 });
   assert.equal(JSON.stringify(preview.preview).includes("old-set"), false);
 });
 
@@ -84,7 +89,7 @@ test("apply replaces all stores together and advances local revisions", async ()
   const exported = await sourceManager.exportBackup();
 
   const target = fakeStorage({
-    [ORG]: { schemaVersion: 1, revision: 10, tabSets: [], stashedItems: [] },
+    [ORG]: { schemaVersion: 1, revision: 10, tabSets: [], stashedItems: [], sessionSnapshots: [], snapshotRetention: 10 },
     [SNOOZE]: { schemaVersion: 1, revision: 11, items: [] },
     [RULES]: { schemaVersion: 1, revision: 12, enabled: true, rules: [] }
   });
@@ -128,7 +133,7 @@ test("snooze reconciliation failure rolls storage back and reconciles previous a
   const { manager: sourceManager } = managerFor(source);
   const exported = await sourceManager.exportBackup();
   const targetBefore = {
-    [ORG]: { schemaVersion: 1, revision: 20, tabSets: [], stashedItems: [] },
+    [ORG]: { schemaVersion: 1, revision: 20, tabSets: [], stashedItems: [], sessionSnapshots: [], snapshotRetention: 10 },
     [SNOOZE]: { schemaVersion: 1, revision: 21, items: [] },
     [RULES]: { schemaVersion: 1, revision: 22, enabled: false, rules: [] }
   };

@@ -52,7 +52,21 @@
           <div><dt>Stashed</dt><dd id="count-stashed">—</dd></div>
           <div><dt>Snoozed</dt><dd id="count-snoozed">—</dd></div>
           <div><dt>Rules</dt><dd id="count-rules">—</dd></div>
+          <div><dt>Session snapshots</dt><dd id="count-session-snapshots">—</dd></div>
         </dl>
+      </article>
+
+      <article class="panel session-panel">
+        <h2>Session snapshots</h2>
+        <p>Capture the current non-private Firefox windows as local recovery state. Restoring a snapshot opens new windows and does not replace or close the current live session.</p>
+        <div class="snapshot-toolbar">
+          <button id="create-snapshot" class="primary" type="button">Capture current session</button>
+          <label class="retention-field" for="snapshot-retention">Retention
+            <input id="snapshot-retention" type="number" min="1" max="50" step="1" inputmode="numeric">
+          </label>
+          <button id="save-retention" type="button">Save retention</button>
+        </div>
+        <div id="snapshot-list" class="snapshot-list" aria-live="polite"></div>
       </article>
 
       <article class="panel">
@@ -87,8 +101,8 @@
 
       <article class="panel">
         <h2>Current boundary</h2>
-        <p>The 0.1.9 portability milestone adds explicit local backup export and validated replacement import without opening tabs or widening Firefox permissions. Import is previewed before replacement and uses readback verification plus rollback.</p>
-        <p>The Manager still does not claim complete settings, session snapshots, large-session qualification, representative Firefox runtime acceptance, signing, or Stable status.</p>
+        <p>The 0.1.10 milestone adds local session snapshots with configurable retention and additive restore into new windows. Snapshot capture is bounded to restorable non-private URLs and remains inside the existing organizational backup state.</p>
+        <p>The Manager still does not claim full representative Firefox runtime/accessibility acceptance, rendered large-session acceptance, signing, or Stable status.</p>
       </article>
     </section>
 

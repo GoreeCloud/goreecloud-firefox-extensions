@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.10 — Source candidate
+
+- Added ATM-008E retained local session snapshots for supported non-private Firefox windows.
+- Added configurable local snapshot retention from 1 through 50 records, defaulting to 10, with explicit oldest-record pruning when retention is reduced.
+- Reused existing safe restorable-URL, native-group, tree, pin, order, and active-tab capture semantics rather than creating a competing session model.
+- Added additive snapshot restore into new Firefox windows; existing live windows remain open, and failed multi-window restore attempts rollback of every window created by that restore.
+- Added explicit Manager capture, restore, delete, and retention controls with destructive confirmations where state can be pruned or deleted.
+- Kept Manager snapshot diagnostics privacy-minimized to ID, capture time, window count, and tab count; saved URLs/titles are not projected into the diagnostic model.
+- Extended the existing organizational backup path so session snapshots are covered by backup integrity, schema validation, import preview, stale-revision rejection, readback verification, and rollback.
+- Added legacy organizational-state normalization so pre-0.1.10 records load with empty snapshots/default retention without silent rewriting.
+- Added deterministic 100/500/1,000-tab core-scale qualification and CI retention of the scale report, unsigned XPI, and SHA-256 package checksum.
+- Added no Firefox permission; the boundary remains `alarms`, `sessions`, `storage`, `tabGroups`, and `tabs`, with no host permissions/content scripts and private browsing disabled.
+- Representative Firefox runtime/accessibility/rendered-scale acceptance, actual browser-restart acceptance, current-Stable Glaze UI 1.5.1 product acceptance, security/privacy release qualification, Mozilla signing, signed-XPI acceptance, production release evidence, and Stable qualification remain pending.
+
 ## 0.1.9 — Source candidate
 
 - Added ATM-008D source-preserving local backup portability for the implemented organizational, snooze, and rule stores.

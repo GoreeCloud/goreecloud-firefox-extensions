@@ -99,3 +99,55 @@ test("restorable URL boundary permits web pages and about:blank but rejects priv
   assert.equal(isRestorableUrl("file:///tmp/example.txt"), false);
   assert.equal(isRestorableUrl("data:text/plain,hello"), false);
 });
+
+test("legacy organizational records normalize snapshot settings without rewriting storage", async () => {
+  const legacy = { schemaVersion:1, revision:2, tabSets:[], stashedItems:[] };
+  const storage = fakeStorage(legacy);
+  const record = await readPersistentStateRecord(storage);
+  assert.equal(record.exists, true);
+  assert.equal(record.state.snapshotRetention, 10);
+  assert.deepEqual(record.state.sessionSnapshots, []);
+  assert.deepEqual(storage.peek(), legacy);
+});
+
+test("session snapshot validation enforces bounded retention and safe captured URLs", () => {
+  const state = createEmptyPersistentState();
+  state.snapshotRetention = 1;
+  state.sessionSnapshots.push({
+    id:"snapshot-1",
+    createdAt:1,
+    windows:[{
+      id:"window-1",
+      focused:true,
+      activeItemId:"item-1",
+      groups:[],
+      items:[{ id:"item-1", url:"https://example.com/", title:"Example", pinned:false, sourceIndex:0, groupId:null, parentItemId:null }]
+    }]
+  });
+  assert.equal(validatePersistentState(state).sessionSnapshots.length, 1);
+
+  const overflow = structuredClone(state);
+  overflow.sessionSnapshots.push({ ...structuredClone(state.sessionSnapshots[0]), id:"snapshot-2", createdAt:2 });
+  assert.throws(() => validatePersistentState(overflow), /exceed configured retention/);
+
+  const unsafe = structuredClone(state);
+  unsafe.sessionSnapshots[0].windows[0].items[0].url = "file:///tmp/private";
+  assert.throws(() => validatePersistentState(unsafe), /is invalid/);
+});
+
+
+test("session snapshot validation rejects empty captured windows", () => {
+  const state = createEmptyPersistentState();
+  state.sessionSnapshots.push({
+    id:"snapshot-empty",
+    createdAt:1,
+    windows:[{
+      id:"window-empty",
+      focused:true,
+      activeItemId:null,
+      groups:[],
+      items:[]
+    }]
+  });
+  assert.throws(() => validatePersistentState(state), /at least one restorable tab/);
+});

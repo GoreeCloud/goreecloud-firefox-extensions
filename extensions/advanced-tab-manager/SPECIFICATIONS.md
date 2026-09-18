@@ -1,6 +1,6 @@
 # GoreeCloud Advanced Tab Manager — Repository Specifications
 
-This repository document describes the implemented source boundary for version `0.1.9`. The broader product direction is governed by the canonical Drive project specification.
+This repository document describes the implemented source boundary for version `0.1.10`. The broader product direction is governed by the canonical Drive project specification.
 
 ## Component and dependency contract
 
@@ -8,7 +8,7 @@ This repository document describes the implemented source boundary for version `
 - Supported platform: Firefox 139+.
 - Source state: `source-candidate`; product lifecycle: In Development.
 - Required GoreeCloud runtime dependencies: none.
-- Optional/planned integrations such as Webspaces are not implemented dependencies in 0.1.9.
+- Optional/planned integrations such as Webspaces are not implemented dependencies in 0.1.10.
 - Browser-surface presentation follows current GoreeCloud Glaze principles where practical without claiming a separate Glaze runtime-package or product-level acceptance state.
 
 ## Implemented source contract
@@ -19,7 +19,7 @@ This repository document describes the implemented source boundary for version `
 - No `unlimitedStorage`, host permissions, content scripts, remote telemetry, page-content inspection, or private-browsing access.
 - Firefox remains authoritative for live tabs/windows/native groups; extension UI and automation snapshots are reconstructed from Firefox APIs.
 - Runtime Firefox tab/group IDs are not durable persistent identity.
-- Tab Set/stash, snooze recovery, and rule definitions remain in separate versioned `storage.local` records.
+- Organizational state contains Tab Sets, stashed items, retained session snapshots, and snapshot-retention configuration; snooze recovery and rule definitions remain in separate versioned `storage.local` records.
 - Restorable URLs remain limited to `http:`, `https:`, and `about:blank`.
 - Existing tree, Tab Set/stash, duplicate-cleanup, snooze, rule-action, and command-palette contracts remain in force.
 
@@ -50,6 +50,17 @@ This repository document describes the implemented source boundary for version `
 - Import itself never opens or closes Firefox tabs. Restoring saved records and opening live browser tabs remain separate user actions.
 - Version 0.1.9 adds no Firefox permission and preserves the existing no-host/no-content-script/private-browsing boundary.
 
+### ATM-008E retained session snapshots and core-scale qualification — 0.1.10
+
+- `src/core/session-snapshots.js` captures supported non-private Firefox windows into bounded extension-owned recovery records using the same safe restorable-URL, group, tree, pin, order, and active-tab semantics already used by Tab Set capture.
+- Snapshot retention defaults to 10 and is explicitly configurable from 1 through 50 records. Lowering retention prunes the oldest records through the verified organizational-state mutation path.
+- Snapshot restore is additive: saved windows are reconstructed as new Firefox windows. Existing live windows are not closed or replaced.
+- Multi-window restore failure attempts to remove every window created by that restore while the saved snapshot remains available.
+- The Manager exposes only snapshot ID, capture timestamp, window count, and tab count. Saved snapshot URLs and titles are not included in the diagnostic model.
+- Session snapshots are included inside the existing organizational backup payload and are therefore covered by backup identity, integrity, schema validation, preview, stale-revision rejection, readback verification, and rollback.
+- `scripts/large-session-qualification.mjs` runs deterministic 100/500/1,000-tab core-scale fixtures for snapshot capture and Manager aggregation. CI retains the JSON report with the unsigned candidate XPI and SHA-256 checksum.
+- Core-scale success is not representative Firefox runtime/rendered-performance acceptance.
+
 ## Release boundary
 
-`0.1.9` is a source candidate. Source tests, CI, deterministic packaging, or merge do not establish representative Firefox manager/portability runtime/accessibility acceptance, browser-restart acceptance, Mozilla signing, signed-XPI acceptance, production release, or Stable qualification.
+`0.1.10` is a source candidate. Source tests, CI, deterministic packaging, or merge do not establish representative Firefox manager/portability runtime/accessibility acceptance, browser-restart acceptance, Mozilla signing, signed-XPI acceptance, production release, or Stable qualification.
