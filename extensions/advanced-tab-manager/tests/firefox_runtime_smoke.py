@@ -198,6 +198,30 @@ def flatten(snapshot: dict) -> list[dict]:
     return [tab for window in snapshot.get("windows", []) for tab in window.get("tabs", [])]
 
 
+
+def wait_for_snapshot_url_count(driver: webdriver.Firefox, url: str, count: int, timeout: float = 10) -> list[dict]:
+    deadline = time.monotonic() + timeout
+    last_count = -1
+    while time.monotonic() < deadline:
+        result = driver.execute_async_script(
+            """
+            const done = arguments[arguments.length - 1];
+            browser.runtime.sendMessage({type: "atm:get-snapshot"}).then(
+              value => done({ok: true, value}),
+              error => done({ok: false, error: String(error)})
+            );
+            """
+        )
+        if isinstance(result, dict) and result.get("ok") is True:
+            snapshot = result.get("value") or {}
+            matches = [tab for tab in flatten(snapshot) if tab.get("url") == url]
+            last_count = len(matches)
+            if last_count == count:
+                return matches
+        time.sleep(0.1)
+    raise AssertionError(f"FAIL live Firefox snapshot reached {count} tabs for controlled URL: observed {last_count}")
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         raise SystemExit("usage: firefox_runtime_smoke.py /path/to/goreecloud-advanced-tab-manager.xpi")
@@ -277,8 +301,7 @@ def main() -> int:
             duplicate_url = f"{base}/duplicate"
             create_tab(driver, duplicate_url)
             create_tab(driver, duplicate_url)
-            duplicate_snapshot = extension_message(driver, {"type": "atm:get-snapshot"})
-            duplicates = [tab for tab in flatten(duplicate_snapshot) if tab.get("url") == duplicate_url]
+            duplicates = wait_for_snapshot_url_count(driver, duplicate_url, 2)
             require(len(duplicates) == 2, "duplicate fixture contains two tabs", str(len(duplicates)))
             cleanup = extension_message(
                 driver,

@@ -29,6 +29,7 @@ from firefox_runtime_smoke import (
     normal_window_ids,
     remove_windows,
     require,
+    wait_for_snapshot_url_count,
 )
 
 
@@ -123,8 +124,7 @@ def exercise_post_restart(driver: webdriver.Firefox, base: str, checks: list[str
     duplicate_url = f"{base}/signed-duplicate"
     create_tab(driver, duplicate_url)
     create_tab(driver, duplicate_url)
-    duplicate_snapshot = extension_message(driver, {"type": "atm:get-snapshot"})
-    duplicates = [tab for tab in flatten(duplicate_snapshot) if tab.get("url") == duplicate_url]
+    duplicates = wait_for_snapshot_url_count(driver, duplicate_url, 2)
     require(len(duplicates) == 2, "post-restart duplicate fixture contains two tabs", str(len(duplicates)))
     cleanup = extension_message(
         driver,

@@ -146,6 +146,7 @@ assert "browser-actions/setup-firefox@v1" in runtime_workflow
 assert "browser-actions/setup-geckodriver@latest" in runtime_workflow
 assert "firefox_runtime_smoke.py" in runtime_workflow
 assert "advanced-tab-manager-firefox-runtime.json" in runtime_workflow
+assert "wait_for_snapshot_url_count" in runtime_smoke, "Firefox duplicate acceptance must wait for reconciled live state"
 assert "github.event.pull_request.head.sha || github.sha" in runtime_workflow
 assert "ATM_SOURCE_REVISION" in runtime_workflow
 assert '"sourceRevision": source_revision' in runtime_smoke
@@ -197,11 +198,17 @@ assert "AMO_JWT_ISSUER" in signing_workflow and "AMO_JWT_SECRET" in signing_work
 assert "stable_security_review.py" in signing_workflow and "glaze_consumer_qualification.py" in signing_workflow
 assert "verify_signed_xpi.py" in signing_workflow and "signed_restart_smoke.py" in signing_workflow
 assert "advanced-tab-manager-signing-evidence.json" in signing_workflow
+assert "statuses: write" in signing_workflow
+assert "goreecloud/advanced-tab-manager-mozilla-signing" in signing_workflow
+assert "Publish signing gate pending status" in signing_workflow
+assert "Publish authoritative signing gate result" in signing_workflow
+assert "github.run_id" in signing_workflow or "GITHUB_RUN_ID" in signing_workflow
 
 assert "temporary=False" in signed_restart, "signed restart acceptance must use persistent installation"
 assert signed_restart.count("install_addon(") == 1, "signed restart acceptance must not reinstall after restart"
 assert "post-restart organizational state readable" in signed_restart
 assert "advanced-tab-manager-signed-restart.json" in signed_restart
+assert "wait_for_snapshot_url_count" in signed_restart, "signed restart duplicate acceptance must wait for reconciled live state"
 
 assert 'EXPECTED_ADDON_ID = "advanced-tab-manager@goreecloud.com"' in signed_parity
 assert "META-INF/" in signed_parity and "nonManifestPayloadByteExact" in signed_parity
