@@ -14,6 +14,8 @@ full-process restart acceptance remain separate release gates.
 from __future__ import annotations
 
 import json
+import os
+import re
 import socket
 import sys
 import tempfile
@@ -326,10 +328,13 @@ def main() -> int:
                     "backup preview includes retained snapshot count")
             passes.append("backup-preview")
 
+            source_revision = os.environ.get("ATM_SOURCE_REVISION", "")
+            require(re.fullmatch(r"[0-9a-f]{40}", source_revision) is not None, "runtime evidence is bound to an exact source revision")
             report = {
                 "schemaVersion": 1,
                 "product": "GoreeCloud Advanced Tab Manager",
                 "sourceVersion": EXPECTED_VERSION,
+                "sourceRevision": source_revision,
                 "firefoxVersion": str(driver.capabilities.get("browserVersion", "unknown")),
                 "installation": "temporary-unsigned-runtime-smoke",
                 "controlledLocalFixtureOnly": True,
