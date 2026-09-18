@@ -12,6 +12,7 @@
 - Added legacy organizational-state normalization so pre-0.1.10 records load with empty snapshots/default retention without silent rewriting.
 - Added deterministic 100/500/1,000-tab core-scale qualification and CI retention of the scale report, unsigned XPI, and SHA-256 package checksum.
 - Added no Firefox permission; the boundary remains `alarms`, `sessions`, `storage`, `tabGroups`, and `tabs`, with no host permissions/content scripts and private browsing disabled.
+- Added source-only release acceptance infrastructure: a dedicated clean-profile real-Firefox runtime smoke workflow covering Manager/live-state/tree/Tab Set/stash/snooze/duplicate/rule-default/session-snapshot/backup-preview paths against controlled local fixtures, with privacy-minimized retained evidence. This does not change packaged 0.1.10 runtime bytes.
 - Representative Firefox runtime/accessibility/rendered-scale acceptance, actual browser-restart acceptance, current-Stable Glaze UI 1.5.1 product acceptance, security/privacy release qualification, Mozilla signing, signed-XPI acceptance, production release evidence, and Stable qualification remain pending.
 
 ## 0.1.9 — Source candidate

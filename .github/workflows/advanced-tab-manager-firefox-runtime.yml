@@ -1,0 +1,60 @@
+name: Advanced Tab Manager Firefox Runtime
+
+on:
+  pull_request:
+    paths:
+      - 'extensions/advanced-tab-manager/**'
+      - 'shared/scripts/package_extension.py'
+      - '.github/workflows/advanced-tab-manager-firefox-runtime.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: advanced-tab-manager-firefox-runtime-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  runtime-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: browser-actions/setup-firefox@v1
+        with:
+          firefox-version: latest
+      - uses: browser-actions/setup-geckodriver@latest
+      - name: Install Selenium
+        run: python -m pip install --disable-pip-version-check selenium
+      - name: Validate exact source candidate
+        run: |
+          python shared/scripts/validate_repository.py
+          python extensions/advanced-tab-manager/scripts/validate.py
+          node --test extensions/advanced-tab-manager/tests/*.test.mjs
+          node extensions/advanced-tab-manager/scripts/large-session-qualification.mjs
+          python -m py_compile extensions/advanced-tab-manager/tests/firefox_runtime_smoke.py
+      - name: Package deterministic unsigned Advanced Tab Manager XPI
+        run: python shared/scripts/package_extension.py advanced-tab-manager --output-dir dist/runtime
+      - name: Resolve runtime candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          XPI="$(find dist/runtime -maxdepth 1 -type f -name 'goreecloud-advanced-tab-manager-*.xpi' -print -quit)"
+          test -n "$XPI"
+          echo "ATM_RUNTIME_XPI=$XPI" >> "$GITHUB_ENV"
+          sha256sum "$XPI" | tee dist/advanced-tab-manager-runtime-candidate.sha256
+      - name: Exercise real Firefox release-critical runtime paths
+        run: python extensions/advanced-tab-manager/tests/firefox_runtime_smoke.py "$ATM_RUNTIME_XPI"
+      - name: Retain unsigned Firefox runtime evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: goreecloud-advanced-tab-manager-runtime-${{ github.event.pull_request.head.sha || github.sha }}
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            dist/advanced-tab-manager-firefox-runtime.json
+            dist/advanced-tab-manager-runtime-candidate.sha256
