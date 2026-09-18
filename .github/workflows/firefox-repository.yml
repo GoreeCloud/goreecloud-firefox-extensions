@@ -93,7 +93,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sha256sum dist/goreecloud-advanced-tab-manager-*.xpi > dist/goreecloud-advanced-tab-manager-${{ github.sha }}.sha256
+          sha256sum dist/goreecloud-advanced-tab-manager-*.xpi > dist/goreecloud-advanced-tab-manager-${{ github.event.pull_request.head.sha || github.sha }}.sha256
       - name: Verify package archives
         shell: bash
         run: |
@@ -105,10 +105,10 @@ jobs:
       - name: Publish Advanced Tab Manager candidate evidence
         uses: actions/upload-artifact@v4
         with:
-          name: goreecloud-advanced-tab-manager-${{ github.sha }}
+          name: goreecloud-advanced-tab-manager-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             dist/goreecloud-advanced-tab-manager-*.xpi
-            dist/goreecloud-advanced-tab-manager-${{ github.sha }}.sha256
+            dist/goreecloud-advanced-tab-manager-${{ github.event.pull_request.head.sha || github.sha }}.sha256
             dist/advanced-tab-manager-large-session-qualification.json
           if-no-files-found: error
           retention-days: 14
