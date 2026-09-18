@@ -10,7 +10,7 @@ inventory_entry = next(item for item in inventory["extensions"] if item["slug"] 
 
 assert manifest["manifest_version"] == 3
 assert manifest["name"] == "GoreeCloud Advanced Tab Manager"
-assert manifest["version"] == "0.1.11"
+assert manifest["version"] == "0.1.12"
 assert manifest["browser_specific_settings"]["gecko"]["id"] == "advanced-tab-manager@goreecloud.com"
 assert manifest["browser_specific_settings"]["gecko"]["strict_min_version"] == "139.0"
 assert manifest["incognito"] == "not_allowed"
@@ -20,8 +20,8 @@ assert "content_scripts" not in manifest, "Stable source must not inspect page c
 assert "unlimitedStorage" not in manifest["permissions"], "bounded Stable saved state must not request unlimited storage"
 assert manifest["background"].get("persistent") is False
 assert manifest["background"].get("type") == "module"
-assert inventory_entry["source_version"] == "0.1.11"
-assert inventory_entry["source_state"] == "stable"
+assert inventory_entry["source_version"] == "0.1.12"
+assert inventory_entry["source_state"] == "source-candidate"
 assert inventory_entry["accepted_stable_version"] == "0.1.11"
 
 required = [
@@ -117,7 +117,7 @@ assert "Local backup and portability" in manager_html and 'id="export-backup"' i
 assert 'id="apply-import"' in manager_html and 'id="clear-import"' in manager_html
 assert "prefers-reduced-transparency" in manager_css and "forced-colors" in manager_css
 assert "browser.tabs.create" in manager_link and "src/manager/manager.html" in manager_link
-assert 'id="open-manager"' in popup_html and "0.1.11 · retained session snapshots" in popup_html
+assert 'id="open-manager"' in popup_html and "0.1.12" in popup_html and 'id="metric-tabs"' in popup_html
 assert "source candidate" not in popup_html.lower(), "packaged popup must be lifecycle-neutral for release signing"
 assert "development source only" not in manager_html.lower(), "packaged Manager must be lifecycle-neutral for release signing"
 assert "Stable status" not in manager_html, "packaged Manager must not hard-code Stable lifecycle truth"
@@ -135,7 +135,7 @@ assert "SIZES = [100, 500, 1000]" in large_session_qualification
 assert "representative Firefox rendered/runtime performance remains separate" in large_session_qualification
 
 assert 'EXPECTED_ADDON_ID = "advanced-tab-manager@goreecloud.com"' in runtime_smoke
-assert 'EXPECTED_VERSION = "0.1.11"' in runtime_smoke
+assert 'EXPECTED_VERSION = "0.1.12"' in runtime_smoke
 assert "gBrowser.addTrustedTab" in runtime_smoke and "--allow-system-access" in runtime_smoke
 assert "temporary=True" in runtime_smoke, "unsigned runtime gate must not masquerade as persistent signed acceptance"
 for route in (
@@ -189,7 +189,7 @@ assert "0.1.11" in release_acceptance_011 and "**Lifecycle:** Stable" in release
 assert "35350654198" in release_acceptance_011
 assert "e0f16901529cb8fa76e57d9aa056c98de9fa04e708f2232c151d5b75c1dfdb1d" in release_acceptance_011
 assert '"git"' in security_script and '"log"' in security_script and "--full-history" in security_script
-assert "EXPECTED_VERSION = \"0.1.11\"" in security_script
+assert "manifest.json" in security_script and "EXPECTED_VERSION" in security_script
 assert "GLAZE_AUTHORITY_REVISION = \"af0d0d3e85aaf46e83a2baa64aab914fd96a7e98\"" in glaze_script
 assert "sharedPerformanceAcceptanceInherited" in glaze_script and "False" in glaze_script
 assert "fetch-depth: 0" in release_workflow
@@ -226,4 +226,4 @@ assert "NoRedirect" in amo_recovery and "/api/v4/file/" in amo_recovery
 assert '"Authorization": f"JWT {token}"' in amo_recovery
 assert 'mirror_request = Request(location, headers={"User-Agent": USER_AGENT})' in amo_recovery
 
-print("Validated Advanced Tab Manager 0.1.11 Stable source, qualification, signing, and lifecycle contracts.")
+print("Validated Advanced Tab Manager 0.1.12 source candidate while preserving accepted Stable 0.1.11 release evidence.")
