@@ -22,7 +22,6 @@ The repository provides:
 ```text
 extensions/
 ├── advanced-tab-manager/
-├── bookmarks/
 ├── download-manager/
 ├── privacy-shield/
 ├── redirector/
@@ -45,7 +44,6 @@ shared/
 | Extension | Current directory | Firefox add-on ID | Source state | Ownership / disposition |
 | --- | --- | --- | --- | --- |
 | GoreeCloud Advanced Tab Manager | `extensions/advanced-tab-manager/` | `advanced-tab-manager@goreecloud.com` | **Stable 0.1.11** accepted for Mozilla unlisted/self-distribution | Standalone Firefox product; remains here |
-| GoreeCloud Bookmarks | `extensions/bookmarks/` | `goreecloud-bookmarks@goreecloud.com` | Source baseline; not Stable | Application-owned Firefox client; transitional here pending migration to `GoreeCloud/goreecloud-bookmarks` |
 | GoreeCloud Download Manager Extension | `extensions/download-manager/` | `download-manager@goreecloud.com` | **Stable 0.2.12** accepted for Mozilla unlisted/self-distribution | Application-owned Firefox client; transitional here pending migration to `GoreeCloud/goreecloud-advanced-download-manager` |
 | GoreeCloud Privacy Shield | `extensions/privacy-shield/` | `privacy-shield@goreecloud.com` | Stable 0.2.0 accepted for Mozilla unlisted/self-distribution | Platform adapter; retained here pending explicit platform-boundary review |
 | GoreeCloud Redirector | `extensions/redirector/` | `redirector@goreecloud.com` | Canonical source | Standalone Firefox product; canonical here; isolated legacy repository retired 2026-09-18 after history/provenance preservation |
