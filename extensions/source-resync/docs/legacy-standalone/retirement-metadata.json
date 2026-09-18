@@ -1,0 +1,1147 @@
+{
+  "schemaVersion": 1,
+  "capturedDate": "2026-09-18",
+  "status": "legacy-migration-source-pending-retirement",
+  "legacyRepository": {
+    "id": "1335488226",
+    "fullName": "GoreeCloud/source-resync",
+    "defaultBranch": "main",
+    "visibility": "public",
+    "archived": false
+  },
+  "canonicalFirefoxSource": {
+    "repository": "GoreeCloud/goreecloud-firefox-extensions",
+    "path": "extensions/source-resync/"
+  },
+  "archivedGitHistory": {
+    "repository": "GoreeCloud/goreecloud-firefox-extensions",
+    "refPrefix": "refs/tags/archive/source-resync/"
+  },
+  "pullRequests": [
+    {
+      "number": 8,
+      "title": "Mark standalone Source Resync repository for Firefox consolidation",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-09-18T20:32:22Z",
+      "updatedAt": "2026-09-18T20:32:57Z",
+      "closedAt": "2026-09-18T20:32:57Z",
+      "mergedAt": "2026-09-18T20:32:57Z",
+      "mergeCommitSha": "c386759c1932f658b8304479bc956dcbfea77f5c",
+      "head": {
+        "ref": "migration/consolidate-into-firefox-extensions-20260918",
+        "sha": "4887879f2ed6d6e5784fd95d036a6838872e279b"
+      },
+      "base": {
+        "ref": "main",
+        "sha": "05110749753a53ea8f5d4b7318c8f5103c0c69e1"
+      },
+      "body": "GoreeCloud Source Resync is now canonically maintained in `GoreeCloud/goreecloud-firefox-extensions` under `extensions/source-resync/`.\n\nThis change marks the standalone repository as a legacy migration source pending provenance/history preservation and retirement. It does not change the Source Resync product identity, Firefox add-on ID, version, or release history.",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/pull/8"
+    },
+    {
+      "number": 7,
+      "title": "Improve manual resync progress and control reset",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-08-16T05:48:49Z",
+      "updatedAt": "2026-08-16T05:49:12Z",
+      "closedAt": "2026-08-16T05:49:12Z",
+      "mergedAt": "2026-08-16T05:49:12Z",
+      "mergeCommitSha": "6d50941b45f1816c4bd316b65c71e28a372b2276",
+      "head": {
+        "ref": "agent/manual-progress-state-fix",
+        "sha": "236a9ba9470e26b26330bdb2d0a17a195ea526c0"
+      },
+      "base": {
+        "ref": "main",
+        "sha": "3b49e4446c5c82768855c83c0b53e188bdf58a95"
+      },
+      "body": "## Summary\n- add transient runtime progress tracking for manual resync runs\n- show bounded `Resyncing N/total…` progress in the popup and in-page control\n- route the in-page control through the background runtime so both manual entry points share overlap protection and last-run recording\n- keep the popup button synchronized with actual runtime state and return controls to idle after the request pass completes\n- bump the extension to v1.1.2 and document the behavior\n\n## Rationale\nThe manual resync flow is working, but the controls can appear to remain on `Resyncing…` while the page is still processing individual source refreshes. This makes a successful request pass look stuck. The new progress state makes the active request pass explicit and distinguishes it from ChatGPT's later server-side `Syncing` state.\n\n## Validation\nExisting CI should validate manifest JSON, JavaScript syntax, required files, secret-material patterns, and validation-XPI packaging.",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/pull/7"
+    },
+    {
+      "number": 6,
+      "title": "Fix manual Resync all regression",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-08-16T04:20:12Z",
+      "updatedAt": "2026-08-16T04:20:32Z",
+      "closedAt": "2026-08-16T04:20:32Z",
+      "mergedAt": "2026-08-16T04:20:32Z",
+      "mergeCommitSha": "3b49e4446c5c82768855c83c0b53e188bdf58a95",
+      "head": {
+        "ref": "agent/manual-resync-regression-fix",
+        "sha": "3226fb6d0f417a8b76d072ee0a21834213ef056a"
+      },
+      "base": {
+        "ref": "main",
+        "sha": "af17b4286e95e6f4471d338bc3619bbac38ace4b"
+      },
+      "body": "## Summary\n\nFixes the manual Resync all control getting stuck on **Resyncing…** without refreshing sources.\n\n## Root cause\n\nThe inactive-tab experiments changed the content script to use broader DOM/style-based source-card and menu detection plus a 45-second readiness wait. Those changes were useful for background testing but regressed the proven foreground/manual workflow by allowing overly broad card matches and delaying/failing action discovery.\n\n## Changes\n\n- Restore the previously validated foreground/manual source-card detection logic from v1.0.0.\n- Restore visible menu-button and visible **Resync** action detection.\n- Remove the 45-second readiness wait from the manual-only path.\n- Keep the v1.1.x manual-only architecture with no scheduling or automatic intervals.\n- Bump version to `1.1.1`.\n- Document the regression fix in the changelog.\n\n## Expected behavior\n\nWith the ChatGPT Project Sources page visible and active, **Resync all** should immediately step through the visible Google Drive source rows and request a refresh for each source, as the original validated manual implementation did.",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/pull/6"
+    },
+    {
+      "number": 5,
+      "title": "Focus extension on manual Resync all",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-08-16T02:46:16Z",
+      "updatedAt": "2026-08-16T02:46:39Z",
+      "closedAt": "2026-08-16T02:46:39Z",
+      "mergedAt": "2026-08-16T02:46:39Z",
+      "mergeCommitSha": "af17b4286e95e6f4471d338bc3619bbac38ace4b",
+      "head": {
+        "ref": "agent/manual-only",
+        "sha": "e228aca0a89f21048b5c5332899f0b6037cc35ab"
+      },
+      "base": {
+        "ref": "main",
+        "sha": "d16a67a0514401e0d509ecf0bc42b67f3767f999"
+      },
+      "body": "## Summary\n\nSimplifies GoreeCloud Source Resync to the reliable manual workflow.\n\n## Changes\n\n- Removes automatic/time-based resync and all interval controls.\n- Removes scheduled background-tab opening, warm-up, restoration, and cleanup logic.\n- Removes the saved Sources URL workflow because manual resync operates on the active Sources page.\n- Removes the Firefox `alarms` permission.\n- Removes obsolete automatic settings during extension update.\n- Keeps the popup **Resync all now** action and in-page **Resync all** button.\n- Keeps last-run count, duration, failure, timestamp, and bounded history reporting.\n- Updates README and changelog for the manual-only reliability boundary.\n- Bumps the extension to `1.1.0`.\n\n## Rationale\n\nManual resync is reliable, while ChatGPT's Sources UI does not remain consistently interactive in inactive Firefox tabs. This change removes brittle automation and focuses the extension on the behavior that works consistently.",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/pull/5"
+    },
+    {
+      "number": 4,
+      "title": "Fix scheduled resync in inactive Firefox tabs",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-08-16T00:58:30Z",
+      "updatedAt": "2026-08-16T00:58:50Z",
+      "closedAt": "2026-08-16T00:58:50Z",
+      "mergedAt": "2026-08-16T00:58:50Z",
+      "mergeCommitSha": "d16a67a0514401e0d509ecf0bc42b67f3767f999",
+      "head": {
+        "ref": "agent/background-visibility-fix",
+        "sha": "5b428e2efd342935e3af0ee17eeece8bb2e7ff10"
+      },
+      "base": {
+        "ref": "main",
+        "sha": "33e9e721a405058933a5b78359da8d3d36aef371"
+      },
+      "body": "## Summary\n\nFixes the recurring failure where manual resync works but automatic resync reports that no Google Drive sources are available when the ChatGPT Sources page is inactive.\n\n## Root cause\n\nThe content script used layout/visibility checks (`getBoundingClientRect`) to decide whether source markers, source cards, menu buttons, and the Resync action were usable. Firefox aggressively treats inactive tabs as hidden and throttles/backgrounds their page work, so DOM content can exist while those layout-based visibility checks report zero-sized or otherwise non-visible elements. That made automatic runs see zero sources even though manual foreground runs worked.\n\n## Changes\n\n- Replace layout-dependent source discovery with DOM/style usability checks that work in inactive tabs.\n- Stop requiring non-zero element rectangles to recognize source cards and Resync controls.\n- Add a source-status message so the background script can inspect whether the Sources DOM is ready.\n- Add a scheduled-run warm-up: if the source list is not ready, briefly activate the Sources tab, wait for the source count to stabilize, then restore the user's previously active tab before starting the resync sequence.\n- Keep the existing 45-second readiness timeout as a final guard.\n- Bump the extension version to `1.0.2`.\n\n## Expected behavior\n\nManual resync remains unchanged. Scheduled resync should now work while the user is on another Firefox tab. In the fallback case, Firefox may briefly activate the Sources tab for a few seconds only to allow ChatGPT to render it, then return the user to the previous tab before the source-by-source resync requests continue.\n\n## Validation\n\nThe existing CI workflow should validate the manifest, JavaScript syntax, required files, secret-pattern checks, and validation-XPI construction.",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/pull/4"
+    },
+    {
+      "number": 3,
+      "title": "Fix automatic resync readiness in background tabs",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-08-15T23:54:04Z",
+      "updatedAt": "2026-08-15T23:54:28Z",
+      "closedAt": "2026-08-15T23:54:27Z",
+      "mergedAt": "2026-08-15T23:54:27Z",
+      "mergeCommitSha": "33e9e721a405058933a5b78359da8d3d36aef371",
+      "head": {
+        "ref": "agent/background-tab-readiness-fix",
+        "sha": "e393157b9af80066e6e90d8c61d66ef9f85bfd5a"
+      },
+      "base": {
+        "ref": "main",
+        "sha": "e68f2522e8167ffca2c350dc204ee30200a1b4a7"
+      },
+      "body": "## Summary\n\nFixes automatic five-minute resync failures when the saved ChatGPT Project Sources page is opened in an inactive background tab.\n\n## Root cause\n\nThe extension previously waited only for the browser tab load event plus a short fixed delay. ChatGPT can finish the page load before its Project Sources list has rendered, so the content script immediately saw zero Google Drive source cards and returned `No Google Drive sources were found on this page.`\n\n## Changes\n\n- Wait up to 45 seconds for Google Drive source cards to appear on a Project Sources page.\n- Require a stable positive source-card count across multiple polls before resync begins.\n- Preserve foreground/manual behavior while making automatic background runs tolerant of ChatGPT's asynchronous rendering.\n- Return a specific readiness-timeout message if the list never renders.\n- Bump the Firefox extension version to `1.0.1`.\n\n## Validation\n\nExisting CI should verify manifest integrity, JavaScript syntax, required files, secret-pattern checks, and XPI construction.",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/pull/3"
+    },
+    {
+      "number": 2,
+      "title": "Publish packaged files as GitHub Release assets",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-08-15T23:35:20Z",
+      "updatedAt": "2026-08-15T23:35:47Z",
+      "closedAt": "2026-08-15T23:35:47Z",
+      "mergedAt": "2026-08-15T23:35:47Z",
+      "mergeCommitSha": "e68f2522e8167ffca2c350dc204ee30200a1b4a7",
+      "head": {
+        "ref": "agent/release-assets",
+        "sha": "ca1ee82109ee2ab4ec8e64550b6fbc9c4d00d9f9"
+      },
+      "base": {
+        "ref": "main",
+        "sha": "6103e9fad7103087a5067f0fbf508327868de4d3"
+      },
+      "body": "## Summary\n\nUpdates Firefox packaging so tagged builds and controlled manual retries attach the packaged files directly to the corresponding GitHub Release.\n\n## Changes\n\n- Grant `contents: write` only to the packaging workflow so its short-lived GitHub token can publish release assets.\n- Resolve an exact package source ref before checkout.\n- Allow manual packaging of an existing release tag such as `v1.0.0`.\n- Build from the exact requested tag rather than the current `main` tree during a release retry.\n- Upload the XPI, source archive, and `SHA256SUMS` directly to the existing GitHub Release using GitHub CLI.\n- Use `--clobber` so a controlled retry repairs same-name assets rather than creating duplicates.\n- Continue retaining the normal GitHub Actions artifact for 30 days.\n- Document the release-asset behavior in README and CHANGELOG.\n\n## Security\n\nNo long-lived repository secret is introduced. Release upload uses GitHub's short-lived workflow token. The validation workflow remains read-only.",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/pull/2"
+    },
+    {
+      "number": 1,
+      "title": "Add CI validation and reproducible release packaging",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-08-15T23:19:18Z",
+      "updatedAt": "2026-08-15T23:19:40Z",
+      "closedAt": "2026-08-15T23:19:40Z",
+      "mergedAt": "2026-08-15T23:19:39Z",
+      "mergeCommitSha": "6103e9fad7103087a5067f0fbf508327868de4d3",
+      "head": {
+        "ref": "agent/ci-release-packaging",
+        "sha": "56c376cbf16bf20f4abce31a396453745dab5f87"
+      },
+      "base": {
+        "ref": "main",
+        "sha": "888a4b05a5cc6ddf7cb5a41ac06ebc7e3cd80e14"
+      },
+      "body": "## Summary\n\nAdds GitHub Actions validation and Firefox release packaging for GoreeCloud Source Resync.\n\n## Changes\n\n- Validate `manifest.json`, semantic version format, Firefox extension identity, JavaScript syntax, required files, common reusable-secret patterns, and XPI archive integrity.\n- Build versioned unsigned Firefox XPI and source archives.\n- Generate SHA-256 checksums for packaged artifacts.\n- Require semantic-version tags to match `manifest.json`.\n- Retain workflow build artifacts for 30 days.\n- Document CI and packaging behavior in README and CHANGELOG.\n\n## Security and permissions\n\nBoth workflows use read-only repository permissions. No repository secrets are required for validation or packaging.\n\n## Validation expectation\n\nThe pull request workflow should run automatically after this PR opens. The packaging workflow is intentionally limited to manual dispatches and semantic-version tags.",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/pull/1"
+    }
+  ],
+  "issues": [],
+  "pullRequestConversations": {
+    "verifiedDate": "2026-09-18",
+    "comments": 0,
+    "submittedReviews": 0,
+    "note": "All historical pull requests were checked through the connected GitHub source; no PR conversation comments or submitted reviews were present."
+  },
+  "workflowRuns": [
+    {
+      "id": 35392060974,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 51,
+      "headBranch": "main",
+      "headSha": "c386759c1932f658b8304479bc956dcbfea77f5c",
+      "createdAt": "2026-09-18T20:32:59Z",
+      "updatedAt": "2026-09-18T20:33:17Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/35392060974"
+    },
+    {
+      "id": 35392004369,
+      "name": "Validate",
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 50,
+      "headBranch": "migration/consolidate-into-firefox-extensions-20260918",
+      "headSha": "4887879f2ed6d6e5784fd95d036a6838872e279b",
+      "createdAt": "2026-09-18T20:32:25Z",
+      "updatedAt": "2026-09-18T20:32:42Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/35392004369"
+    },
+    {
+      "id": 33134305751,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 49,
+      "headBranch": "main",
+      "headSha": "05110749753a53ea8f5d4b7318c8f5103c0c69e1",
+      "createdAt": "2026-08-28T01:54:57Z",
+      "updatedAt": "2026-08-28T02:07:13Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/33134305751"
+    },
+    {
+      "id": 32738152258,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 48,
+      "headBranch": "main",
+      "headSha": "cd7438b7fac613e9a2761469517e8622e6ddfe27",
+      "createdAt": "2026-08-24T14:21:04Z",
+      "updatedAt": "2026-08-24T14:39:25Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/32738152258"
+    },
+    {
+      "id": 31930051841,
+      "name": "Package Firefox Extension",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 7,
+      "headBranch": "v1.1.2",
+      "headSha": "6d50941b45f1816c4bd316b65c71e28a372b2276",
+      "createdAt": "2026-08-16T05:53:00Z",
+      "updatedAt": "2026-08-16T05:53:14Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31930051841"
+    },
+    {
+      "id": 31929902856,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 47,
+      "headBranch": "main",
+      "headSha": "6d50941b45f1816c4bd316b65c71e28a372b2276",
+      "createdAt": "2026-08-16T05:49:14Z",
+      "updatedAt": "2026-08-16T05:49:22Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31929902856"
+    },
+    {
+      "id": 31929885790,
+      "name": "Validate",
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 46,
+      "headBranch": "agent/manual-progress-state-fix",
+      "headSha": "236a9ba9470e26b26330bdb2d0a17a195ea526c0",
+      "createdAt": "2026-08-16T05:48:52Z",
+      "updatedAt": "2026-08-16T05:49:02Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31929885790"
+    },
+    {
+      "id": 31929877010,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 45,
+      "headBranch": "agent/manual-progress-state-fix",
+      "headSha": "236a9ba9470e26b26330bdb2d0a17a195ea526c0",
+      "createdAt": "2026-08-16T05:48:37Z",
+      "updatedAt": "2026-08-16T05:48:44Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31929877010"
+    },
+    {
+      "id": 31929866478,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 44,
+      "headBranch": "agent/manual-progress-state-fix",
+      "headSha": "c0f9f6e7f91a02675ec9a1b8fc6c604ff0069267",
+      "createdAt": "2026-08-16T05:48:20Z",
+      "updatedAt": "2026-08-16T05:48:31Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31929866478"
+    },
+    {
+      "id": 31929860852,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 43,
+      "headBranch": "agent/manual-progress-state-fix",
+      "headSha": "a6e04d7bf0e2ffb67e1660510fec1f3459515947",
+      "createdAt": "2026-08-16T05:48:11Z",
+      "updatedAt": "2026-08-16T05:48:22Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31929860852"
+    },
+    {
+      "id": 31929852989,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 42,
+      "headBranch": "agent/manual-progress-state-fix",
+      "headSha": "a1e38ca2af451f6fbfa4287d31f456d3d859c7a7",
+      "createdAt": "2026-08-16T05:48:03Z",
+      "updatedAt": "2026-08-16T05:48:12Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31929852989"
+    },
+    {
+      "id": 31929844716,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 41,
+      "headBranch": "agent/manual-progress-state-fix",
+      "headSha": "a2a18a0f20c50ca625e13ee8122b28f594059cc3",
+      "createdAt": "2026-08-16T05:47:50Z",
+      "updatedAt": "2026-08-16T05:47:59Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31929844716"
+    },
+    {
+      "id": 31929829031,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 40,
+      "headBranch": "agent/manual-progress-state-fix",
+      "headSha": "3b49e4446c5c82768855c83c0b53e188bdf58a95",
+      "createdAt": "2026-08-16T05:47:17Z",
+      "updatedAt": "2026-08-16T05:47:32Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31929829031"
+    },
+    {
+      "id": 31929413205,
+      "name": "Package Firefox Extension",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 6,
+      "headBranch": "v1.1.1",
+      "headSha": "3b49e4446c5c82768855c83c0b53e188bdf58a95",
+      "createdAt": "2026-08-16T05:36:45Z",
+      "updatedAt": "2026-08-16T05:36:59Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31929413205"
+    },
+    {
+      "id": 31926403361,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 39,
+      "headBranch": "main",
+      "headSha": "3b49e4446c5c82768855c83c0b53e188bdf58a95",
+      "createdAt": "2026-08-16T04:20:34Z",
+      "updatedAt": "2026-08-16T04:20:46Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31926403361"
+    },
+    {
+      "id": 31926393344,
+      "name": "Validate",
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 38,
+      "headBranch": "agent/manual-resync-regression-fix",
+      "headSha": "3226fb6d0f417a8b76d072ee0a21834213ef056a",
+      "createdAt": "2026-08-16T04:20:16Z",
+      "updatedAt": "2026-08-16T04:20:25Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31926393344"
+    },
+    {
+      "id": 31926375941,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 37,
+      "headBranch": "agent/manual-resync-regression-fix",
+      "headSha": "3226fb6d0f417a8b76d072ee0a21834213ef056a",
+      "createdAt": "2026-08-16T04:19:52Z",
+      "updatedAt": "2026-08-16T04:20:03Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31926375941"
+    },
+    {
+      "id": 31926361783,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 36,
+      "headBranch": "agent/manual-resync-regression-fix",
+      "headSha": "5cc846fa4d812e7b7fab9db8e5c437a303b7c6ca",
+      "createdAt": "2026-08-16T04:19:33Z",
+      "updatedAt": "2026-08-16T04:19:44Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31926361783"
+    },
+    {
+      "id": 31926357606,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 35,
+      "headBranch": "agent/manual-resync-regression-fix",
+      "headSha": "ea1e960428ec6831a7e0922a7426f4099e50bf25",
+      "createdAt": "2026-08-16T04:19:27Z",
+      "updatedAt": "2026-08-16T04:19:37Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31926357606"
+    },
+    {
+      "id": 31926345494,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 34,
+      "headBranch": "agent/manual-resync-regression-fix",
+      "headSha": "af17b4286e95e6f4471d338bc3619bbac38ace4b",
+      "createdAt": "2026-08-16T04:19:05Z",
+      "updatedAt": "2026-08-16T04:19:15Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31926345494"
+    },
+    {
+      "id": 31922679587,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 33,
+      "headBranch": "main",
+      "headSha": "af17b4286e95e6f4471d338bc3619bbac38ace4b",
+      "createdAt": "2026-08-16T02:46:42Z",
+      "updatedAt": "2026-08-16T02:46:54Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31922679587"
+    },
+    {
+      "id": 31922665376,
+      "name": "Validate",
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 32,
+      "headBranch": "agent/manual-only",
+      "headSha": "e228aca0a89f21048b5c5332899f0b6037cc35ab",
+      "createdAt": "2026-08-16T02:46:20Z",
+      "updatedAt": "2026-08-16T02:46:30Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31922665376"
+    },
+    {
+      "id": 31922660040,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 31,
+      "headBranch": "agent/manual-only",
+      "headSha": "e228aca0a89f21048b5c5332899f0b6037cc35ab",
+      "createdAt": "2026-08-16T02:46:10Z",
+      "updatedAt": "2026-08-16T02:46:18Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31922660040"
+    },
+    {
+      "id": 31922653579,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 30,
+      "headBranch": "agent/manual-only",
+      "headSha": "e40735176e8304c7acbaa3e4f6fc263d78be4e7d",
+      "createdAt": "2026-08-16T02:45:59Z",
+      "updatedAt": "2026-08-16T02:46:10Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31922653579"
+    },
+    {
+      "id": 31922646197,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 29,
+      "headBranch": "agent/manual-only",
+      "headSha": "95305ff60fbce58117cb70279461c40e5b065f0e",
+      "createdAt": "2026-08-16T02:45:47Z",
+      "updatedAt": "2026-08-16T02:45:57Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31922646197"
+    },
+    {
+      "id": 31922632492,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 28,
+      "headBranch": "agent/manual-only",
+      "headSha": "56e3c0b4dd50ca26f7cfd84cf5889ea0eb56faa7",
+      "createdAt": "2026-08-16T02:45:28Z",
+      "updatedAt": "2026-08-16T02:45:38Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31922632492"
+    },
+    {
+      "id": 31922625833,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 27,
+      "headBranch": "agent/manual-only",
+      "headSha": "b2e56463cdcbd341bdfac23e174126359e6343c6",
+      "createdAt": "2026-08-16T02:45:18Z",
+      "updatedAt": "2026-08-16T02:45:27Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31922625833"
+    },
+    {
+      "id": 31922619945,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 26,
+      "headBranch": "agent/manual-only",
+      "headSha": "bacd817240a8f6be73f5eefc45e3e5a6bac4c8bc",
+      "createdAt": "2026-08-16T02:45:10Z",
+      "updatedAt": "2026-08-16T02:45:22Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31922619945"
+    },
+    {
+      "id": 31922609806,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 25,
+      "headBranch": "agent/manual-only",
+      "headSha": "48ee9a3d1cd538ae5a98751671c4d083874e7b5b",
+      "createdAt": "2026-08-16T02:44:55Z",
+      "updatedAt": "2026-08-16T02:45:06Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31922609806"
+    },
+    {
+      "id": 31922603314,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 24,
+      "headBranch": "agent/manual-only",
+      "headSha": "d16a67a0514401e0d509ecf0bc42b67f3767f999",
+      "createdAt": "2026-08-16T02:44:43Z",
+      "updatedAt": "2026-08-16T02:44:56Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31922603314"
+    },
+    {
+      "id": 31920585903,
+      "name": "Package Firefox Extension",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 5,
+      "headBranch": "v1.0.2",
+      "headSha": "d16a67a0514401e0d509ecf0bc42b67f3767f999",
+      "createdAt": "2026-08-16T01:53:17Z",
+      "updatedAt": "2026-08-16T01:53:29Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31920585903"
+    },
+    {
+      "id": 31918508293,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 23,
+      "headBranch": "main",
+      "headSha": "d16a67a0514401e0d509ecf0bc42b67f3767f999",
+      "createdAt": "2026-08-16T00:58:52Z",
+      "updatedAt": "2026-08-16T00:59:03Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31918508293"
+    },
+    {
+      "id": 31918495078,
+      "name": "Validate",
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 22,
+      "headBranch": "agent/background-visibility-fix",
+      "headSha": "5b428e2efd342935e3af0ee17eeece8bb2e7ff10",
+      "createdAt": "2026-08-16T00:58:32Z",
+      "updatedAt": "2026-08-16T00:58:42Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31918495078"
+    },
+    {
+      "id": 31918487841,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 21,
+      "headBranch": "agent/background-visibility-fix",
+      "headSha": "5b428e2efd342935e3af0ee17eeece8bb2e7ff10",
+      "createdAt": "2026-08-16T00:58:21Z",
+      "updatedAt": "2026-08-16T00:58:32Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31918487841"
+    },
+    {
+      "id": 31918480780,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 20,
+      "headBranch": "agent/background-visibility-fix",
+      "headSha": "d73cf7de0a1deb079cdf46e340ad8417df6ccafa",
+      "createdAt": "2026-08-16T00:58:12Z",
+      "updatedAt": "2026-08-16T00:58:22Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31918480780"
+    },
+    {
+      "id": 31918468541,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 19,
+      "headBranch": "agent/background-visibility-fix",
+      "headSha": "48edf190a159c9cfeb173c8571758b789e9f1433",
+      "createdAt": "2026-08-16T00:57:53Z",
+      "updatedAt": "2026-08-16T00:58:06Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31918468541"
+    },
+    {
+      "id": 31918451896,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 18,
+      "headBranch": "agent/background-visibility-fix",
+      "headSha": "33e9e721a405058933a5b78359da8d3d36aef371",
+      "createdAt": "2026-08-16T00:57:26Z",
+      "updatedAt": "2026-08-16T00:57:36Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31918451896"
+    },
+    {
+      "id": 31916598256,
+      "name": "Package Firefox Extension",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 4,
+      "headBranch": "v1.0.1",
+      "headSha": "33e9e721a405058933a5b78359da8d3d36aef371",
+      "createdAt": "2026-08-16T00:10:59Z",
+      "updatedAt": "2026-08-16T00:11:12Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31916598256"
+    },
+    {
+      "id": 31915921038,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 17,
+      "headBranch": "main",
+      "headSha": "33e9e721a405058933a5b78359da8d3d36aef371",
+      "createdAt": "2026-08-15T23:54:29Z",
+      "updatedAt": "2026-08-15T23:54:40Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31915921038"
+    },
+    {
+      "id": 31915906137,
+      "name": "Validate",
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 16,
+      "headBranch": "agent/background-tab-readiness-fix",
+      "headSha": "e393157b9af80066e6e90d8c61d66ef9f85bfd5a",
+      "createdAt": "2026-08-15T23:54:06Z",
+      "updatedAt": "2026-08-15T23:54:19Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31915906137"
+    },
+    {
+      "id": 31915890871,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 15,
+      "headBranch": "agent/background-tab-readiness-fix",
+      "headSha": "e393157b9af80066e6e90d8c61d66ef9f85bfd5a",
+      "createdAt": "2026-08-15T23:53:48Z",
+      "updatedAt": "2026-08-15T23:53:57Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31915890871"
+    },
+    {
+      "id": 31915885023,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 14,
+      "headBranch": "agent/background-tab-readiness-fix",
+      "headSha": "351cf06bd1eb1f84f253b5495717348d5ec6f94a",
+      "createdAt": "2026-08-15T23:53:40Z",
+      "updatedAt": "2026-08-15T23:53:50Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31915885023"
+    },
+    {
+      "id": 31915866391,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 13,
+      "headBranch": "agent/background-tab-readiness-fix",
+      "headSha": "e68f2522e8167ffca2c350dc204ee30200a1b4a7",
+      "createdAt": "2026-08-15T23:53:08Z",
+      "updatedAt": "2026-08-15T23:53:19Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31915866391"
+    },
+    {
+      "id": 31915750098,
+      "name": "Package Firefox Extension",
+      "event": "workflow_dispatch",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 3,
+      "headBranch": "main",
+      "headSha": "e68f2522e8167ffca2c350dc204ee30200a1b4a7",
+      "createdAt": "2026-08-15T23:50:26Z",
+      "updatedAt": "2026-08-15T23:50:40Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31915750098"
+    },
+    {
+      "id": 31915594996,
+      "name": "Package Firefox Extension",
+      "event": "workflow_dispatch",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 2,
+      "headBranch": "main",
+      "headSha": "e68f2522e8167ffca2c350dc204ee30200a1b4a7",
+      "createdAt": "2026-08-15T23:46:35Z",
+      "updatedAt": "2026-08-15T23:46:49Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31915594996"
+    },
+    {
+      "id": 31915137414,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 12,
+      "headBranch": "main",
+      "headSha": "e68f2522e8167ffca2c350dc204ee30200a1b4a7",
+      "createdAt": "2026-08-15T23:35:50Z",
+      "updatedAt": "2026-08-15T23:35:57Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31915137414"
+    },
+    {
+      "id": 31915117442,
+      "name": "Validate",
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 11,
+      "headBranch": "agent/release-assets",
+      "headSha": "ca1ee82109ee2ab4ec8e64550b6fbc9c4d00d9f9",
+      "createdAt": "2026-08-15T23:35:23Z",
+      "updatedAt": "2026-08-15T23:35:35Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31915117442"
+    },
+    {
+      "id": 31915111152,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 10,
+      "headBranch": "agent/release-assets",
+      "headSha": "ca1ee82109ee2ab4ec8e64550b6fbc9c4d00d9f9",
+      "createdAt": "2026-08-15T23:35:14Z",
+      "updatedAt": "2026-08-15T23:35:23Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31915111152"
+    },
+    {
+      "id": 31915102434,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 9,
+      "headBranch": "agent/release-assets",
+      "headSha": "1ee9ecd27f54933aaa147ae5f1deb2f8c9d74550",
+      "createdAt": "2026-08-15T23:35:02Z",
+      "updatedAt": "2026-08-15T23:35:11Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31915102434"
+    },
+    {
+      "id": 31915093655,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 8,
+      "headBranch": "agent/release-assets",
+      "headSha": "8acd08ab333e18a0fc0fa8c066260aeec0da5dca",
+      "createdAt": "2026-08-15T23:34:48Z",
+      "updatedAt": "2026-08-15T23:35:00Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31915093655"
+    },
+    {
+      "id": 31915078561,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 7,
+      "headBranch": "agent/release-assets",
+      "headSha": "6103e9fad7103087a5067f0fbf508327868de4d3",
+      "createdAt": "2026-08-15T23:34:27Z",
+      "updatedAt": "2026-08-15T23:34:36Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31915078561"
+    },
+    {
+      "id": 31914945068,
+      "name": "Package Firefox Extension",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 1,
+      "headBranch": "v1.0.0",
+      "headSha": "6103e9fad7103087a5067f0fbf508327868de4d3",
+      "createdAt": "2026-08-15T23:31:23Z",
+      "updatedAt": "2026-08-15T23:31:36Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31914945068"
+    },
+    {
+      "id": 31914442953,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 6,
+      "headBranch": "main",
+      "headSha": "6103e9fad7103087a5067f0fbf508327868de4d3",
+      "createdAt": "2026-08-15T23:19:42Z",
+      "updatedAt": "2026-08-15T23:19:49Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31914442953"
+    },
+    {
+      "id": 31914426755,
+      "name": "Validate",
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 5,
+      "headBranch": "agent/ci-release-packaging",
+      "headSha": "56c376cbf16bf20f4abce31a396453745dab5f87",
+      "createdAt": "2026-08-15T23:19:21Z",
+      "updatedAt": "2026-08-15T23:19:31Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31914426755"
+    },
+    {
+      "id": 31914420639,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 4,
+      "headBranch": "agent/ci-release-packaging",
+      "headSha": "56c376cbf16bf20f4abce31a396453745dab5f87",
+      "createdAt": "2026-08-15T23:19:13Z",
+      "updatedAt": "2026-08-15T23:19:25Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31914420639"
+    },
+    {
+      "id": 31914415297,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 3,
+      "headBranch": "agent/ci-release-packaging",
+      "headSha": "f60f457ef780daf184832fc05a8ac0f34ae87174",
+      "createdAt": "2026-08-15T23:19:07Z",
+      "updatedAt": "2026-08-15T23:19:17Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31914415297"
+    },
+    {
+      "id": 31914407767,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 2,
+      "headBranch": "agent/ci-release-packaging",
+      "headSha": "4232743abb015753af55cf9ff0766d2d36c81672",
+      "createdAt": "2026-08-15T23:18:57Z",
+      "updatedAt": "2026-08-15T23:19:08Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31914407767"
+    },
+    {
+      "id": 31914404104,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 1,
+      "headBranch": "agent/ci-release-packaging",
+      "headSha": "f497d5c5334903a99ff37bfd118c23ed764ef714",
+      "createdAt": "2026-08-15T23:18:51Z",
+      "updatedAt": "2026-08-15T23:18:59Z",
+      "formerUrl": "https://github.com/GoreeCloud/source-resync/actions/runs/31914404104"
+    }
+  ],
+  "releases": [
+    {
+      "id": 371244085,
+      "tagName": "v1.1.2",
+      "name": "GoreeCloud Source Resync v1.1.2",
+      "draft": false,
+      "prerelease": false,
+      "createdAt": "2026-08-16T05:49:12Z",
+      "publishedAt": "2026-08-16T05:52:49Z",
+      "body": "## What's Changed\r\n* Improve manual resync progress and control reset by @GoreeCloud in https://github.com/GoreeCloud/goreecloud-source-resync/pull/7\r\n\r\n\r\n**Full Changelog**: https://github.com/GoreeCloud/goreecloud-source-resync/compare/v1.1.1...v1.1.2",
+      "assets": [
+        {
+          "id": 516496970,
+          "name": "goreecloud-source-resync-v1.1.2-source.tar.gz",
+          "size": 12699,
+          "digest": "sha256:e696ef0f87f6e576da9385d32cdc845b763c4913eabc5063115504deebe6edea",
+          "contentType": "application/x-gtar",
+          "formerDownloadUrl": "https://github.com/GoreeCloud/source-resync/releases/download/v1.1.2/goreecloud-source-resync-v1.1.2-source.tar.gz"
+        },
+        {
+          "id": 516496966,
+          "name": "goreecloud-source-resync-v1.1.2.xpi",
+          "size": 15430,
+          "digest": "sha256:3433f5e9755eef38a24f1bf0482560598a5d781ca829771a9badcd92612f495f",
+          "contentType": "application/x-xpinstall",
+          "formerDownloadUrl": "https://github.com/GoreeCloud/source-resync/releases/download/v1.1.2/goreecloud-source-resync-v1.1.2.xpi"
+        },
+        {
+          "id": 516496972,
+          "name": "SHA256SUMS",
+          "size": 224,
+          "digest": "sha256:96a0b5646411175601fd4339c3cea1ea562a0d75fdc4acad1c625432a9d0a5ca",
+          "contentType": "application/octet-stream",
+          "formerDownloadUrl": "https://github.com/GoreeCloud/source-resync/releases/download/v1.1.2/SHA256SUMS"
+        }
+      ]
+    },
+    {
+      "id": 371240800,
+      "tagName": "v1.1.1",
+      "name": "GoreeCloud Source Resync v1.1.1",
+      "draft": false,
+      "prerelease": false,
+      "createdAt": "2026-08-16T04:20:31Z",
+      "publishedAt": "2026-08-16T05:36:44Z",
+      "body": "## What's Changed\r\n* Focus extension on manual Resync all by @GoreeCloud in https://github.com/GoreeCloud/goreecloud-source-resync/pull/5\r\n* Fix manual Resync all regression by @GoreeCloud in https://github.com/GoreeCloud/goreecloud-source-resync/pull/6\r\n\r\n\r\n**Full Changelog**: https://github.com/GoreeCloud/goreecloud-source-resync/compare/v1.0.2...v1.1.1",
+      "assets": [
+        {
+          "id": 516484130,
+          "name": "goreecloud-source-resync-v1.1.1-source.tar.gz",
+          "size": 11774,
+          "digest": "sha256:838ea7000c4d4085edc110ed0564f3b7840efb226be65d86c2632ec63058fe9c",
+          "contentType": "application/x-gtar",
+          "formerDownloadUrl": "https://github.com/GoreeCloud/source-resync/releases/download/v1.1.1/goreecloud-source-resync-v1.1.1-source.tar.gz"
+        },
+        {
+          "id": 516484132,
+          "name": "goreecloud-source-resync-v1.1.1.xpi",
+          "size": 14327,
+          "digest": "sha256:5b419a2e55bba260eba57d039b6e411cf26d7eae9e2c45ffd2f2669f266060f0",
+          "contentType": "application/x-xpinstall",
+          "formerDownloadUrl": "https://github.com/GoreeCloud/source-resync/releases/download/v1.1.1/goreecloud-source-resync-v1.1.1.xpi"
+        },
+        {
+          "id": 516484131,
+          "name": "SHA256SUMS",
+          "size": 224,
+          "digest": "sha256:283cb531854fce66dfe43e6fc529803b0c27851fb8dd538f4ea92adaf1cd7663",
+          "contentType": "application/octet-stream",
+          "formerDownloadUrl": "https://github.com/GoreeCloud/source-resync/releases/download/v1.1.1/SHA256SUMS"
+        }
+      ]
+    },
+    {
+      "id": 371205876,
+      "tagName": "v1.0.2",
+      "name": "GoreeCloud Source Resync v1.0.2",
+      "draft": false,
+      "prerelease": false,
+      "createdAt": "2026-08-16T00:58:49Z",
+      "publishedAt": "2026-08-16T01:53:15Z",
+      "body": "## What's Changed\r\n* Fix scheduled resync in inactive Firefox tabs by @GoreeCloud in https://github.com/GoreeCloud/goreecloud-source-resync/pull/4\r\n\r\n\r\n**Full Changelog**: https://github.com/GoreeCloud/goreecloud-source-resync/compare/v1.0.1...v1.0.2",
+      "assets": [
+        {
+          "id": 516299199,
+          "name": "goreecloud-source-resync-v1.0.2-source.tar.gz",
+          "size": 13266,
+          "digest": "sha256:38dbcd687c033b272239dc22c97ff8c88fde6e918e9c30e774d24f6bf95c7707",
+          "contentType": "application/x-gtar",
+          "formerDownloadUrl": "https://github.com/GoreeCloud/source-resync/releases/download/v1.0.2/goreecloud-source-resync-v1.0.2-source.tar.gz"
+        },
+        {
+          "id": 516299200,
+          "name": "goreecloud-source-resync-v1.0.2.xpi",
+          "size": 16167,
+          "digest": "sha256:3a71d5e79d35e9a24b3e27d5c4505ab6204a0f080b2a87c186a65abe21d7dade",
+          "contentType": "application/x-xpinstall",
+          "formerDownloadUrl": "https://github.com/GoreeCloud/source-resync/releases/download/v1.0.2/goreecloud-source-resync-v1.0.2.xpi"
+        },
+        {
+          "id": 516299198,
+          "name": "SHA256SUMS",
+          "size": 224,
+          "digest": "sha256:057433690da66ce122541641433116217012316e0729ab1dcbd02bf5a4f0cd3b",
+          "contentType": "application/octet-stream",
+          "formerDownloadUrl": "https://github.com/GoreeCloud/source-resync/releases/download/v1.0.2/SHA256SUMS"
+        }
+      ]
+    },
+    {
+      "id": 371189645,
+      "tagName": "v1.0.1",
+      "name": "GoreeCloud Source Resync v1.0.1",
+      "draft": false,
+      "prerelease": false,
+      "createdAt": "2026-08-15T23:54:27Z",
+      "publishedAt": "2026-08-16T00:10:57Z",
+      "body": "## What's Changed\r\n* Publish packaged files as GitHub Release assets by @GoreeCloud in https://github.com/GoreeCloud/goreecloud-source-resync/pull/2\r\n* Fix automatic resync readiness in background tabs by @GoreeCloud in https://github.com/GoreeCloud/goreecloud-source-resync/pull/3\r\n\r\n\r\n**Full Changelog**: https://github.com/GoreeCloud/goreecloud-source-resync/compare/v1.0.0...v1.0.1",
+      "assets": [
+        {
+          "id": 516219300,
+          "name": "goreecloud-source-resync-v1.0.1-source.tar.gz",
+          "size": 12982,
+          "digest": "sha256:987efd1384ac6c5e66bcb56859149abb5de292045033d6ef3a83c396a28f5f64",
+          "contentType": "application/x-gtar",
+          "formerDownloadUrl": "https://github.com/GoreeCloud/source-resync/releases/download/v1.0.1/goreecloud-source-resync-v1.0.1-source.tar.gz"
+        },
+        {
+          "id": 516219298,
+          "name": "goreecloud-source-resync-v1.0.1.xpi",
+          "size": 15834,
+          "digest": "sha256:652bdf21bf9eabaebac406231c4871c1de0dfef6bd8688dac22f85f618971fd3",
+          "contentType": "application/x-xpinstall",
+          "formerDownloadUrl": "https://github.com/GoreeCloud/source-resync/releases/download/v1.0.1/goreecloud-source-resync-v1.0.1.xpi"
+        },
+        {
+          "id": 516219299,
+          "name": "SHA256SUMS",
+          "size": 224,
+          "digest": "sha256:9b33e298f3b4c6b3fbc9f8e46eaa138e5f6be0e01c5f828fdadfa570a8f02d98",
+          "contentType": "application/octet-stream",
+          "formerDownloadUrl": "https://github.com/GoreeCloud/source-resync/releases/download/v1.0.1/SHA256SUMS"
+        }
+      ]
+    },
+    {
+      "id": 371184003,
+      "tagName": "v1.0.0",
+      "name": "GoreeCloud Source Resync v1.0.0",
+      "draft": false,
+      "prerelease": false,
+      "createdAt": "2026-08-15T23:19:39Z",
+      "publishedAt": "2026-08-15T23:31:22Z",
+      "body": "## What's Changed\r\n* Add CI validation and reproducible release packaging by @GoreeCloud in https://github.com/GoreeCloud/goreecloud-source-resync/pull/1\r\n\r\n## New Contributors\r\n* @GoreeCloud made their first contribution in https://github.com/GoreeCloud/goreecloud-source-resync/pull/1\r\n\r\n**Full Changelog**: https://github.com/GoreeCloud/goreecloud-source-resync/commits/v1.0.0",
+      "assets": [
+        {
+          "id": 516207753,
+          "name": "goreecloud-source-resync-v1.0.0-source.tar.gz",
+          "size": 12463,
+          "digest": "sha256:eacca3b2ada47cd0993f7f6c913919aa2bdce5f46066ae9d1388fb7e772cf94e",
+          "contentType": "application/x-gtar",
+          "formerDownloadUrl": "https://github.com/GoreeCloud/source-resync/releases/download/v1.0.0/goreecloud-source-resync-v1.0.0-source.tar.gz"
+        },
+        {
+          "id": 516207749,
+          "name": "goreecloud-source-resync-v1.0.0.xpi",
+          "size": 15217,
+          "digest": "sha256:ba94c024ad2ff93560dbe4774d1af58b8e0042d791b279d9265be8e90b3ca076",
+          "contentType": "application/x-xpinstall",
+          "formerDownloadUrl": "https://github.com/GoreeCloud/source-resync/releases/download/v1.0.0/goreecloud-source-resync-v1.0.0.xpi"
+        },
+        {
+          "id": 516207751,
+          "name": "SHA256SUMS",
+          "size": 224,
+          "digest": "sha256:f42e732f736e8021e4d85e7c6fc427bae4c1461f3da1ba0ce1a2d0a1b2b09239",
+          "contentType": "application/octet-stream",
+          "formerDownloadUrl": "https://github.com/GoreeCloud/source-resync/releases/download/v1.0.0/SHA256SUMS"
+        }
+      ]
+    }
+  ],
+  "archivedReleaseCopies": {
+    "verifiedDate": "2026-09-18",
+    "destinationRepository": "GoreeCloud/goreecloud-firefox-extensions",
+    "tags": [
+      "archive/source-resync/tags/v1.0.0",
+      "archive/source-resync/tags/v1.0.1",
+      "archive/source-resync/tags/v1.0.2",
+      "archive/source-resync/tags/v1.1.1",
+      "archive/source-resync/tags/v1.1.2"
+    ],
+    "verification": "All 15 copied release assets independently matched original filenames, sizes, and SHA-256 digests."
+  }
+}
