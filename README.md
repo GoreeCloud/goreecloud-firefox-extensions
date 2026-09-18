@@ -1,8 +1,8 @@
 # GoreeCloud Firefox Extensions
 
-This repository is the canonical source-control home for Firefox extensions built and maintained by GoreeCloud.
+This repository is the canonical source-control home for **standalone** Firefox extensions built and maintained by GoreeCloud, plus shared Firefox/WebExtension tooling.
 
-All first-party GoreeCloud Firefox-extension source code, extension-specific documentation, validation tooling, packaging workflows, release metadata, and maintained extension assets belong here. New GoreeCloud Firefox extensions should be created in this repository unless a documented technical, licensing, or platform requirement makes separation necessary.
+Firefox support that is a client, adapter, or platform variant of a broader GoreeCloud application belongs in that application's repository alongside its other supported variants (for example Android, iOS, web, Linux, and Firefox). Such an extension must not be split into its own isolated repository. During migration, an application-owned Firefox extension may temporarily remain represented here, but its permanent source-control authority is the owning application repository.
 
 ## Repository role
 
@@ -10,7 +10,7 @@ All first-party GoreeCloud Firefox-extension source code, extension-specific doc
 
 The repository provides:
 
-- one discoverable home for every GoreeCloud Firefox extension;
+- one discoverable home for standalone GoreeCloud Firefox extensions and shared browser-extension tooling;
 - independent extension identities and release boundaries inside one repository;
 - shared Firefox/WebExtension validation and deterministic packaging tooling;
 - common Mozilla signing and release-gate guidance;
@@ -42,15 +42,15 @@ shared/
 
 ## Current extension inventory
 
-| Extension | Canonical directory | Firefox add-on ID | Canonical source state | Legacy repository |
+| Extension | Current directory | Firefox add-on ID | Source state | Ownership / disposition |
 | --- | --- | --- | --- | --- |
-| GoreeCloud Advanced Tab Manager | `extensions/advanced-tab-manager/` | `advanced-tab-manager@goreecloud.com` | **Stable 0.1.11** accepted for Mozilla unlisted/self-distribution | None |
-| GoreeCloud Bookmarks | `extensions/bookmarks/` | `goreecloud-bookmarks@goreecloud.com` | Source baseline; not Stable | `GoreeCloud/goreecloud-bookmark-browser-extension` |
-| GoreeCloud Download Manager Extension | `extensions/download-manager/` | `download-manager@goreecloud.com` | **Stable 0.2.12** accepted for Mozilla unlisted/self-distribution | None |
-| GoreeCloud Privacy Shield | `extensions/privacy-shield/` | `privacy-shield@goreecloud.com` | Stable 0.2.0 accepted for Mozilla unlisted/self-distribution | None |
-| GoreeCloud Redirector | `extensions/redirector/` | `redirector@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-redirector` |
-| GoreeCloud Source Resync | `extensions/source-resync/` | `source-resync@goreecloud.com` | Canonical source | `GoreeCloud/goreecloud-source-resync` |
-| GoreeCloud Webspaces | `extensions/webspaces/` | `webspaces@goreecloud.com` | **Stable 0.1.14** accepted for Mozilla unlisted/self-distribution | None |
+| GoreeCloud Advanced Tab Manager | `extensions/advanced-tab-manager/` | `advanced-tab-manager@goreecloud.com` | **Stable 0.1.11** accepted for Mozilla unlisted/self-distribution | Standalone Firefox product; remains here |
+| GoreeCloud Bookmarks | `extensions/bookmarks/` | `goreecloud-bookmarks@goreecloud.com` | Source baseline; not Stable | Application-owned Firefox client; transitional here pending migration to `GoreeCloud/goreecloud-bookmarks` |
+| GoreeCloud Download Manager Extension | `extensions/download-manager/` | `download-manager@goreecloud.com` | **Stable 0.2.12** accepted for Mozilla unlisted/self-distribution | Application-owned Firefox client; transitional here pending migration to `GoreeCloud/goreecloud-advanced-download-manager` |
+| GoreeCloud Privacy Shield | `extensions/privacy-shield/` | `privacy-shield@goreecloud.com` | Stable 0.2.0 accepted for Mozilla unlisted/self-distribution | Platform adapter; retained here pending explicit platform-boundary review |
+| GoreeCloud Redirector | `extensions/redirector/` | `redirector@goreecloud.com` | Canonical source | Standalone Firefox product; canonical here; isolated legacy repository pending retirement |
+| GoreeCloud Source Resync | `extensions/source-resync/` | `source-resync@goreecloud.com` | Canonical source | Standalone Firefox product; canonical here; `GoreeCloud/source-resync` pending retirement |
+| GoreeCloud Webspaces | `extensions/webspaces/` | `webspaces@goreecloud.com` | **Stable 0.1.14** accepted for Mozilla unlisted/self-distribution | Standalone Firefox product; remains here |
 
 Machine-readable inventory lives in [`docs/extension-inventory.json`](docs/extension-inventory.json). Inventory schema v2 records each checked-in manifest version and source lifecycle state separately from independently accepted Mozilla-signed Stable versions, preventing a newer source candidate from silently inheriting older release status.
 
@@ -104,8 +104,8 @@ The accepted deterministic unsigned XPI SHA-256 is `ac605e4781a6dcc605d6c7474989
 
 ## Maintenance rule
 
-A GoreeCloud Firefox extension is not fully centralized until its active source, documentation, validation, package workflow, release instructions, required licensing/attribution, and relevant release history are represented here.
+A standalone GoreeCloud Firefox extension is not fully centralized until its active source, documentation, validation, package workflow, release instructions, required licensing/attribution, and relevant release history are represented here. After migration acceptance, its isolated legacy repository must be retired; long-term provenance belongs in canonical records or approved archives rather than a permanent standalone extension repository.
 
-Legacy repositories may remain for provenance, redirects, compatibility, or release continuity, but new Firefox-specific development belongs in the canonical directory after migration acceptance.
+An application-owned Firefox client is not permanently centralized here. Its authoritative source must converge on the owning application repository, where Firefox is maintained as one supported platform variant alongside the application's other clients. Transitional copies must be clearly identified and removed from authority after migration acceptance.
 
 See [`docs/repository-policy.md`](docs/repository-policy.md) for repository governance and migration rules.
