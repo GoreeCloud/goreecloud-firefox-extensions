@@ -108,10 +108,12 @@ function render(model) {
   setText("count-snoozed", model.counts.snoozed);
   setText("count-rules", model.counts.rules);
   setText("count-session-snapshots", model.counts.sessionSnapshots);
+  setText("count-snapshot-retention", model.snapshots.retention);
+  renderSnapshotList(model.snapshots);
 
   setText("extension-permissions", model.permissions.extension.join(", ") || "None");
   setText("host-permissions", model.permissions.hosts.join(", ") || "None");
-  setText("content-scripts", model.permissions.contentScripts);
+  setText("content-scripts", model.permissions.contentScripts ? model.permissions.contentScripts : "None");
   setText("private-browsing", model.permissions.incognitoMode === "not_allowed" ? "Not allowed" : model.permissions.incognitoMode);
 
   storeHealth.replaceChildren(
