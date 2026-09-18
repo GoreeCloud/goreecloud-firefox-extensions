@@ -134,3 +134,20 @@ test("session snapshot validation enforces bounded retention and safe captured U
   unsafe.sessionSnapshots[0].windows[0].items[0].url = "file:///tmp/private";
   assert.throws(() => validatePersistentState(unsafe), /is invalid/);
 });
+
+
+test("session snapshot validation rejects empty captured windows", () => {
+  const state = createEmptyPersistentState();
+  state.sessionSnapshots.push({
+    id:"snapshot-empty",
+    createdAt:1,
+    windows:[{
+      id:"window-empty",
+      focused:true,
+      activeItemId:null,
+      groups:[],
+      items:[]
+    }]
+  });
+  assert.throws(() => validatePersistentState(state), /at least one restorable tab/);
+});
