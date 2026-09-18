@@ -48,8 +48,6 @@ export function buildManagerModel({ dashboard, snooze, rules, manifest, generate
     generatedAt,
     source: {
       version: String(manifest?.version ?? "unknown"),
-      state: "source-candidate",
-      lifecycle: "In Development",
       componentClass: "Browser extension",
       minimumFirefoxVersion: String(manifest?.browser_specific_settings?.gecko?.strict_min_version ?? "unknown")
     },
