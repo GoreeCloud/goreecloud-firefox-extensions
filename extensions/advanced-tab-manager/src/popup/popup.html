@@ -1,5 +1,45 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Advanced Tab Manager</title><link rel="stylesheet" href="popup.css"></head>
-<body><main><p class="eyebrow">GoreeCloud</p><h1>Advanced Tab Manager</h1><div id="summary" class="summary" aria-live="polite">Reading live and saved state…</div><button id="save-window" class="primary" type="button">Save focused window as Tab Set</button><button id="open-sidebar" type="button">Open sidebar</button><button id="open-manager" type="button">Open manager</button><button id="refresh" type="button">Refresh status</button><p class="note">0.1.11 · retained session snapshots</p></main><script type="module" src="popup.js"></script></body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GoreeCloud Advanced Tab Manager</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="popup-shell">
+    <header class="popup-header">
+      <div>
+        <p class="eyebrow">GoreeCloud</p>
+        <h1>Advanced Tab Manager</h1>
+      </div>
+      <span class="version-badge" aria-label="Version 0.1.12">0.1.12</span>
+    </header>
+
+    <p id="summary" class="status-line" aria-live="polite">Reading this Firefox profile…</p>
+
+    <dl class="metrics" aria-label="Current tab organization">
+      <div><dt>Open tabs</dt><dd id="metric-tabs">—</dd></div>
+      <div><dt>Tab Sets</dt><dd id="metric-tab-sets">—</dd></div>
+      <div><dt>Snoozed</dt><dd id="metric-snoozed">—</dd></div>
+      <div><dt>Duplicates</dt><dd id="metric-duplicates">—</dd></div>
+    </dl>
+
+    <button id="save-window" class="primary-action" type="button">
+      <span>Save focused window</span>
+      <small>Capture the current window as a Tab Set</small>
+    </button>
+
+    <div class="quick-actions" aria-label="Open Advanced Tab Manager surfaces">
+      <button id="open-sidebar" type="button">Open sidebar</button>
+      <button id="open-manager" type="button">Open manager</button>
+    </div>
+
+    <footer class="popup-footer">
+      <span>Local-first · no host permissions</span>
+      <button id="refresh" class="quiet-action" type="button">Refresh</button>
+    </footer>
+  </main>
+  <script type="module" src="popup.js"></script>
+</body>
 </html>
