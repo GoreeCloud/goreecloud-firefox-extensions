@@ -1,9 +1,9 @@
 # Changelog
 
-## 0.1.11 — Release candidate
+## 0.1.11 — Stable
 
 - Preserved the accepted 0.1.10 functional feature slice with no permission or browser-authority expansion.
-- Advanced the manifest and canonical inventory source version to 0.1.11 while keeping `source_state: source-candidate` and no accepted Stable version.
+- Advanced the manifest and canonical inventory source version to 0.1.11; after governed signed acceptance, canonical lifecycle metadata was promoted to `source_state: stable` and `accepted_stable_version: 0.1.11` without changing packaged runtime bytes.
 - Removed packaged `source candidate` / `Development source only` lifecycle wording from popup and Manager surfaces so signed runtime bytes remain lifecycle-neutral.
 - Added an explicit popup Forced Colors border fallback.
 - Added repository-local GLAZE UI 1.5.1 consumer qualification bound to the current Stable shared authority while explicitly not inheriting shared performance/posture claims.
@@ -11,7 +11,7 @@
 - Added a dedicated exact-candidate release qualification workflow retaining the unsigned candidate, SHA-256 digest, Glaze evidence, security evidence, and large-session evidence.
 - Updated the real-Firefox runtime gate and deterministic qualification generators to bind to 0.1.11.
 - Added source-only governed Mozilla signing infrastructure bound to accepted unsigned SHA-256 `9c0f44926ac1d2f213fd07f82dd18fa11bd54ceebc6cd871898fe82b962a5b02`, including authenticated existing-version recovery, governed signed-manifest parity, persistent signed installation, full same-profile Firefox restart, and post-restart product acceptance. This infrastructure does not change packaged runtime bytes.
-- Mozilla signing, signed-XPI parity/integrity, persistent signed installation, full Firefox restart acceptance, post-restart release-critical acceptance, and a separate metadata-only Stable promotion remain required.
+- Governed signing/restart run `35350654198` accepted source revision `34c27805c3b56f3ba858794c785f6b68d1f7b8f3`, unsigned SHA-256 `9c0f44926ac1d2f213fd07f82dd18fa11bd54ceebc6cd871898fe82b962a5b02`, signed SHA-256 `e0f16901529cb8fa76e57d9aa056c98de9fa04e708f2232c151d5b75c1dfdb1d`, governed payload parity, Stable Security Blockers, GLAZE UI 1.5.1 consumer acceptance, persistent signed installation, full Firefox restart, and post-restart release-critical acceptance.
 
 ## 0.1.10 — Source candidate
 
