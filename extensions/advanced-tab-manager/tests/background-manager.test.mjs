@@ -4,7 +4,7 @@ import test from "node:test";
 import { createManagerState } from "../src/background/manager.js";
 
 const manifest = {
-  version: "0.1.8",
+  version: "0.1.10",
   permissions: ["alarms", "sessions", "storage", "tabGroups", "tabs"],
   incognito: "not_allowed",
   browser_specific_settings: { gecko: { strict_min_version: "139.0" } }
