@@ -27,7 +27,7 @@ assert inventory_entry["accepted_stable_version"] == "0.1.11"
 required = [
     "README.md", "FEATURES.md", "FEATURE-ROADMAP.md", "SPECIFICATIONS.md", "ARCHITECTURE.md",
     "PRIVACY.md", "SECURITY.md", "CHANGELOG.md", "LICENSE",
-    "GLAZE-UI-1.5.1-ADOPTION.md", "STABLE-SECURITY-REVIEW-0.1.11.md", "RELEASE-ACCEPTANCE-0.1.11.md",
+    "GLAZE-UI-1.5.1-ADOPTION.md", "RENDERED-ACCEPTANCE-0.1.12.md", "STABLE-SECURITY-REVIEW-0.1.11.md", "RELEASE-ACCEPTANCE-0.1.11.md",
     "src/background/background.js", "src/background/browser-state.js", "src/background/saved-state.js", "src/background/duplicate-cleanup.js", "src/background/snooze.js", "src/background/rules.js", "src/background/manager.js", "src/background/portability.js",
     "src/core/state.js", "src/core/tree.js", "src/core/tree-session.js", "src/core/duplicates.js",
     "src/core/persistent-state.js", "src/core/tab-sets.js", "src/core/stash-transaction.js",
@@ -182,6 +182,7 @@ assert "file.size > MAX_IMPORT_BYTES" in manager_page
 assert "sessionSnapshots" in portability_core, "portable organizational state must include snapshot preview accounting"
 assert "prefers-reduced-transparency" in manager_css and "forced-colors" in manager_css
 glaze_adoption = (ROOT / "GLAZE-UI-1.5.1-ADOPTION.md").read_text(encoding="utf-8")
+rendered_acceptance = (ROOT / "RENDERED-ACCEPTANCE-0.1.12.md").read_text(encoding="utf-8")
 security_review = (ROOT / "STABLE-SECURITY-REVIEW-0.1.11.md").read_text(encoding="utf-8")
 release_acceptance_011 = (ROOT / "RELEASE-ACCEPTANCE-0.1.11.md").read_text(encoding="utf-8")
 security_script = (ROOT / "scripts/stable_security_review.py").read_text(encoding="utf-8")
@@ -193,6 +194,13 @@ signed_parity = (ROOT / "tests/verify_signed_xpi.py").read_text(encoding="utf-8"
 amo_recovery = (ROOT / "tests/amo_signed_version_recovery.py").read_text(encoding="utf-8")
 assert "GLAZE UI V1.5 / machine version 1.5.1 Stable" in glaze_adoption
 assert "af0d0d3e85aaf46e83a2baa64aab914fd96a7e98" in glaze_adoption
+assert "35c4d2dd8aa2a3fcd5742f430d8c8388ab85846a" in rendered_acceptance
+assert "normal-light rendered acceptance" in rendered_acceptance.lower(), "rendered acceptance must remain scoped to normal-light observed evidence"
+assert "does not establish the following" in rendered_acceptance.lower(), "rendered acceptance must preserve explicit unverified-condition boundaries"
+assert "forced colors rendered acceptance" in rendered_acceptance.lower()
+assert "reduced transparency rendered acceptance" in rendered_acceptance.lower()
+assert "dark appearance rendered acceptance" in rendered_acceptance.lower()
+assert "stable acceptance implied: no" in rendered_acceptance.lower()
 assert "Security exceptions:** None" in security_review
 assert "full Git history" in security_review
 assert "0.1.11" in release_acceptance_011 and "**Lifecycle:** Stable" in release_acceptance_011
