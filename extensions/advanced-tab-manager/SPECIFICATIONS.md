@@ -6,7 +6,7 @@ This repository document describes the implemented source boundary for version `
 
 - Component class: browser extension.
 - Supported platform: Firefox 139+.
-- Source state: `source-candidate`; product lifecycle: In Development.
+- Source state: `stable`; product lifecycle: Stable.
 - Required GoreeCloud runtime dependencies: none.
 - Optional/planned integrations such as Webspaces are not implemented dependencies in 0.1.11.
 - Browser-surface presentation follows current GoreeCloud Glaze principles where practical without claiming a separate Glaze runtime-package or product-level acceptance state.
@@ -67,8 +67,8 @@ This repository document describes the implemented source boundary for version `
 - Packaged lifecycle wording is neutral so a later signed artifact does not contradict canonical release metadata.
 - The popup gains an explicit Forced Colors border fallback.
 - Repository-local Glaze UI 1.5.1 qualification and Stable Security Blocker qualification are exact-revision gates.
-- The candidate remains unsigned and non-Stable until governed Mozilla signing, signed parity/integrity verification, persistent install, full Firefox restart, and post-restart acceptance succeed.
+- Governed Mozilla signing, signed parity/integrity verification, persistent install, full Firefox restart, and post-restart acceptance all passed for the accepted 0.1.11 Stable release.
 
 ## Release boundary
 
-`0.1.11` is a release candidate / source candidate. Source tests, CI, deterministic packaging, or merge do not establish representative Firefox manager/portability runtime/accessibility acceptance, browser-restart acceptance, Mozilla signing, signed-XPI acceptance, production release, or Stable qualification.
+`0.1.11` is the accepted Stable release for Mozilla unlisted/self-distribution. Governed run `35350654198` accepted source revision `34c27805c3b56f3ba858794c785f6b68d1f7b8f3`, unsigned SHA-256 `9c0f44926ac1d2f213fd07f82dd18fa11bd54ceebc6cd871898fe82b962a5b02`, signed SHA-256 `e0f16901529cb8fa76e57d9aa056c98de9fa04e708f2232c151d5b75c1dfdb1d`, Stable Security Blockers, GLAZE UI 1.5.1 consumer acceptance, persistent signed installation, full Firefox restart, and post-restart product acceptance.

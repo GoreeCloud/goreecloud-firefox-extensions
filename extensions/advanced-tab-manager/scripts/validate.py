@@ -3,7 +3,10 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+REPOSITORY_ROOT = ROOT.parents[1]
 manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
+inventory = json.loads((REPOSITORY_ROOT / "docs/extension-inventory.json").read_text(encoding="utf-8"))
+inventory_entry = next(item for item in inventory["extensions"] if item["slug"] == "advanced-tab-manager")
 
 assert manifest["manifest_version"] == 3
 assert manifest["name"] == "GoreeCloud Advanced Tab Manager"
@@ -12,11 +15,14 @@ assert manifest["browser_specific_settings"]["gecko"]["id"] == "advanced-tab-man
 assert manifest["browser_specific_settings"]["gecko"]["strict_min_version"] == "139.0"
 assert manifest["incognito"] == "not_allowed"
 assert set(manifest["permissions"]) == {"alarms", "sessions", "storage", "tabGroups", "tabs"}
-assert not manifest.get("host_permissions"), "source candidate must not request host permissions"
-assert "content_scripts" not in manifest, "source candidate must not inspect page content"
-assert "unlimitedStorage" not in manifest["permissions"], "bounded saved state must not request unlimited storage"
+assert not manifest.get("host_permissions"), "Stable source must not request host permissions"
+assert "content_scripts" not in manifest, "Stable source must not inspect page content"
+assert "unlimitedStorage" not in manifest["permissions"], "bounded Stable saved state must not request unlimited storage"
 assert manifest["background"].get("persistent") is False
 assert manifest["background"].get("type") == "module"
+assert inventory_entry["source_version"] == "0.1.11"
+assert inventory_entry["source_state"] == "stable"
+assert inventory_entry["accepted_stable_version"] == "0.1.11"
 
 required = [
     "README.md", "FEATURES.md", "FEATURE-ROADMAP.md", "SPECIFICATIONS.md", "ARCHITECTURE.md",
@@ -56,7 +62,6 @@ session_snapshots = (ROOT / "src/core/session-snapshots.js").read_text(encoding=
 large_session_qualification = (ROOT / "scripts/large-session-qualification.mjs").read_text(encoding="utf-8")
 runtime_smoke = (ROOT / "tests/firefox_runtime_smoke.py").read_text(encoding="utf-8")
 release_acceptance = (ROOT / "RELEASE-ACCEPTANCE-0.1.10.md").read_text(encoding="utf-8")
-REPOSITORY_ROOT = ROOT.parents[1]
 runtime_workflow = (REPOSITORY_ROOT / ".github/workflows/advanced-tab-manager-firefox-runtime.yml").read_text(encoding="utf-8")
 rule_background = (ROOT / "src/background/rules.js").read_text(encoding="utf-8")
 rule_state = (ROOT / "src/core/rule-state.js").read_text(encoding="utf-8")
@@ -180,7 +185,9 @@ assert "GLAZE UI V1.5 / machine version 1.5.1 Stable" in glaze_adoption
 assert "af0d0d3e85aaf46e83a2baa64aab914fd96a7e98" in glaze_adoption
 assert "Security exceptions:** None" in security_review
 assert "full Git history" in security_review
-assert "0.1.11" in release_acceptance_011 and "metadata-only Stable promotion" in release_acceptance_011
+assert "0.1.11" in release_acceptance_011 and "**Lifecycle:** Stable" in release_acceptance_011
+assert "35350654198" in release_acceptance_011
+assert "e0f16901529cb8fa76e57d9aa056c98de9fa04e708f2232c151d5b75c1dfdb1d" in release_acceptance_011
 assert '"git"' in security_script and '"log"' in security_script and "--full-history" in security_script
 assert "EXPECTED_VERSION = \"0.1.11\"" in security_script
 assert "GLAZE_AUTHORITY_REVISION = \"af0d0d3e85aaf46e83a2baa64aab914fd96a7e98\"" in glaze_script
@@ -219,4 +226,4 @@ assert "NoRedirect" in amo_recovery and "/api/v4/file/" in amo_recovery
 assert '"Authorization": f"JWT {token}"' in amo_recovery
 assert 'mirror_request = Request(location, headers={"User-Agent": USER_AGENT})' in amo_recovery
 
-print("Validated Advanced Tab Manager 0.1.11 release-candidate source, qualification, and signing contracts.")
+print("Validated Advanced Tab Manager 0.1.11 Stable source, qualification, signing, and lifecycle contracts.")

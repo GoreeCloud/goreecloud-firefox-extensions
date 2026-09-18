@@ -44,7 +44,7 @@ shared/
 
 | Extension | Canonical directory | Firefox add-on ID | Canonical source state | Legacy repository |
 | --- | --- | --- | --- | --- |
-| GoreeCloud Advanced Tab Manager | `extensions/advanced-tab-manager/` | `advanced-tab-manager@goreecloud.com` | 0.1.11 release candidate; no accepted Stable version | None |
+| GoreeCloud Advanced Tab Manager | `extensions/advanced-tab-manager/` | `advanced-tab-manager@goreecloud.com` | **Stable 0.1.11** accepted for Mozilla unlisted/self-distribution | None |
 | GoreeCloud Bookmarks | `extensions/bookmarks/` | `goreecloud-bookmarks@goreecloud.com` | Source baseline; not Stable | `GoreeCloud/goreecloud-bookmark-browser-extension` |
 | GoreeCloud Download Manager Extension | `extensions/download-manager/` | `download-manager@goreecloud.com` | **Stable 0.2.12** accepted for Mozilla unlisted/self-distribution | None |
 | GoreeCloud Privacy Shield | `extensions/privacy-shield/` | `privacy-shield@goreecloud.com` | Stable 0.2.0 accepted for Mozilla unlisted/self-distribution | None |
@@ -79,6 +79,12 @@ Generated packages are written to `dist/` and are build outputs rather than auth
 ## Mozilla signing
 
 See [`docs/MOZILLA_SIGNING.md`](docs/MOZILLA_SIGNING.md). Each extension keeps an independent release state. A source merge or unsigned package must never be described as Stable solely because repository validation passes.
+
+### GoreeCloud Advanced Tab Manager 0.1.11
+
+Advanced Tab Manager 0.1.11 is the accepted Stable release for Mozilla unlisted/self-distribution. Governed signing/restart run `35350654198` accepted authoritative source revision `34c27805c3b56f3ba858794c785f6b68d1f7b8f3`, deterministic unsigned XPI SHA-256 `9c0f44926ac1d2f213fd07f82dd18fa11bd54ceebc6cd871898fe82b962a5b02`, and Mozilla-signed XPI SHA-256 `e0f16901529cb8fa76e57d9aa056c98de9fa04e708f2232c151d5b75c1dfdb1d`.
+
+The governed gate re-ran Stable Security Blockers and GLAZE UI 1.5.1 consumer qualification, verified Mozilla signature metadata and governed signed-payload parity, installed the signed XPI persistently, fully restarted Firefox without reinstalling the add-on, verified persisted organizational state, and repeated release-critical Manager/tree/stash/snooze/duplicate/rule/session-snapshot/backup acceptance after restart.
 
 ### GoreeCloud Download Manager Extension 0.2.12
 

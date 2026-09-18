@@ -23,7 +23,7 @@
 
 ## Release boundary
 
-The 0.1.11 release candidate is gated by real-Firefox runtime acceptance, repository-local Glaze UI 1.5.1 qualification, Stable Security Blockers qualification, Mozilla signing, signed-XPI parity/integrity, persistent signed installation, full Firefox restart acceptance, and final metadata-only Stable promotion. No Stable status is declared before those exact-candidate gates pass. Source and CI evidence must not be represented as those runtime/release gates.
+Stable 0.1.11 completed the exact-candidate release gates: real-Firefox runtime acceptance, repository-local Glaze UI 1.5.1 qualification, Stable Security Blockers qualification, governed Mozilla signing, signed-XPI parity/integrity, persistent signed installation, full Firefox restart acceptance, and post-restart product acceptance. The Stable promotion changes metadata/documentation only and does not alter the accepted signed runtime payload.
 
 
 ## Portability hardening — 0.1.9
@@ -62,3 +62,10 @@ The governed signing workflow is bound to unsigned candidate SHA-256 `9c0f44926a
 Mozilla-returned payload acceptance requires signature metadata, exact non-manifest payload inventory and byte parity, and manifest semantic parity except for the narrowly governed no-data `data_collection_permissions` materialization used by AMO. Existing-version recovery authenticates to AMO, suppresses automatic credential-bearing redirects, and follows any HTTPS mirror redirect without the developer JWT.
 
 The signed XPI must then install persistently, survive a full Firefox process restart on the same profile without reinstalling, preserve extension-owned recovery state, and pass release-critical post-restart runtime checks.
+
+
+## Stable 0.1.11 accepted security evidence
+
+Governed signing/restart run `35350654198` accepted source revision `34c27805c3b56f3ba858794c785f6b68d1f7b8f3`, deterministic unsigned XPI SHA-256 `9c0f44926ac1d2f213fd07f82dd18fa11bd54ceebc6cd871898fe82b962a5b02`, and Mozilla-signed XPI SHA-256 `e0f16901529cb8fa76e57d9aa056c98de9fa04e708f2232c151d5b75c1dfdb1d`.
+
+The same governed run re-ran the Stable Security Blocker qualification and GLAZE UI 1.5.1 consumer qualification, verified signed payload parity, and completed persistent-install/full-restart product acceptance. No security exception is recorded for this release.
