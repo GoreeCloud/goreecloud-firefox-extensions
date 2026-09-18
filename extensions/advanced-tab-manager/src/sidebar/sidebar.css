@@ -174,7 +174,6 @@ select:focus-visible,
   padding: 8px 8px 8px 11px;
   border-top: 1px solid var(--border);
   cursor: pointer;
-  transition: background-color 110ms ease;
 }
 .tab-row:first-child { border-top: 0; }
 .tree .tab-row { padding-left: calc(11px + (var(--tree-depth) * 17px)); }
@@ -278,16 +277,13 @@ select:focus-visible,
   .controls { grid-template-columns: minmax(0, 1fr) 132px; }
 }
 @media (hover: hover) and (pointer: fine) {
-  .tab-row .actions { opacity: .22; transition: opacity 110ms ease; }
+  .tab-row .actions { opacity: .22; }
   .tab-row:hover .actions, .tab-row:focus-within .actions { opacity: 1; }
 }
 @media (max-width: 320px) {
   .content { padding-inline: 8px; }
   .actions { max-width: 62px; }
   .row-action { min-width: 26px; width: 26px; padding: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .tab-row, .tab-row .actions { transition: none; }
 }
 @media (prefers-reduced-transparency: reduce) {
   :root { --surface: Canvas; --surface-raised: Canvas; --surface-strong: color-mix(in srgb, Canvas 90%, CanvasText 10%); }
