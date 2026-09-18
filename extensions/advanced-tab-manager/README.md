@@ -4,9 +4,9 @@ GoreeCloud Advanced Tab Manager is a local-first Firefox WebExtension for high-s
 
 ## Current source state
 
-- Version: `0.1.10`
+- Version: `0.1.11`
 - Source state: `source-candidate`
-- Product lifecycle: In Development
+- Product lifecycle: Release Candidate / In Development
 - Component class: Browser extension
 - Firefox add-on ID: `advanced-tab-manager@goreecloud.com`
 - Minimum Firefox version: `139.0`
@@ -72,11 +72,17 @@ The Manager exposes only snapshot ID, capture time, window count, and tab count.
 
 CI also runs a deterministic core-scale qualification at 100, 500, and 1,000 synthetic tabs and retains the resulting JSON report with the unsigned XPI and SHA-256 package checksum. This is core-scale evidence only; representative Firefox rendering, interaction latency, accessibility, browser-restart, and device/runtime performance remain separate acceptance gates.
 
+### Release preparation — 0.1.11
+
+Version 0.1.11 preserves the accepted 0.1.10 functional slice while advancing the manifest identity, making packaged popup/Manager lifecycle wording neutral, adding an explicit popup Forced Colors fallback, and introducing exact-revision Glaze 1.5.1 plus Stable-security qualification gates. It adds no permission and does not widen browser authority.
+
+The exact candidate remains a source candidate until Mozilla signing, signed-XPI parity/integrity verification, persistent signed installation, full Firefox restart acceptance, and a separate metadata-only Stable promotion complete.
+
 ## GoreeCloud platform dependency posture
 
 Required GoreeCloud runtime dependencies: none. Core tab management remains local and Firefox-native.
 
-The current UI follows GoreeCloud Glaze presentation principles where practical for a Firefox extension surface, but 0.1.10 does not claim product-level current-Stable Glaze V1.5 / 1.5.1 acceptance. Webspaces integration and other platform-system integrations remain optional/planned and are not represented as implemented.
+The current UI follows GoreeCloud Glaze presentation principles where practical for a Firefox extension surface, and 0.1.11 is qualified against the current Stable Glaze V1.5 / 1.5.1 consumer contract through `scripts/glaze_consumer_qualification.py`; shared performance/posture evidence is not inherited. Webspaces integration and other platform-system integrations remain optional/planned and are not represented as implemented.
 
 ## Development validation
 
@@ -91,4 +97,4 @@ python -m py_compile extensions/advanced-tab-manager/tests/firefox_runtime_smoke
 
 The permanent **Advanced Tab Manager Firefox Runtime** workflow packages the exact candidate and exercises release-critical paths in a clean real Firefox profile against controlled local fixtures. That workflow is an unsigned temporary-install gate; it does not substitute for Mozilla signing, persistent signed installation, full Firefox restart acceptance, current-Stable Glaze UI consumer acceptance, or Stable qualification.
 
-Packaging produces a deterministic unsigned XPI under `dist/`. See `RELEASE-ACCEPTANCE-0.1.10.md` for the evidence boundary and remaining release gates.
+Packaging produces a deterministic unsigned XPI under `dist/`. See `RELEASE-ACCEPTANCE-0.1.11.md`, `GLAZE-UI-1.5.1-ADOPTION.md`, and `STABLE-SECURITY-REVIEW-0.1.11.md` for the release boundary and remaining Mozilla-signed restart gate.
