@@ -1,5 +1,11 @@
 # GoreeCloud Redirector
 
+## Repository status
+
+**Legacy migration source — pending retirement.**
+
+The authoritative Firefox source is now `GoreeCloud/goreecloud-firefox-extensions` at `extensions/redirector/`. Do not start new Redirector feature development in this repository. This repository remains available only during the controlled history/provenance preservation and rollback window before retirement.
+
 GoreeCloud Redirector is a small, privacy-first Firefox extension for redirecting selected external service URLs to GoreeCloud services.
 
 ## Built-in redirect
@@ -58,7 +64,7 @@ See [`docs/AMO_SIGNING.md`](docs/AMO_SIGNING.md). The repository never stores Mo
 
 ## Repository
 
-Canonical repository target: `GoreeCloud/goreecloud-redirector`.
+Canonical Firefox source: `GoreeCloud/goreecloud-firefox-extensions` → `extensions/redirector/`.
 
 ## Version
 
