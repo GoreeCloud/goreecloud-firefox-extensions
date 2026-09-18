@@ -123,6 +123,7 @@ function validateSessionSnapshot(snapshot, index) {
     if (windowIds.has(window.id)) throw new PersistentStateError("invalid-persistent-state", `${path} has duplicate window IDs`);
     windowIds.add(window.id);
     if (typeof window.focused !== "boolean") throw new PersistentStateError("invalid-persistent-state", `${windowPath}.focused is invalid`);
+    if (!Array.isArray(window.items) || !window.items.length) throw new PersistentStateError("invalid-persistent-state", `${windowPath}.items must contain at least one restorable tab`);
     if (window.focused) focusedWindows += 1;
     validateTabSet({
       id: window.id,
