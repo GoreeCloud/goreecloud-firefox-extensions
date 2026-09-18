@@ -81,7 +81,7 @@ button:focus-visible, .file-button:focus-within { outline: 2px solid var(--accen
 .section-heading h2 { margin: 0; font-size: 17px; letter-spacing: -.012em; }
 .section-heading p:not(.section-kicker), .panel > p { max-width: 72ch; margin: 7px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
 .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
-.saved-metrics { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.saved-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .metrics > div { min-width: 0; padding: 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-strong); }
 .metrics dt { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .metrics dd { margin: 4px 0 0; font-size: clamp(22px, 3vw, 30px); font-weight: 780; font-variant-numeric: tabular-nums; letter-spacing: -.025em; }
