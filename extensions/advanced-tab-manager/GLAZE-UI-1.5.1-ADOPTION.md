@@ -46,3 +46,22 @@ Advanced Tab Manager has its own deterministic large-session core qualification 
 `dist/advanced-tab-manager-glaze-1.5.1-acceptance.json`
 
 The accepted evidence is bound to the exact qualified 0.1.11 release lineage. Governed signing/restart run `35350654198` re-ran this qualification on authoritative source revision `34c27805c3b56f3ba858794c785f6b68d1f7b8f3`. A later material presentation or authority change requires requalification.
+
+
+## 0.1.12 candidate requalification
+
+Version 0.1.12 is a material presentation change and therefore does not inherit the accepted 0.1.11 consumer result as proof for the new runtime bytes.
+
+The 0.1.12 source candidate retains GLAZE UI V1.5 / machine version 1.5.1 as its current Stable target. Its popup, sidebar, and Manager have been reworked for stronger hierarchy, action priority, density, responsive composition, lifecycle-truth separation, and accessible interaction semantics while preserving the existing browser-authority and privacy boundary.
+
+Fresh qualification must be bound to the exact 0.1.12 candidate revision. Source/machine validation through `scripts/glaze_consumer_qualification.py` is necessary but is not, by itself, a substitute for representative rendered Firefox visual, keyboard, accessibility, narrow-window, Forced Colors, and Reduced Transparency review.
+
+Until those applicable acceptance steps and the later signing/release gates pass:
+
+- source version: `0.1.12`;
+- source lifecycle: Development / source candidate;
+- accepted Stable release: `0.1.11`;
+- 0.1.12 Glaze consumer acceptance: pending exact-revision qualification;
+- 0.1.12 Stable status: not established.
+
+The lack of an approved Advanced Tab Manager product icon in the canonical branding catalog remains separate from Glaze source qualification. This candidate does not invent or substitute an unofficial product identity asset.
