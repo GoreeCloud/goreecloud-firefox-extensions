@@ -86,6 +86,9 @@ node --test extensions/advanced-tab-manager/tests/*.test.mjs
 node extensions/advanced-tab-manager/scripts/large-session-qualification.mjs
 python shared/scripts/validate_repository.py
 python shared/scripts/package_extension.py advanced-tab-manager
+python -m py_compile extensions/advanced-tab-manager/tests/firefox_runtime_smoke.py
 ```
 
-Packaging produces a deterministic unsigned XPI under `dist/`. Source/CI/package evidence does not establish representative Firefox runtime acceptance, Mozilla signing, production release, or Stable qualification.
+The permanent **Advanced Tab Manager Firefox Runtime** workflow packages the exact candidate and exercises release-critical paths in a clean real Firefox profile against controlled local fixtures. That workflow is an unsigned temporary-install gate; it does not substitute for Mozilla signing, persistent signed installation, full Firefox restart acceptance, current-Stable Glaze UI consumer acceptance, or Stable qualification.
+
+Packaging produces a deterministic unsigned XPI under `dist/`. See `RELEASE-ACCEPTANCE-0.1.10.md` for the evidence boundary and remaining release gates.
