@@ -58,7 +58,7 @@ See [`docs/AMO_SIGNING.md`](docs/AMO_SIGNING.md). The repository never stores Mo
 
 ## Repository
 
-Canonical repository target: `GoreeCloud/redirector`.
+Canonical Firefox source: `GoreeCloud/goreecloud-firefox-extensions` → `extensions/redirector/`.
 
 ## Version
 
