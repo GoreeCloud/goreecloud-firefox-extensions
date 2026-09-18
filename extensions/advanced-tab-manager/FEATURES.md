@@ -1,6 +1,6 @@
 # GoreeCloud Advanced Tab Manager — Features
 
-## Implemented in release candidate 0.1.11
+## Implemented in Stable 0.1.11
 
 - Firefox Manifest V3 identity, canonical component directory, Firefox 139+ baseline, and deterministic packaging integration.
 - Non-persistent ES-module background event page with cold-start Firefox state reconstruction.
@@ -26,8 +26,9 @@
 - Reduced Transparency and Forced Colors fallbacks across the bounded manager/command surfaces, including an explicit popup Forced Colors release fallback.
 - Lifecycle-neutral packaged popup/Manager text suitable for signing without embedding candidate or Stable claims.
 - Repository-local GLAZE UI 1.5.1 qualification and fail-closed Stable Security Blocker qualification with full relevant Git-history secret scanning.
+- Governed Mozilla signing, signed-XPI parity/integrity, persistent installation, full Firefox restart, and post-restart release-critical acceptance completed for Stable 0.1.11.
 - No host permissions, no content scripts, no telemetry, no remote synchronization, and private browsing disabled.
 
 ## Planned / not yet implemented
 
-Tree drag-and-drop and branch bulk actions, normalized duplicate matching, durable protected-tab rules, richer arbitrary-date/recurring snoozing, event-driven automatic rule application, richer rule editing, automatic discard policy, richer command actions, broader manager/settings workflows, Webspaces integration, optional hidden-tab Focus Mode, representative rendered Firefox large-session qualification, representative Firefox runtime/accessibility acceptance, Mozilla signing, signed-XPI acceptance, production release, and Stable qualification remain future work.
+Tree drag-and-drop and branch bulk actions, normalized duplicate matching, durable protected-tab rules, richer arbitrary-date/recurring snoozing, event-driven automatic rule application, richer rule editing, automatic discard policy, richer command actions, broader manager/settings workflows, Webspaces integration, optional hidden-tab Focus Mode, additional representative rendered Firefox large-session/performance coverage, and future feature expansion remain planned. Stable 0.1.11 release qualification itself is complete.
