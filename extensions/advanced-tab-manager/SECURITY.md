@@ -12,7 +12,7 @@
 - Duplicate cleanup remains reviewed, fresh-state checked, guarded, and non-automatic.
 - Snoozing preserves verified recovery-before-destruction semantics and reconstructs ephemeral Firefox alarms from durable local deadlines.
 - Rule-engine global state defaults disabled; explicit Apply now rechecks live plans and target tabs before bounded mutation.
-- Manager diagnostics remain privacy-minimized; 0.1.10 retains the explicit local portability path that mutates only extension-owned local stores after preview and confirmation.
+- Manager diagnostics remain privacy-minimized; 0.1.11 retains the explicit local portability path that mutates only extension-owned local stores after preview and confirmation.
 - The manager model contains counts and health/version metadata only; it does not serialize tab titles/URLs, saved URLs, rule contents, or browsing history.
 - A failed local-store read degrades manager diagnostics rather than fabricating data or mutating recovery state.
 - Retained session snapshots reuse validated organizational state, exclude private/unsupported URLs, enforce 1–50 record retention, and restore additively into new windows with created-window rollback on failure.
@@ -23,7 +23,7 @@
 
 ## Release boundary
 
-This source candidate has not completed representative Firefox runtime/browser-restart acceptance, Manager/sidebar rendered accessibility and large-session acceptance, current-Stable Glaze UI 1.5.1 product acceptance, Mozilla signing, signed-XPI acceptance, Stable Security Blockers qualification, production release evidence, or Stable qualification. Source and CI evidence must not be represented as those runtime/release gates.
+The 0.1.11 release candidate is gated by real-Firefox runtime acceptance, repository-local Glaze UI 1.5.1 qualification, Stable Security Blockers qualification, Mozilla signing, signed-XPI parity/integrity, persistent signed installation, full Firefox restart acceptance, and final metadata-only Stable promotion. No Stable status is declared before those exact-candidate gates pass. Source and CI evidence must not be represented as those runtime/release gates.
 
 
 ## Portability hardening — 0.1.9
@@ -46,3 +46,10 @@ This source candidate has not completed representative Firefox runtime/browser-r
 - Restore creates new windows only. It does not close or replace pre-existing live windows. A failed multi-window restore attempts to remove every newly created window while preserving the source snapshot.
 - Retention reduction is explicit in the Manager and prunes the oldest local recovery records through the verified organizational-state transaction.
 - Session snapshots are carried through the existing integrity-checked portability envelope; no parallel unvalidated import path exists.
+
+
+## Stable release qualification — 0.1.11
+
+The dedicated release qualification workflow uses full Git history, deterministic double-build comparison, candidate archive inspection, recognized secret-pattern scanning, runtime remote/dynamic-code scanning, exact permission verification, and repository-local Glaze UI 1.5.1 qualification. Security exceptions: none.
+
+Passing these source/package gates does not replace Mozilla-signed artifact verification. The returned signed XPI must still pass identity, version, payload parity/integrity, persistent installation, full-process restart, and post-restart acceptance before Stable promotion.

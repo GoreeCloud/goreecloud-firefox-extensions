@@ -61,7 +61,7 @@ function managerFor(storage, overrides = {}) {
     changes,
     manager: createPortabilityManager({
       browser: { storage: { local: storage } },
-      getManifest: () => ({ version: "0.1.10" }),
+      getManifest: () => ({ version: "0.1.11" }),
       reconcileSnoozeAlarms: overrides.reconcileSnoozeAlarms || (async () => ({ ok: true })),
       broadcastChange: (reason) => changes.push(reason),
       now: () => 1700000000000,

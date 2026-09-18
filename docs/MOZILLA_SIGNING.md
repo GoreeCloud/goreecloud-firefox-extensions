@@ -38,6 +38,7 @@ The manifest version must match `source_version` exactly. `accepted_stable_versi
 - **GoreeCloud Privacy Shield 0.2.0** is Stable for Mozilla unlisted/self-distribution after its governed signing and signed-runtime/persistent-restart acceptance.
 - **GoreeCloud Webspaces 0.1.14** is Stable for Mozilla unlisted/self-distribution. The exact accepted unsigned candidate SHA-256 is `ac605e4781a6dcc605d6c7474989e5f125cee12448580786cfefc4ffd81f3e00`. Mozilla produced the signed XPI with SHA-256 `37a42b44e779b0a5585b622ae5040ffe1b51e15a72099e2c13182ca3c5a18479`. Governed signing/restart run `34735370919` revalidated the exact candidate, retrieved the existing unlisted Mozilla-signed 0.1.14 artifact from AMO, verified archive integrity, version, add-on ID, and Mozilla `META-INF` signature metadata, installed it persistently in Firefox 155.0.1, fully restarted Firefox on the same profile without reinstalling, and verified that the active Webspaces registration plus all six distinct built-in contextual identities persisted after restart. Direct Firefox acceptance already covered Standard fallback/current-identity reconciliation, six-Webspace Isolation Health, provider marks, and Proton routing.
 - **GoreeCloud Redirector** checks in source version 0.2.1 while historical Stable acceptance remains 0.2.0. The newer source version requires its own signing and runtime acceptance before it can replace that Stable release.
+- **GoreeCloud Advanced Tab Manager 0.1.11** is a lifecycle-neutral release candidate with no accepted Stable version. Exact-candidate repository/runtime, GLAZE UI 1.5.1, and Stable-security qualification must pass before its deterministic unsigned digest is bound to a governed Mozilla unlisted-signing workflow; signed parity, persistent installation, full Firefox restart, and post-restart acceptance remain required before promotion.
 - **GoreeCloud Bookmarks** checks in source version 0.1.1 as a source candidate with no accepted Stable version recorded. Its required runtime, signing, restart, and post-restart gates remain outstanding.
 - **GoreeCloud Source Resync** checks in source version 1.1.2 as canonical source with no accepted Stable version currently recorded in the shared inventory.
 
@@ -54,6 +55,7 @@ python shared/scripts/package_extension.py <extension-slug>
 Examples:
 
 ```bash
+python shared/scripts/package_extension.py advanced-tab-manager
 python shared/scripts/package_extension.py bookmarks
 python shared/scripts/package_extension.py download-manager
 python shared/scripts/package_extension.py redirector

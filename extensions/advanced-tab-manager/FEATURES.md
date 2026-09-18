@@ -1,6 +1,6 @@
 # GoreeCloud Advanced Tab Manager — Features
 
-## Implemented in source candidate 0.1.10
+## Implemented in release candidate 0.1.11
 
 - Firefox Manifest V3 identity, canonical component directory, Firefox 139+ baseline, and deterministic packaging integration.
 - Non-persistent ES-module background event page with cold-start Firefox state reconstruction.
@@ -23,7 +23,9 @@
 - Manager aggregation limited to counts, source/lifecycle metadata, store availability/schema/revisions, and manifest permission posture; tab titles/URLs, saved URLs, rule contents, and browsing history are not included in the manager model.
 - Degraded manager rendering when one local store is unavailable.
 - Manager entry points from sidebar, toolbar popup, and command palette.
-- Reduced Transparency and Forced Colors fallbacks across the bounded manager/command surfaces.
+- Reduced Transparency and Forced Colors fallbacks across the bounded manager/command surfaces, including an explicit popup Forced Colors release fallback.
+- Lifecycle-neutral packaged popup/Manager text suitable for signing without embedding candidate or Stable claims.
+- Repository-local GLAZE UI 1.5.1 qualification and fail-closed Stable Security Blocker qualification with full relevant Git-history secret scanning.
 - No host permissions, no content scripts, no telemetry, no remote synchronization, and private browsing disabled.
 
 ## Planned / not yet implemented

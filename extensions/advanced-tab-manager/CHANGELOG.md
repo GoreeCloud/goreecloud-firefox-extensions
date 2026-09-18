@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.11 — Release candidate
+
+- Preserved the accepted 0.1.10 functional feature slice with no permission or browser-authority expansion.
+- Advanced the manifest and canonical inventory source version to 0.1.11 while keeping `source_state: source-candidate` and no accepted Stable version.
+- Removed packaged `source candidate` / `Development source only` lifecycle wording from popup and Manager surfaces so signed runtime bytes remain lifecycle-neutral.
+- Added an explicit popup Forced Colors border fallback.
+- Added repository-local GLAZE UI 1.5.1 consumer qualification bound to the current Stable shared authority while explicitly not inheriting shared performance/posture claims.
+- Added fail-closed Stable Security Blocker qualification covering exact permissions, runtime remote/dynamic-code checks, candidate package inspection, deterministic package reproducibility, and full relevant Git-history secret scanning.
+- Added a dedicated exact-candidate release qualification workflow retaining the unsigned candidate, SHA-256 digest, Glaze evidence, security evidence, and large-session evidence.
+- Updated the real-Firefox runtime gate and deterministic qualification generators to bind to 0.1.11.
+- Mozilla signing, signed-XPI parity/integrity, persistent signed installation, full Firefox restart acceptance, post-restart release-critical acceptance, and a separate metadata-only Stable promotion remain required.
+
 ## 0.1.10 — Source candidate
 
 - Added ATM-008E retained local session snapshots for supported non-private Firefox windows.

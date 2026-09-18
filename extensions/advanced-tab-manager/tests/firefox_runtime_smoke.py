@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Real-Firefox release smoke for GoreeCloud Advanced Tab Manager 0.1.10.
+"""Real-Firefox release smoke for GoreeCloud Advanced Tab Manager 0.1.11.
 
 The test installs the deterministic unsigned candidate temporarily in a clean
 headless Firefox profile, opens the extension's real Manager document, and
@@ -14,6 +14,8 @@ full-process restart acceptance remain separate release gates.
 from __future__ import annotations
 
 import json
+import os
+import re
 import socket
 import sys
 import tempfile
@@ -28,7 +30,7 @@ from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 
 EXPECTED_ADDON_ID = "advanced-tab-manager@goreecloud.com"
-EXPECTED_VERSION = "0.1.10"
+EXPECTED_VERSION = "0.1.11"
 FIXED_EXTENSION_UUID = "4c974aa1-e177-4e73-a1e5-a0ee28ad4b61"
 
 
@@ -326,10 +328,13 @@ def main() -> int:
                     "backup preview includes retained snapshot count")
             passes.append("backup-preview")
 
+            source_revision = os.environ.get("ATM_SOURCE_REVISION", "")
+            require(re.fullmatch(r"[0-9a-f]{40}", source_revision) is not None, "runtime evidence is bound to an exact source revision")
             report = {
                 "schemaVersion": 1,
                 "product": "GoreeCloud Advanced Tab Manager",
                 "sourceVersion": EXPECTED_VERSION,
+                "sourceRevision": source_revision,
                 "firefoxVersion": str(driver.capabilities.get("browserVersion", "unknown")),
                 "installation": "temporary-unsigned-runtime-smoke",
                 "controlledLocalFixtureOnly": True,

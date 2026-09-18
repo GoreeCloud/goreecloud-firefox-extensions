@@ -20,7 +20,7 @@ const states = {
 };
 
 test("backup bundle is canonical, versioned, identity-bound, and integrity-checked", async () => {
-  const bundle = await createBackupBundle({ extensionVersion: "0.1.10", exportedAt: 123, ...states }, { digestHex });
+  const bundle = await createBackupBundle({ extensionVersion: "0.1.11", exportedAt: 123, ...states }, { digestHex });
   assert.equal(bundle.format, PORTABILITY_FORMAT);
   assert.equal(bundle.schemaVersion, 1);
   assert.equal(bundle.source.geckoId, "advanced-tab-manager@goreecloud.com");
@@ -34,13 +34,13 @@ test("canonical JSON is independent of object key insertion order", () => {
 });
 
 test("backup verification rejects payload mutation", async () => {
-  const bundle = await createBackupBundle({ extensionVersion: "0.1.10", exportedAt: 123, ...states }, { digestHex });
+  const bundle = await createBackupBundle({ extensionVersion: "0.1.11", exportedAt: 123, ...states }, { digestHex });
   bundle.stores.organizational.revision = 99;
   await assert.rejects(() => verifyBackupBundle(bundle, { digestHex }), (error) => error instanceof PortabilityError && error.code === "backup-integrity-mismatch");
 });
 
 test("backup verification rejects wrong extension identity", async () => {
-  const bundle = await createBackupBundle({ extensionVersion: "0.1.10", exportedAt: 123, ...states }, { digestHex });
+  const bundle = await createBackupBundle({ extensionVersion: "0.1.11", exportedAt: 123, ...states }, { digestHex });
   bundle.source.geckoId = "other@example.com";
   bundle.integrity.digest = await digestHex(canonicalJson({
     format: bundle.format,

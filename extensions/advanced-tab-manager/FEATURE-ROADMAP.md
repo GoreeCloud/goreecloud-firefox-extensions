@@ -1,6 +1,6 @@
 # GoreeCloud Advanced Tab Manager — Feature Roadmap
 
-**Lifecycle:** source-candidate 0.1.10  
+**Lifecycle:** release-candidate 0.1.11  
 **Authoritative project record:** `GoreeCloud/Projects/Project Specification — Advanced Tab Manager.md`
 
 | ID | Obligation | Priority | State |
@@ -15,12 +15,12 @@
 | ATM-006A | Add optional conservative normalized-URL matching and durable protected-tab cleanup exclusions. | Medium | Planned |
 | ATM-007 | Add restart-safe snoozing and deadline reconstruction. | High | Implemented in 0.1.4+ source candidate with one-shot local deadlines, restart alarm reconstruction, rescheduling, and source-preserving restore; runtime acceptance pending |
 | ATM-007A | Add richer arbitrary-date/time snooze scheduling and optional recurring schedules only after a separate policy/UX design. | Medium | Planned |
-| ATM-008 | Add rule engine, command palette, full manager, import/export, and large-session performance qualification. | Medium | In progress — rules/actions, command palette, manager diagnostics, portability, retained session snapshots, and deterministic core-scale qualification implemented through 0.1.10; representative rendered/runtime qualification and broader settings remain open |
+| ATM-008 | Add rule engine, command palette, full manager, import/export, and large-session performance qualification. | Medium | In progress — rules/actions, command palette, manager diagnostics, portability, retained session snapshots, and deterministic core-scale qualification implemented through 0.1.10 and carried into lifecycle-neutral 0.1.11; exact-candidate runtime, Glaze, security, signing, and Stable promotion gates are in progress |
 | ATM-008A | Add explicit rule-action execution and user-facing rule management after separate mutation-safety and UX acceptance. | Medium | Implemented in 0.1.6 source candidate; representative runtime acceptance pending |
 | ATM-008B | Add a keyboard-first command-palette foundation without widening browser authority. | Medium | Implemented in 0.1.7 source candidate; representative runtime acceptance pending |
 | ATM-008C | Add a privacy-minimized full-window manager/diagnostics foundation without new mutation authority. | Medium | Implemented in 0.1.8+ source candidate; representative runtime/accessibility acceptance pending |
 | ATM-008D | Add versioned local backup export and validated source-preserving import for implemented extension-owned stores. | Medium | Implemented in 0.1.9+ source candidate; representative runtime/accessibility acceptance pending |
 | ATM-008E | Add retained local session snapshots and deterministic large-session core qualification without replacing the live Firefox session. | Medium | Implemented in 0.1.10 source candidate; representative Firefox runtime/accessibility/rendered-scale acceptance pending |
-| ATM-009 | Complete privacy/security review, Firefox runtime acceptance, Mozilla signing, and later Stable qualification. | High | Planned |
+| ATM-009 | Complete privacy/security review, Firefox runtime acceptance, Mozilla signing, and later Stable qualification. | High | In progress — 0.1.11 release candidate adds exact Glaze 1.5.1 and Stable-security gates; Mozilla signing, signed restart acceptance, and final metadata-only Stable promotion remain |
 
 No roadmap entry is a release or Stable claim without exact implementation and acceptance evidence.

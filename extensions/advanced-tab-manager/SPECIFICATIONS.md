@@ -1,6 +1,6 @@
 # GoreeCloud Advanced Tab Manager — Repository Specifications
 
-This repository document describes the implemented source boundary for version `0.1.10`. The broader product direction is governed by the canonical Drive project specification.
+This repository document describes the implemented source boundary for version `0.1.11`. The broader product direction is governed by the canonical Drive project specification.
 
 ## Component and dependency contract
 
@@ -8,7 +8,7 @@ This repository document describes the implemented source boundary for version `
 - Supported platform: Firefox 139+.
 - Source state: `source-candidate`; product lifecycle: In Development.
 - Required GoreeCloud runtime dependencies: none.
-- Optional/planned integrations such as Webspaces are not implemented dependencies in 0.1.10.
+- Optional/planned integrations such as Webspaces are not implemented dependencies in 0.1.11.
 - Browser-surface presentation follows current GoreeCloud Glaze principles where practical without claiming a separate Glaze runtime-package or product-level acceptance state.
 
 ## Implemented source contract
@@ -61,6 +61,14 @@ This repository document describes the implemented source boundary for version `
 - `scripts/large-session-qualification.mjs` runs deterministic 100/500/1,000-tab core-scale fixtures for snapshot capture and Manager aggregation. CI retains the JSON report with the unsigned candidate XPI and SHA-256 checksum.
 - Core-scale success is not representative Firefox runtime/rendered-performance acceptance.
 
+### 0.1.11 release-preparation boundary
+
+- Functional behavior from the accepted 0.1.10 slice is preserved; 0.1.11 introduces no feature expansion.
+- Packaged lifecycle wording is neutral so a later signed artifact does not contradict canonical release metadata.
+- The popup gains an explicit Forced Colors border fallback.
+- Repository-local Glaze UI 1.5.1 qualification and Stable Security Blocker qualification are exact-revision gates.
+- The candidate remains unsigned and non-Stable until governed Mozilla signing, signed parity/integrity verification, persistent install, full Firefox restart, and post-restart acceptance succeed.
+
 ## Release boundary
 
-`0.1.10` is a source candidate. Source tests, CI, deterministic packaging, or merge do not establish representative Firefox manager/portability runtime/accessibility acceptance, browser-restart acceptance, Mozilla signing, signed-XPI acceptance, production release, or Stable qualification.
+`0.1.11` is a release candidate / source candidate. Source tests, CI, deterministic packaging, or merge do not establish representative Firefox manager/portability runtime/accessibility acceptance, browser-restart acceptance, Mozilla signing, signed-XPI acceptance, production release, or Stable qualification.
