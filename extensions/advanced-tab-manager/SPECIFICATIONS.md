@@ -1,14 +1,14 @@
 # GoreeCloud Advanced Tab Manager — Repository Specifications
 
-This repository document describes the implemented source boundary for version `0.1.11`. The broader product direction is governed by the canonical Drive project specification.
+This repository document describes the implemented source boundary for version `0.1.12`. The broader product direction is governed by the canonical Drive project specification.
 
 ## Component and dependency contract
 
 - Component class: browser extension.
 - Supported platform: Firefox 139+.
-- Source state: `stable`; product lifecycle: Stable.
+- Source state: `source-candidate`; product lifecycle: Development. Accepted Stable release: `0.1.11`.
 - Required GoreeCloud runtime dependencies: none.
-- Optional/planned integrations such as Webspaces are not implemented dependencies in 0.1.11.
+- Optional/planned integrations such as Webspaces are not implemented dependencies in 0.1.12.
 - Browser-surface presentation follows current GoreeCloud Glaze principles where practical without claiming a separate Glaze runtime-package or product-level acceptance state.
 
 ## Implemented source contract
@@ -69,6 +69,18 @@ This repository document describes the implemented source boundary for version `
 - Repository-local Glaze UI 1.5.1 qualification and Stable Security Blocker qualification are exact-revision gates.
 - Governed Mozilla signing, signed parity/integrity verification, persistent install, full Firefox restart, and post-restart acceptance all passed for the accepted 0.1.11 Stable release.
 
+### 0.1.12 interface-refinement boundary
+
+- Stable 0.1.11 remains the accepted signed rollback/production baseline while 0.1.12 is a Development/source candidate.
+- Popup, sidebar, and Manager presentation is reorganized for clearer hierarchy, density, action priority, responsive behavior, and GoreeCloud/Firefox fit without changing browser authority.
+- The Manager model no longer embeds mutable release lifecycle labels. It exposes immutable build version/component/platform information while canonical release records remain authoritative for lifecycle/signing status.
+- The Manager now renders the retained session-snapshot count already present in the privacy-minimized manager model.
+- Sidebar tab rows expose stronger keyboard/assistive semantics while preserving the established activation and action routes.
+- Semantic Firefox/system colors, visible focus, Reduced Transparency, Forced Colors, and responsive constrained-window fallbacks remain mandatory.
+- No new Firefox permission, host permission, content script, telemetry path, remote dependency, private-browsing access, storage schema, or browser mutation route is introduced.
+- Because the presentation delta is material, 0.1.12 requires fresh exact-revision Glaze UI 1.5.1 consumer qualification plus representative real-Firefox rendered/accessibility acceptance before any Stable promotion.
+- Advanced Tab Manager has no approved canonical product icon in `GoreeCloud/goreecloud-branding-assets` at this source revision; no local replacement is invented by this candidate.
+
 ## Release boundary
 
-`0.1.11` is the accepted Stable release for Mozilla unlisted/self-distribution. Governed run `35350654198` accepted source revision `34c27805c3b56f3ba858794c785f6b68d1f7b8f3`, unsigned SHA-256 `9c0f44926ac1d2f213fd07f82dd18fa11bd54ceebc6cd871898fe82b962a5b02`, signed SHA-256 `e0f16901529cb8fa76e57d9aa056c98de9fa04e708f2232c151d5b75c1dfdb1d`, Stable Security Blockers, GLAZE UI 1.5.1 consumer acceptance, persistent signed installation, full Firefox restart, and post-restart product acceptance.
+`0.1.12` is a Development/source candidate and is not Stable. Accepted Stable remains `0.1.11` for Mozilla unlisted/self-distribution. Governed run `35350654198` accepted 0.1.11 source revision `34c27805c3b56f3ba858794c785f6b68d1f7b8f3`, unsigned SHA-256 `9c0f44926ac1d2f213fd07f82dd18fa11bd54ceebc6cd871898fe82b962a5b02`, signed SHA-256 `e0f16901529cb8fa76e57d9aa056c98de9fa04e708f2232c151d5b75c1dfdb1d`, Stable Security Blockers, GLAZE UI 1.5.1 consumer acceptance, persistent signed installation, full Firefox restart, and post-restart product acceptance. Those 0.1.11 release facts are historical evidence, not acceptance of the 0.1.12 presentation delta.
