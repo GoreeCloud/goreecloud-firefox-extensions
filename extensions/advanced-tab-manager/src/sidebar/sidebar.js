@@ -286,8 +286,8 @@ content.addEventListener("click", async (event) => {
     return;
   }
 
-  const row = event.target.closest(".tab-row");
-  if (row) await activate(Number(row.dataset.tabId));
+  const activation = event.target.closest(".tab-activate");
+  if (activation) await activate(Number(activation.dataset.tabId));
 });
 
 content.addEventListener("submit", async (event) => {
@@ -314,13 +314,6 @@ content.addEventListener("submit", async (event) => {
   event.target.reset();
   rulePreview = null;
   await load();
-});
-
-content.addEventListener("keydown", async (event) => {
-  if ((event.key === "Enter" || event.key === " ") && event.target.classList.contains("tab-row")) {
-    event.preventDefault();
-    await activate(Number(event.target.dataset.tabId));
-  }
 });
 
 saveWindow.addEventListener("click", async () => {
