@@ -7,7 +7,7 @@ manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
 assert manifest["manifest_version"] == 3
 assert manifest["name"] == "GoreeCloud Advanced Tab Manager"
-assert manifest["version"] == "0.1.10"
+assert manifest["version"] == "0.1.11"
 assert manifest["browser_specific_settings"]["gecko"]["id"] == "advanced-tab-manager@goreecloud.com"
 assert manifest["browser_specific_settings"]["gecko"]["strict_min_version"] == "139.0"
 assert manifest["incognito"] == "not_allowed"
@@ -21,6 +21,7 @@ assert manifest["background"].get("type") == "module"
 required = [
     "README.md", "FEATURES.md", "FEATURE-ROADMAP.md", "SPECIFICATIONS.md", "ARCHITECTURE.md",
     "PRIVACY.md", "SECURITY.md", "CHANGELOG.md", "LICENSE",
+    "GLAZE-UI-1.5.1-ADOPTION.md", "STABLE-SECURITY-REVIEW-0.1.11.md", "RELEASE-ACCEPTANCE-0.1.11.md",
     "src/background/background.js", "src/background/browser-state.js", "src/background/saved-state.js", "src/background/duplicate-cleanup.js", "src/background/snooze.js", "src/background/rules.js", "src/background/manager.js", "src/background/portability.js",
     "src/core/state.js", "src/core/tree.js", "src/core/tree-session.js", "src/core/duplicates.js",
     "src/core/persistent-state.js", "src/core/tab-sets.js", "src/core/stash-transaction.js",
@@ -37,7 +38,7 @@ required = [
     "tests/manager-model.test.mjs", "tests/background-manager.test.mjs", "tests/portability.test.mjs", "tests/background-portability.test.mjs",
     "tests/session-snapshots.test.mjs", "tests/background-session-snapshots.test.mjs",
     "tests/firefox_runtime_smoke.py", "RELEASE-ACCEPTANCE-0.1.10.md",
-    "scripts/large-session-qualification.mjs"
+    "scripts/large-session-qualification.mjs", "scripts/stable_security_review.py", "scripts/glaze_consumer_qualification.py"
 ]
 for relative in required:
     assert (ROOT / relative).is_file(), f"missing required source-candidate file: {relative}"
@@ -110,7 +111,10 @@ assert "Local backup and portability" in manager_html and 'id="export-backup"' i
 assert 'id="apply-import"' in manager_html and 'id="clear-import"' in manager_html
 assert "prefers-reduced-transparency" in manager_css and "forced-colors" in manager_css
 assert "browser.tabs.create" in manager_link and "src/manager/manager.html" in manager_link
-assert 'id="open-manager"' in popup_html and "0.1.10 source candidate" in popup_html
+assert 'id="open-manager"' in popup_html and "0.1.11 · retained session snapshots" in popup_html
+assert "source candidate" not in popup_html.lower(), "packaged popup must be lifecycle-neutral for release signing"
+assert "development source only" not in manager_html.lower(), "packaged Manager must be lifecycle-neutral for release signing"
+assert "Stable status" not in manager_html, "packaged Manager must not hard-code Stable lifecycle truth"
 assert "src/manager/manager.html" in popup_js
 
 assert "captureSessionSnapshot" in session_snapshots and "trimSessionSnapshots" in session_snapshots
@@ -125,7 +129,7 @@ assert "SIZES = [100, 500, 1000]" in large_session_qualification
 assert "representative Firefox rendered/runtime performance remains separate" in large_session_qualification
 
 assert 'EXPECTED_ADDON_ID = "advanced-tab-manager@goreecloud.com"' in runtime_smoke
-assert 'EXPECTED_VERSION = "0.1.10"' in runtime_smoke
+assert 'EXPECTED_VERSION = "0.1.11"' in runtime_smoke
 assert "gBrowser.addTrustedTab" in runtime_smoke and "--allow-system-access" in runtime_smoke
 assert "temporary=True" in runtime_smoke, "unsigned runtime gate must not masquerade as persistent signed acceptance"
 for route in (
@@ -157,4 +161,22 @@ assert "new Blob" in manager_page and "JSON.parse" in manager_page and "window.c
 assert "file.size > MAX_IMPORT_BYTES" in manager_page
 assert "sessionSnapshots" in portability_core, "portable organizational state must include snapshot preview accounting"
 assert "prefers-reduced-transparency" in manager_css and "forced-colors" in manager_css
-print("Validated Advanced Tab Manager 0.1.10 retained session snapshot source candidate.")
+glaze_adoption = (ROOT / "GLAZE-UI-1.5.1-ADOPTION.md").read_text(encoding="utf-8")
+security_review = (ROOT / "STABLE-SECURITY-REVIEW-0.1.11.md").read_text(encoding="utf-8")
+release_acceptance_011 = (ROOT / "RELEASE-ACCEPTANCE-0.1.11.md").read_text(encoding="utf-8")
+security_script = (ROOT / "scripts/stable_security_review.py").read_text(encoding="utf-8")
+glaze_script = (ROOT / "scripts/glaze_consumer_qualification.py").read_text(encoding="utf-8")
+release_workflow = (REPOSITORY_ROOT / ".github/workflows/advanced-tab-manager-release-qualification.yml").read_text(encoding="utf-8")
+assert "GLAZE UI V1.5 / machine version 1.5.1 Stable" in glaze_adoption
+assert "af0d0d3e85aaf46e83a2baa64aab914fd96a7e98" in glaze_adoption
+assert "Security exceptions:** None" in security_review
+assert "full Git history" in security_review
+assert "0.1.11" in release_acceptance_011 and "metadata-only Stable promotion" in release_acceptance_011
+assert "git log" in security_script and "--full-history" in security_script
+assert "EXPECTED_VERSION = \"0.1.11\"" in security_script
+assert "GLAZE_AUTHORITY_REVISION = \"af0d0d3e85aaf46e83a2baa64aab914fd96a7e98\"" in glaze_script
+assert "sharedPerformanceAcceptanceInherited" in glaze_script and "False" in glaze_script
+assert "fetch-depth: 0" in release_workflow
+assert "stable_security_review.py" in release_workflow and "glaze_consumer_qualification.py" in release_workflow
+assert "cmp \"$A\" \"$B\"" in release_workflow
+print("Validated Advanced Tab Manager 0.1.11 release-candidate source and qualification contracts.")
