@@ -175,7 +175,7 @@ assert "af0d0d3e85aaf46e83a2baa64aab914fd96a7e98" in glaze_adoption
 assert "Security exceptions:** None" in security_review
 assert "full Git history" in security_review
 assert "0.1.11" in release_acceptance_011 and "metadata-only Stable promotion" in release_acceptance_011
-assert "git log" in security_script and "--full-history" in security_script
+assert '"git"' in security_script and '"log"' in security_script and "--full-history" in security_script
 assert "EXPECTED_VERSION = \"0.1.11\"" in security_script
 assert "GLAZE_AUTHORITY_REVISION = \"af0d0d3e85aaf46e83a2baa64aab914fd96a7e98\"" in glaze_script
 assert "sharedPerformanceAcceptanceInherited" in glaze_script and "False" in glaze_script
