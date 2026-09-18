@@ -94,7 +94,6 @@ button {
   border-radius: 11px;
   background: var(--surface);
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
 }
 button:hover { background: var(--surface-raised); }
 button:active { transform: translateY(1px); }
@@ -146,9 +145,6 @@ button:focus-visible {
   border-color: transparent;
   background: transparent;
   color: inherit;
-}
-@media (prefers-reduced-motion: reduce) {
-  button { transition: none; }
 }
 @media (prefers-reduced-transparency: reduce) {
   :root { --surface: Canvas; --surface-raised: Canvas; }
