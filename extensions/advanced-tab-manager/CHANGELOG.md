@@ -15,6 +15,8 @@
 - Corrected deterministic large-session evidence generation so `sourceVersion` is read from the exact candidate manifest instead of retaining the historical 0.1.11 label.
 - Refined the sidebar toolbar after representative Firefox rendering showed the injected command trigger forcing Refresh onto a second row; the command trigger is now a compact `⌘K` control in the shared toolbar system, and row actions remain quieter than primary content without becoming nearly invisible.
 - Corrected the Manager snapshot-recovery surface after representative rendering showed an empty retention field and missing empty-state copy: retention now renders from the manager model, the no-snapshot state is visible, snapshot retention is included in the saved-workspace metrics, zero content scripts render as `None`, and recovery/portability cards no longer stretch to unnecessary equal height.
+- Replaced nested sidebar tab-row button semantics with a dedicated native tab-activation button beside independent row actions, so keyboard activation is native and assistive technology does not encounter a button containing other buttons.
+- Made the command-palette trigger platform-neutral, balanced the six Saved workspace metrics into a 3×2 grid, and changed popup metrics from a cramped four-column strip to a more readable 2×2 grid.
 - No new product icon or other image asset is introduced in this candidate.
 
 
