@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.9 — Source candidate
+
+- Added ATM-008D source-preserving local backup portability for the implemented organizational, snooze, and rule stores.
+- Added a versioned JSON backup envelope bound to the Advanced Tab Manager Gecko ID, source version, export timestamp, and SHA-256 integrity digest over canonicalized payload JSON.
+- Added strict envelope, identity, integrity, organizational-state, snooze-state, and rule-state validation before import replacement.
+- Added a privacy-minimized import preview containing counts, ID-conflict counts, source metadata, integrity status, and expected current revisions rather than browsing URLs or titles.
+- Added explicit Manager backup export, JSON file selection with a 16 MiB safety cap, preview, confirmation, apply, and clear-preview controls.
+- Added fresh-revision rejection when local extension-owned state changes after preview.
+- Added cross-store replacement with local revision advancement, readback verification, snooze-alarm reconstruction, and exact pre-import state rollback when verification/reconstruction fails.
+- Kept import separate from live restoration: applying a backup does not open, navigate, update, discard, or close Firefox tabs.
+- Added deterministic portability-core and background transaction tests.
+- Added no new manifest permission; the permission boundary remains exactly `alarms`, `sessions`, `storage`, `tabGroups`, and `tabs`, with no host permissions/content scripts and private browsing disabled.
+- Broader manager/settings workflows, session snapshots, large-session qualification, representative Firefox portability/accessibility acceptance, current Glaze acceptance, security/privacy release qualification, Mozilla signing, signed-XPI acceptance, production release evidence, and Stable qualification remain pending.
+
 ## 0.1.8 — Source candidate
 
 - Added ATM-008C, a privacy-minimized full-window Manager/diagnostics foundation.

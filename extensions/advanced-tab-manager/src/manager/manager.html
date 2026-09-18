@@ -12,7 +12,7 @@
       <div>
         <p class="eyebrow">GoreeCloud Advanced Tab Manager</p>
         <h1>Manager</h1>
-        <p class="lede">Read-only source and state diagnostics for the current Firefox profile.</p>
+        <p class="lede">Local diagnostics and source-preserving portability controls for the current Firefox profile.</p>
       </div>
       <div class="topbar-actions">
         <button id="open-sidebar" type="button">Open sidebar</button>
@@ -22,7 +22,7 @@
 
     <p id="status" class="status" aria-live="polite">Reading current state…</p>
 
-    <section class="grid" aria-label="Manager diagnostics">
+    <section class="grid" aria-label="Manager diagnostics and local portability">
       <article class="panel">
         <h2>Source</h2>
         <dl>
@@ -70,15 +70,30 @@
         </dl>
       </article>
 
+      <article class="panel portability-panel">
+        <h2>Local backup and portability</h2>
+        <p>Export a versioned JSON backup of Advanced Tab Manager-owned organizational, snooze, and rule state. The file can contain saved URLs, titles, and rules; store it as private data.</p>
+        <div class="portability-actions">
+          <button id="export-backup" type="button">Export backup</button>
+          <label class="file-button" for="import-file">Choose backup</label>
+          <input id="import-file" class="visually-hidden" type="file" accept="application/json,.json">
+        </div>
+        <div id="import-preview" class="import-preview" aria-live="polite"></div>
+        <div class="portability-actions">
+          <button id="apply-import" class="primary" type="button" disabled>Apply validated import</button>
+          <button id="clear-import" type="button" disabled>Clear preview</button>
+        </div>
+      </article>
+
       <article class="panel">
         <h2>Current boundary</h2>
-        <p>This 0.1.8 manager foundation is intentionally diagnostic and read-only. It does not add import/export, session snapshots, bulk organization, destructive settings, remote management, or new Firefox permissions.</p>
-        <p>Firefox remains authoritative for live tabs, windows, and native groups. The manager displays counts and store revisions; it does not expose saved URLs, tab titles, rule contents, or browsing history.</p>
+        <p>The 0.1.9 portability milestone adds explicit local backup export and validated replacement import without opening tabs or widening Firefox permissions. Import is previewed before replacement and uses readback verification plus rollback.</p>
+        <p>The Manager still does not claim complete settings, session snapshots, large-session qualification, representative Firefox runtime acceptance, signing, or Stable status.</p>
       </article>
     </section>
 
     <footer>
-      <p>Development source only. Representative Firefox runtime/accessibility acceptance, signing, production release, and Stable qualification remain separate gates.</p>
+      <p>Development source only. Representative Firefox runtime/accessibility acceptance, signed-XPI acceptance, production release evidence, and Stable qualification remain separate gates.</p>
     </footer>
   </main>
   <script type="module" src="manager.js"></script>

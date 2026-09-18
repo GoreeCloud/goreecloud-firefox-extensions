@@ -1,6 +1,7 @@
 import { createBrowserState } from "./browser-state.js";
 import { createDuplicateCleanup } from "./duplicate-cleanup.js";
 import { createManagerState } from "./manager.js";
+import { createPortabilityManager } from "./portability.js";
 import { createRuleManager } from "./rules.js";
 import { createSavedState } from "./saved-state.js";
 import { createSnoozeManager } from "./snooze.js";
@@ -53,6 +54,12 @@ const managerState = createManagerState({
   readSnoozeState: snoozeManager.readSnoozeState,
   readRuleState: ruleManager.readRuleState
 });
+const portabilityManager = createPortabilityManager({
+  browser,
+  getManifest: () => browser.runtime.getManifest(),
+  reconcileSnoozeAlarms: snoozeManager.reconcileSnoozeAlarms,
+  broadcastChange
+});
 
 browser.tabs.onCreated.addListener((tab) => {
   browserState.adoptOpenerRelationship(tab)
@@ -100,6 +107,12 @@ browser.runtime.onMessage.addListener(async (message) => {
       return savedState.readDashboardState();
     case "atm:get-manager-state":
       return managerState.readManagerState();
+    case "atm:export-backup":
+      return portabilityManager.exportBackup();
+    case "atm:preview-import":
+      return portabilityManager.previewImport(message.bundle);
+    case "atm:apply-import":
+      return portabilityManager.applyImport(message.bundle, message.expectedRevisions);
     case "atm:get-snooze-state":
       return snoozeManager.readSnoozeState();
     case "atm:get-rule-state":
