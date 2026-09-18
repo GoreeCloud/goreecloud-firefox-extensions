@@ -36,7 +36,7 @@ The 0.1.12 candidate:
 - strengthens interactive tab-row semantics with explicit button/current-page semantics;
 - preserves the existing permission, privacy, storage, recovery, and browser-authority boundaries with no new Firefox permission, host permission, content script, telemetry path, remote dependency, or private-browsing access.
 
-This is a material presentation change. Fresh exact-revision Glaze UI 1.5.1 consumer qualification, real-Firefox runtime acceptance, rendered visual/accessibility review, packaging, signing, and Stable promotion are separate gates. The candidate must not inherit 0.1.11 Stable status.
+This is a material presentation change. Fresh exact-revision Glaze UI 1.5.1 consumer qualification, real-Firefox runtime acceptance, rendered visual/accessibility review, packaging, signing, and Stable promotion are separate gates. Representative Firefox 156/Linux normal-light rendering has now been accepted for the observed popup/sidebar/Manager conditions in `RENDERED-ACCEPTANCE-0.1.12.md`; keyboard/assistive-technology and alternate appearance/environment rendering remain pending. The candidate must not inherit 0.1.11 Stable status.
 
 
 ### Source-preserving operations
@@ -124,4 +124,4 @@ python -m py_compile extensions/advanced-tab-manager/tests/firefox_runtime_smoke
 
 The permanent **Advanced Tab Manager Firefox Runtime** workflow packages the exact candidate and exercises release-critical paths in a clean real Firefox profile against controlled local fixtures. That workflow is an unsigned temporary-install gate; it does not substitute for Mozilla signing, persistent signed installation, full Firefox restart acceptance, current-Stable Glaze UI consumer acceptance, or Stable qualification.
 
-Packaging produces a deterministic unsigned XPI under `dist/`. `RELEASE-ACCEPTANCE-0.1.11.md` and `STABLE-SECURITY-REVIEW-0.1.11.md` remain the historical accepted Stable evidence; `GLAZE-UI-1.5.1-ADOPTION.md` also records the fresh-qualification boundary for the 0.1.12 presentation candidate.
+Packaging produces a deterministic unsigned XPI under `dist/`. `RELEASE-ACCEPTANCE-0.1.11.md` and `STABLE-SECURITY-REVIEW-0.1.11.md` remain the historical accepted Stable evidence; `GLAZE-UI-1.5.1-ADOPTION.md` records the current Glaze qualification boundary and `RENDERED-ACCEPTANCE-0.1.12.md` records the scoped owner-rendered normal-light acceptance for the 0.1.12 presentation candidate.
