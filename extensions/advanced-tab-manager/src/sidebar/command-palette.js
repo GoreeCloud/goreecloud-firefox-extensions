@@ -13,11 +13,11 @@ let activeIndex = 0;
 
 const openButton = document.createElement("button");
 openButton.id = "open-command-palette";
-openButton.className = "icon-button";
+openButton.className = "toolbar-button command-button";
 openButton.type = "button";
 openButton.setAttribute("aria-label", "Open command palette");
 openButton.setAttribute("aria-keyshortcuts", "Control+K Meta+K");
-openButton.textContent = "⌘";
+openButton.textContent = "⌘K";
 topbarActions?.prepend(openButton);
 
 const palette = document.createElement("section");
