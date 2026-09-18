@@ -50,7 +50,7 @@
       "source_version": "1.1.2",
       "source_state": "canonical-source",
       "accepted_stable_version": null,
-      "legacy_repository": "GoreeCloud/goreecloud-source-resync"
+      "legacy_repository": "GoreeCloud/source-resync"
     },
     {
       "slug": "privacy-shield",

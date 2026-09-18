@@ -6,13 +6,27 @@ This document defines the source-control and maintenance boundary for Firefox ex
 
 ## Authoritative repository
 
-`GoreeCloud/goreecloud-firefox-extensions` is the canonical repository for GoreeCloud Firefox extensions.
+`GoreeCloud/goreecloud-firefox-extensions` is the canonical repository for **standalone** GoreeCloud Firefox extensions and shared Firefox/WebExtension tooling.
 
-All new GoreeCloud Firefox-extension development should begin in this repository. Standalone repositories that predate centralization are legacy or transitional sources after their canonical Firefox maintenance boundary is accepted here.
+Firefox support that is a client, adapter, or platform variant of a broader GoreeCloud application belongs in the owning application repository rather than in a separate isolated repository. For a multi-platform application, Firefox should be maintained alongside the application's Android, iOS, web, Linux, desktop, or other governed variants. GoreeCloud Memos is the model: a Firefox variant belongs with GoreeCloud Memos rather than in an isolated Firefox-only repository.
+
+A standalone Firefox product with no broader owning application belongs here. A Firefox extension must not receive its own isolated repository merely because it has an independent add-on ID, release cadence, or Mozilla signing workflow.
+
+## Ownership model
+
+Use the following source-control boundary:
+
+1. **Standalone Firefox product** — source belongs under `extensions/` in this repository.
+2. **Application-owned Firefox client or variant** — source belongs in the owning application repository under that repository's governed client/platform structure.
+3. **Platform adapter** — classify against the owning platform boundary explicitly; do not assume either this repository or a separate repository without review.
+4. **No isolated extension repository** — neither a standalone Firefox product nor an application-owned Firefox client should retain a permanent dedicated repository after its migration is accepted.
+5. **Temporary migration copies** — duplicate source may exist only during a controlled migration/rollback window and must identify which location is authoritative.
+
+The extension add-on ID, product branding, package identity, and release lifecycle remain independent from repository placement.
 
 ## Required extension structure
 
-Each maintained extension has its own directory under `extensions/` and contains, as applicable:
+Each standalone extension maintained here has its own directory under `extensions/` and contains, as applicable:
 
 - Firefox/WebExtension source code;
 - `manifest.json` and browser metadata;
@@ -35,18 +49,33 @@ Current directories are `extensions/bookmarks/`, `extensions/privacy-shield/`, `
 
 ## Migration rule
 
+### Standalone Firefox products
+
 For an existing standalone extension repository:
 
 1. Inspect the exact current source and release state.
-2. Preserve licensing, attribution, security, privacy, and release documentation.
-3. Import or rebuild the maintained Firefox source in the appropriate canonical directory.
+2. Preserve licensing, attribution, security, privacy, signing, and release documentation.
+3. Import or rebuild the maintained Firefox source in the appropriate canonical directory here.
 4. Reconcile CI, packaging, and signing workflows so they operate from this repository.
 5. Validate that the extension can be packaged from the exact canonical revision.
 6. Record the legacy repository and migrated or replacement baseline.
-7. Stop normal Firefox-specific feature development in the legacy repository after migration acceptance.
-8. Keep the legacy repository only when it remains useful for historical provenance, redirects, compatibility, cross-browser work, or release continuity.
+7. Stop normal feature development in the isolated legacy repository after migration acceptance.
+8. Preserve rollback/provenance evidence in canonical records or an approved archive.
+9. Retire the isolated legacy repository after the governed migration and rollback window closes.
 
-A migration is not complete merely because a placeholder directory exists. A first-party replacement does not require copying obsolete or platform-specific code merely to reproduce the legacy tree.
+### Application-owned Firefox clients
+
+For an extension that belongs to a broader application:
+
+1. Identify the owning application repository.
+2. Preserve the extension's add-on ID, compatibility, signing, security, privacy, and release history.
+3. Move the maintained Firefox source into the owning application repository alongside the application's other platform variants.
+4. Reconcile application-level CI, shared libraries, packaging, and release automation.
+5. Mark any copy in this shared Firefox repository as transitional while migration is in progress.
+6. Remove the transitional copy from source-control authority after the owning application repository is accepted.
+7. Do not create or retain a separate extension-only repository for that application client.
+
+A migration is not complete merely because a placeholder directory exists. A first-party replacement does not require copying obsolete or platform-specific code merely to reproduce a legacy tree.
 
 ## Development and release boundary
 
@@ -90,9 +119,11 @@ Privacy Shield adapters must not treat branding as evidence of implementation. B
 
 ## Current migration and release state
 
-- `GoreeCloud/goreecloud-source-resync` → `extensions/source-resync/`: canonical Firefox source migration accepted.
-- `GoreeCloud/goreecloud-redirector` → `extensions/redirector/`: canonical Firefox source migration accepted; later canonical source versions retain independent signing gates from the historically accepted signed v0.2.0 release.
-- `GoreeCloud/goreecloud-bookmark-browser-extension` → `extensions/bookmarks/`: legacy cross-browser Linkwarden-derived repository inspected; canonical Firefox-specific first-party replacement foundation accepted. Bookmarks remains a source baseline rather than a Stable release.
-- `extensions/privacy-shield/`: first-party Firefox Privacy Shield adapter introduced directly in the canonical repository; no legacy standalone Firefox extension repository exists. Version 0.2.0 is the accepted Stable Firefox release for Mozilla unlisted/self-distribution after completed human target acceptance, exact reviewed-payload Mozilla signing, signed-artifact runtime/popup/compatibility/MV3 acceptance, persistent signed installation, and full same-profile Firefox restart acceptance. The exact Stable evidence is recorded in `extensions/privacy-shield/RELEASE-PROMOTION-0.2.0.md`.
+- `GoreeCloud/source-resync` → `extensions/source-resync/`: canonical standalone Firefox source migration is accepted; the separate repository is now a retirement/consolidation candidate rather than a permanent source location.
+- `GoreeCloud/goreecloud-redirector` → `extensions/redirector/`: canonical standalone Firefox source migration is accepted; the separate repository is a retirement/consolidation candidate. Later canonical source versions retain independent signing gates from the historically accepted signed v0.2.0 release.
+- `extensions/bookmarks/`: currently transitional. GoreeCloud Bookmarks is a broader application, so its Firefox client must migrate into `GoreeCloud/goreecloud-bookmarks` and cease being authoritative here after application-repository acceptance.
+- `extensions/download-manager/`: currently transitional. GoreeCloud Download Manager Extension is attached to GoreeCloud Advanced Download Manager, so its Firefox client must migrate into `GoreeCloud/goreecloud-advanced-download-manager` and cease being authoritative here after application-repository acceptance.
+- `extensions/privacy-shield/`: first-party Firefox Privacy Shield adapter introduced directly here. Because Privacy Shield is a platform foundation rather than a conventional application client, its long-term repository boundary requires explicit platform-adapter review before relocation.
+- `extensions/advanced-tab-manager/` and `extensions/webspaces/`: standalone Firefox products and appropriate permanent residents of this repository.
 
-Legacy repositories remain useful only to the extent required for provenance, cross-browser boundaries, redirects, compatibility, or historical release continuity.
+A legacy or transitional repository may exist only while migration, rollback, compatibility, or provenance capture is actively required. Permanent historical retention must move to canonical records or approved archives so Firefox extensions do not remain in isolated repositories indefinitely.
