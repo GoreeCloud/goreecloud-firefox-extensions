@@ -20,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
@@ -47,6 +49,8 @@ jobs:
           echo "ATM_RUNTIME_XPI=$XPI" >> "$GITHUB_ENV"
           sha256sum "$XPI" | tee dist/advanced-tab-manager-runtime-candidate.sha256
       - name: Exercise real Firefox release-critical runtime paths
+        env:
+          ATM_SOURCE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python extensions/advanced-tab-manager/tests/firefox_runtime_smoke.py "$ATM_RUNTIME_XPI"
       - name: Retain unsigned Firefox runtime evidence
         if: ${{ always() }}
