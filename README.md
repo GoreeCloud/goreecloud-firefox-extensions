@@ -1,5 +1,11 @@
 # GoreeCloud Source Resync
 
+## Repository status
+
+**Legacy migration source — pending retirement.**
+
+The authoritative Firefox source is now `GoreeCloud/goreecloud-firefox-extensions` at `extensions/source-resync/`. Do not start new Source Resync feature development in this repository. This repository remains available only during the controlled history/provenance preservation and rollback window before retirement.
+
 GoreeCloud Source Resync is a Firefox extension that manually resynchronizes all resyncable Google Drive sources attached to the currently open ChatGPT Project Sources page.
 
 ## Status
