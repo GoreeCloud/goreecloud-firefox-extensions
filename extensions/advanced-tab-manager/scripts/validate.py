@@ -197,6 +197,11 @@ assert "AMO_JWT_ISSUER" in signing_workflow and "AMO_JWT_SECRET" in signing_work
 assert "stable_security_review.py" in signing_workflow and "glaze_consumer_qualification.py" in signing_workflow
 assert "verify_signed_xpi.py" in signing_workflow and "signed_restart_smoke.py" in signing_workflow
 assert "advanced-tab-manager-signing-evidence.json" in signing_workflow
+assert "statuses: write" in signing_workflow
+assert "goreecloud/advanced-tab-manager-mozilla-signing" in signing_workflow
+assert "Publish signing gate pending status" in signing_workflow
+assert "Publish authoritative signing gate result" in signing_workflow
+assert "github.run_id" in signing_workflow or "GITHUB_RUN_ID" in signing_workflow
 
 assert "temporary=False" in signed_restart, "signed restart acceptance must use persistent installation"
 assert signed_restart.count("install_addon(") == 1, "signed restart acceptance must not reinstall after restart"
