@@ -61,7 +61,11 @@ button:focus-visible, .file-button:focus-within { outline: 2px solid var(--accen
 }
 .overview-grid, .workspace-grid, .detail-grid { display: grid; gap: 12px; }
 .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.workspace-grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); margin-top: 12px; }
+.workspace-grid {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+  align-items: start;
+  margin-top: 12px;
+}
 .detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 12px; }
 .panel {
   min-width: 0;
@@ -88,7 +92,17 @@ button:focus-visible, .file-button:focus-within { outline: 2px solid var(--accen
 .snapshot-list { display: grid; gap: 8px; margin-top: 14px; }
 .snapshot-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 11px 12px; border: 1px solid var(--border); border-radius: 13px; background: var(--surface-strong); }
 .snapshot-title { font-size: 12px; font-weight: 750; }
-.snapshot-meta, .snapshot-empty { color: var(--muted); font-size: 10px; }
+.snapshot-meta { color: var(--muted); font-size: 10px; }
+.snapshot-empty {
+  margin: 0;
+  padding: 14px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface-strong);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
 .snapshot-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .portability-actions { margin-top: 8px; }
 .import-preview { min-height: 82px; margin: 12px 0; padding: 12px; border: 1px dashed var(--border-strong); border-radius: 13px; background: var(--surface-strong); }
