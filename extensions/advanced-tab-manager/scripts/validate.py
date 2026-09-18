@@ -68,6 +68,7 @@ rule_state = (ROOT / "src/core/rule-state.js").read_text(encoding="utf-8")
 rules_core = (ROOT / "src/core/rules.js").read_text(encoding="utf-8")
 rules_view = (ROOT / "src/sidebar/rules-view.js").read_text(encoding="utf-8")
 sidebar = (ROOT / "src/sidebar/sidebar.js").read_text(encoding="utf-8")
+open_tabs_view = (ROOT / "src/sidebar/open-tabs-view.js").read_text(encoding="utf-8")
 commands_core = (ROOT / "src/core/commands.js").read_text(encoding="utf-8")
 palette = (ROOT / "src/sidebar/command-palette.js").read_text(encoding="utf-8")
 palette_css = (ROOT / "src/sidebar/command-palette.css").read_text(encoding="utf-8")
@@ -96,6 +97,10 @@ assert "browser.tabs.remove" not in rule_background, "rule actions must not clos
 assert "tabs.create" not in rule_background and "url:" not in rule_background, "rule actions must not navigate or create tabs"
 assert "rule-create-form" in rules_view and "apply-rule-actions" in rules_view
 assert "atm:apply-rule-actions" in sidebar
+assert 'activation.className = "tab-activate"' in open_tabs_view, "tab activation must use a native button"
+assert 'row.setAttribute("role", "button")' not in open_tabs_view, "tab rows must not wrap child buttons in button semantics"
+assert 'event.target.closest(".tab-activate")' in sidebar, "sidebar must route activation through the native tab button"
+assert 'classList.contains("tab-row")' not in sidebar, "sidebar must not require custom keyboard activation for tab rows"
 
 assert "COMMANDS" in commands_core and "searchCommands" in commands_core and "commandById" in commands_core
 for command_id in ("view-tree", "view-groups", "view-duplicates", "view-saved", "view-snoozed", "view-rules", "open-manager", "focus-search", "refresh-state", "save-window"):
