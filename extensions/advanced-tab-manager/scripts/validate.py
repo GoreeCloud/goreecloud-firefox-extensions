@@ -145,6 +145,9 @@ assert "browser-actions/setup-firefox@v1" in runtime_workflow
 assert "browser-actions/setup-geckodriver@latest" in runtime_workflow
 assert "firefox_runtime_smoke.py" in runtime_workflow
 assert "advanced-tab-manager-firefox-runtime.json" in runtime_workflow
+assert "github.event.pull_request.head.sha || github.sha" in runtime_workflow
+assert "ATM_SOURCE_REVISION" in runtime_workflow
+assert '"sourceRevision": source_revision' in runtime_smoke
 assert "Mozilla-signed persistent-install and full-process restart acceptance remain separate" in release_acceptance
 
 assert "createPortabilityManager" in background
@@ -177,6 +180,7 @@ assert "EXPECTED_VERSION = \"0.1.11\"" in security_script
 assert "GLAZE_AUTHORITY_REVISION = \"af0d0d3e85aaf46e83a2baa64aab914fd96a7e98\"" in glaze_script
 assert "sharedPerformanceAcceptanceInherited" in glaze_script and "False" in glaze_script
 assert "fetch-depth: 0" in release_workflow
+assert "github.event.pull_request.head.sha || github.sha" in release_workflow
 assert "stable_security_review.py" in release_workflow and "glaze_consumer_qualification.py" in release_workflow
 assert "cmp \"$A\" \"$B\"" in release_workflow
 print("Validated Advanced Tab Manager 0.1.11 release-candidate source and qualification contracts.")
