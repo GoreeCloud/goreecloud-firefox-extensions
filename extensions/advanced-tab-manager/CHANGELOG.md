@@ -10,6 +10,7 @@
 - Added fail-closed Stable Security Blocker qualification covering exact permissions, runtime remote/dynamic-code checks, candidate package inspection, deterministic package reproducibility, and full relevant Git-history secret scanning.
 - Added a dedicated exact-candidate release qualification workflow retaining the unsigned candidate, SHA-256 digest, Glaze evidence, security evidence, and large-session evidence.
 - Updated the real-Firefox runtime gate and deterministic qualification generators to bind to 0.1.11.
+- Added source-only governed Mozilla signing infrastructure bound to accepted unsigned SHA-256 `9c0f44926ac1d2f213fd07f82dd18fa11bd54ceebc6cd871898fe82b962a5b02`, including authenticated existing-version recovery, governed signed-manifest parity, persistent signed installation, full same-profile Firefox restart, and post-restart product acceptance. This infrastructure does not change packaged runtime bytes.
 - Mozilla signing, signed-XPI parity/integrity, persistent signed installation, full Firefox restart acceptance, post-restart release-critical acceptance, and a separate metadata-only Stable promotion remain required.
 
 ## 0.1.10 — Source candidate
