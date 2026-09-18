@@ -4,7 +4,7 @@ import test from "node:test";
 import { buildManagerModel } from "../src/core/manager-model.js";
 
 const manifest = {
-  version: "0.1.11",
+  version: "0.1.12",
   permissions: ["tabs", "storage", "sessions", "tabGroups", "alarms"],
   host_permissions: [],
   incognito: "not_allowed",
@@ -51,9 +51,7 @@ test("manager model aggregates counts without exposing tab or saved-item content
 
   assert.equal(model.generatedAt, 1234);
   assert.deepEqual(model.source, {
-    version: "0.1.11",
-    state: "source-candidate",
-    lifecycle: "In Development",
+    version: "0.1.12",
     componentClass: "Browser extension",
     minimumFirefoxVersion: "139.0"
   });
