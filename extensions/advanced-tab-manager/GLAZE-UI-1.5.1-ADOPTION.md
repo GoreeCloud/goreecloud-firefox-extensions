@@ -87,3 +87,18 @@ A second owner-supplied Firefox 156 review confirms that the prior Manifest V3 w
 The same review exposed a separate Manager presentation bug: the session-snapshot retention field appeared empty and the empty snapshot state was not rendered, even though the privacy-minimized Manager model already carried both retention and snapshot metadata. The candidate now explicitly renders `model.snapshots`, adds configured snapshot retention to Saved workspace metrics, presents a visible no-snapshot empty state, renders zero content scripts as `None`, and prevents the recovery card from stretching solely to match the taller portability card.
 
 These source changes require fresh exact-head qualification and a new rendered check before Manager visual acceptance is complete.
+
+
+### Accessibility and layout hardening follow-up
+
+After the rendered Firefox review cycle, the 0.1.12 candidate received a focused accessibility and composition pass against the applicable Stable Glaze UI 1.5.1 consumer requirements.
+
+The pass:
+
+- replaces a sidebar tab-row `role="button"` wrapper that contained child action buttons with a dedicated native tab-activation button beside independent action controls, removing nested interactive semantics and restoring native Enter/Space behavior;
+- keeps the command-palette shortcut discoverable without presenting a platform-specific `⌘K` label on non-macOS systems;
+- balances the six Saved workspace metrics into a deliberate 3×2 composition rather than a 5+1 layout;
+- changes the popup metric strip from four cramped columns to a 2×2 grid with larger values and labels;
+- preserves keyboard-visible focus, Forced Colors, Reduced Transparency, semantic system colors, current permission authority, and lifecycle-truth separation.
+
+These changes remain part of the 0.1.12 Development/source-candidate line and require fresh exact-head source/runtime qualification plus representative rendered verification before they can contribute to Release Candidate or Stable acceptance.
