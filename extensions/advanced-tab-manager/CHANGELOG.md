@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.12 — Development
+
+- Started a new Development/source-candidate line from accepted Stable 0.1.11; Stable 0.1.11 remains the signed rollback/production baseline.
+- Redesigned the toolbar popup as a compact command surface with glanceable live metrics and clearer primary/secondary action hierarchy.
+- Redesigned sidebar chrome, search/view controls, state summary, active-tab treatment, responsive density, and interaction semantics.
+- Reorganized the full Manager into overview, recovery, portability, and secondary technical-status regions with more deliberate information hierarchy.
+- Removed stale hard-coded `In Development · source-candidate` fields from the runtime Manager model so canonical release records remain authoritative for mutable lifecycle truth.
+- Corrected the Manager so retained session-snapshot count is rendered from the existing privacy-minimized model.
+- Kept current Stable Glaze UI V1.5 / 1.5.1 as the consumer target and preserved Reduced Transparency, Forced Colors, focus, responsive, and semantic system-color fallbacks.
+- Refactored candidate security/Glaze/release-qualification tooling to bind to the exact current manifest version while preserving historical Stable 0.1.11 release/signing evidence.
+- Added no Firefox permission, host permission, content script, telemetry path, remote dependency, private-browsing access, storage schema, or new browser mutation authority.
+- No new product icon or other image asset is introduced in this candidate.
+
+
 ## 0.1.11 — Stable
 
 - Preserved the accepted 0.1.10 functional feature slice with no permission or browser-authority expansion.
