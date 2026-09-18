@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 concurrency:
   group: advanced-tab-manager-mozilla-signing
@@ -23,6 +24,41 @@ jobs:
   sign-and-restart:
     runs-on: ubuntu-latest
     steps:
+      - name: Publish signing gate pending status
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          repository = os.environ["GITHUB_REPOSITORY"]
+          sha = os.environ["GITHUB_SHA"]
+          run_url = f"{os.environ['GITHUB_SERVER_URL']}/{repository}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+          request = urllib.request.Request(
+              f"https://api.github.com/repos/{repository}/statuses/{sha}",
+              data=json.dumps({
+                  "state": "pending",
+                  "context": "goreecloud/advanced-tab-manager-mozilla-signing",
+                  "description": "Mozilla signing and full-restart acceptance running",
+                  "target_url": run_url,
+              }).encode("utf-8"),
+              headers={
+                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "Content-Type": "application/json",
+                  "User-Agent": "GoreeCloud-Advanced-Tab-Manager-Signing",
+              },
+              method="POST",
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              if response.status not in {200, 201}:
+                  raise SystemExit(f"could not publish pending signing status: HTTP {response.status}")
+          PY
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -261,3 +297,49 @@ jobs:
             dist/advanced-tab-manager-glaze-1.5.1-acceptance.json
             dist/advanced-tab-manager-stable-security-review.json
             dist/advanced-tab-manager-signing-evidence.json
+
+      - name: Publish authoritative signing gate result
+        if: ${{ always() }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+          from pathlib import Path
+
+          job_status = os.environ.get("JOB_STATUS", "failure")
+          state = "success" if job_status == "success" else ("error" if job_status == "cancelled" else "failure")
+          description = "Mozilla signing/full-restart gate passed" if state == "success" else "Mozilla signing/full-restart gate failed"
+          signed = Path("dist/signed-sha256.txt")
+          if state == "success" and signed.is_file():
+              digest = signed.read_text(encoding="utf-8").strip().split()[0]
+              if len(digest) == 64:
+                  description = f"Passed · signed {digest[:12]}"
+          repository = os.environ["GITHUB_REPOSITORY"]
+          sha = os.environ["GITHUB_SHA"]
+          run_url = f"{os.environ['GITHUB_SERVER_URL']}/{repository}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+          request = urllib.request.Request(
+              f"https://api.github.com/repos/{repository}/statuses/{sha}",
+              data=json.dumps({
+                  "state": state,
+                  "context": "goreecloud/advanced-tab-manager-mozilla-signing",
+                  "description": description,
+                  "target_url": run_url,
+              }).encode("utf-8"),
+              headers={
+                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+                  "Content-Type": "application/json",
+                  "User-Agent": "GoreeCloud-Advanced-Tab-Manager-Signing",
+              },
+              method="POST",
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              if response.status not in {200, 201}:
+                  raise SystemExit(f"could not publish final signing status: HTTP {response.status}")
+          PY
