@@ -36,7 +36,7 @@ test("manager state reads all established stores and returns one bounded model",
   const result = await manager.readManagerState();
   assert.equal(result.ok, true);
   assert.equal(result.model.generatedAt, 42);
-  assert.equal(result.model.source.version, "0.1.8");
+  assert.equal(result.model.source.version, "0.1.10");
   assert.deepEqual(new Set(calls), new Set(["dashboard", "snooze", "rules"]));
 });
 
