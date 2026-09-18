@@ -159,6 +159,7 @@ function renderImportPreview(preview) {
   counts.append(
     metric("Tab Sets", preview.importedCounts.tabSets),
     metric("Stashed", preview.importedCounts.stashed),
+    metric("Session snapshots", preview.importedCounts.sessionSnapshots),
     metric("Snoozed", preview.importedCounts.snoozed),
     metric("Rules", preview.importedCounts.rules),
     metric("ID conflicts", Object.values(preview.conflictCounts).reduce((sum, value) => sum + value, 0))
@@ -166,7 +167,7 @@ function renderImportPreview(preview) {
 
   const warning = document.createElement("p");
   warning.className = "portability-warning";
-  warning.textContent = "Applying this import replaces Advanced Tab Manager local organizational, snooze, and rule state. It does not open browser tabs. Live Firefox tabs remain untouched.";
+  warning.textContent = "Applying this import replaces Advanced Tab Manager local organizational state (including session snapshots), snooze state, and rule state. It does not open browser tabs. Live Firefox tabs remain untouched.";
   importPreview.append(heading, counts, warning);
   applyImport.disabled = false;
   clearImport.disabled = false;
@@ -278,7 +279,7 @@ async function previewSelectedImport(file) {
 
 async function applySelectedImport() {
   if (!pendingImport || !pendingPreview) return;
-  const confirmed = window.confirm("Replace Advanced Tab Manager local organizational, snooze, and rule state with this validated backup? Live Firefox tabs will not be opened or closed by the import itself.");
+  const confirmed = window.confirm("Replace Advanced Tab Manager local organizational state (including session snapshots), snooze state, and rule state with this validated backup? Live Firefox tabs will not be opened or closed by the import itself.");
   if (!confirmed) return;
 
   applyImport.disabled = true;
