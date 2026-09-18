@@ -18,6 +18,9 @@ function createTabRow(tab, { depth = 0, treeStatus = "root", groupsById, window 
   const row = document.createElement("div");
   row.className = "tab-row";
   row.tabIndex = 0;
+  row.setAttribute("role", "button");
+  row.setAttribute("aria-label", `Activate tab: ${tab.title}`);
+  if (tab.active) row.setAttribute("aria-current", "page");
   row.dataset.tabId = String(tab.id);
   row.dataset.active = String(tab.active);
   row.dataset.treeStatus = treeStatus;
