@@ -3,16 +3,6 @@
   "repository": "GoreeCloud/goreecloud-firefox-extensions",
   "extensions": [
     {
-      "slug": "bookmarks",
-      "name": "GoreeCloud Bookmarks",
-      "directory": "extensions/bookmarks",
-      "gecko_id": "goreecloud-bookmarks@goreecloud.com",
-      "source_version": "0.1.1",
-      "source_state": "source-candidate",
-      "accepted_stable_version": null,
-      "legacy_repository": "GoreeCloud/goreecloud-bookmark-browser-extension"
-    },
-    {
       "slug": "advanced-tab-manager",
       "name": "GoreeCloud Advanced Tab Manager",
       "directory": "extensions/advanced-tab-manager",

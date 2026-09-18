@@ -45,7 +45,7 @@ Shared code and tooling belongs under `shared/` only when it is genuinely reusab
 
 Extension directories use concise lowercase kebab-case names. The directory name describes the extension rather than repeating the `goreecloud-` repository prefix.
 
-Current directories are `extensions/bookmarks/`, `extensions/privacy-shield/`, `extensions/redirector/`, and `extensions/source-resync/`.
+Current canonical standalone/platform-adapter directories include `extensions/privacy-shield/`, `extensions/redirector/`, and `extensions/source-resync/`; additional standalone extension directories are listed in the repository inventory.
 
 ## Migration rule
 
@@ -121,7 +121,7 @@ Privacy Shield adapters must not treat branding as evidence of implementation. B
 
 - Former `GoreeCloud/source-resync` → `extensions/source-resync/`: canonical standalone Firefox source migration is accepted and the separate repository was retired on 2026-09-18 after full Git history, pull-request/Actions provenance, and all five historical release records/assets were preserved in this repository.
 - Former `GoreeCloud/goreecloud-redirector` → `extensions/redirector/`: canonical standalone Firefox source migration is accepted and the separate repository was retired on 2026-09-18 after full Git history, pull-request/Actions provenance, and Stable/signing/privacy/security records were preserved in this repository. Later canonical source versions retain independent signing gates from the historically accepted signed v0.2.0 release.
-- `extensions/bookmarks/`: currently transitional. GoreeCloud Bookmarks is a broader application, so its Firefox client must migrate into `GoreeCloud/goreecloud-bookmarks` and cease being authoritative here after application-repository acceptance.
+- Former `extensions/bookmarks/` → `GoreeCloud/goreecloud-bookmarks/clients/firefox/`: application-owned Firefox client migration completed on 2026-09-18 via Bookmarks PR #8. The application repository is now authoritative; the transitional shared-repository copy has been removed.
 - `extensions/download-manager/`: currently transitional. GoreeCloud Download Manager Extension is attached to GoreeCloud Advanced Download Manager, so its Firefox client must migrate into `GoreeCloud/goreecloud-advanced-download-manager` and cease being authoritative here after application-repository acceptance.
 - `extensions/privacy-shield/`: first-party Firefox Privacy Shield adapter introduced directly here. Because Privacy Shield is a platform foundation rather than a conventional application client, its long-term repository boundary requires explicit platform-adapter review before relocation.
 - `extensions/advanced-tab-manager/` and `extensions/webspaces/`: standalone Firefox products and appropriate permanent residents of this repository.

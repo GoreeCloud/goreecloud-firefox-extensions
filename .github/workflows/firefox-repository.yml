@@ -36,8 +36,6 @@ jobs:
         run: node --test extensions/advanced-tab-manager/tests/*.test.mjs
       - name: Qualify Advanced Tab Manager deterministic large-session core
         run: node extensions/advanced-tab-manager/scripts/large-session-qualification.mjs
-      - name: Validate Bookmarks source contract
-        run: python extensions/bookmarks/scripts/validate.py
       - name: Validate Webspaces source contract
         run: python extensions/webspaces/scripts/validate.py
       - name: Test Webspaces routing and management core
@@ -83,7 +81,6 @@ jobs:
       - name: Build deterministic unsigned packages
         run: |
           python shared/scripts/package_extension.py advanced-tab-manager
-          python shared/scripts/package_extension.py bookmarks
           python shared/scripts/package_extension.py download-manager
           python shared/scripts/package_extension.py redirector
           python shared/scripts/package_extension.py source-resync
