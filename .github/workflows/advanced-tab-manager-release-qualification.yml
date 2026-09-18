@@ -1,0 +1,73 @@
+name: Advanced Tab Manager Release Qualification
+
+on:
+  pull_request:
+    paths:
+      - 'extensions/advanced-tab-manager/**'
+      - 'docs/extension-inventory.json'
+      - 'shared/scripts/package_extension.py'
+      - '.github/workflows/advanced-tab-manager-release-qualification.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: advanced-tab-manager-release-qualification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate exact release-candidate source
+        run: |
+          python shared/scripts/validate_repository.py
+          python extensions/advanced-tab-manager/scripts/validate.py
+          python -m py_compile             extensions/advanced-tab-manager/scripts/stable_security_review.py             extensions/advanced-tab-manager/scripts/glaze_consumer_qualification.py             extensions/advanced-tab-manager/tests/firefox_runtime_smoke.py
+          node --test extensions/advanced-tab-manager/tests/*.test.mjs
+          node extensions/advanced-tab-manager/scripts/large-session-qualification.mjs
+      - name: Build deterministic candidate twice
+        run: |
+          python shared/scripts/package_extension.py advanced-tab-manager --output-dir dist/candidate-a
+          python shared/scripts/package_extension.py advanced-tab-manager --output-dir dist/candidate-b
+      - name: Prove deterministic bytes and archive integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          A="$(find dist/candidate-a -maxdepth 1 -type f -name 'goreecloud-advanced-tab-manager-*.xpi' -print -quit)"
+          B="$(find dist/candidate-b -maxdepth 1 -type f -name 'goreecloud-advanced-tab-manager-*.xpi' -print -quit)"
+          test -n "$A"
+          test -n "$B"
+          cmp "$A" "$B"
+          unzip -t "$A"
+          mkdir -p dist/release
+          cp "$A" dist/release/goreecloud-advanced-tab-manager-0.1.11.xpi
+          sha256sum dist/release/goreecloud-advanced-tab-manager-0.1.11.xpi | tee dist/release/candidate-sha256.txt
+      - name: Qualify Stable security blockers
+        run: |
+          python extensions/advanced-tab-manager/scripts/stable_security_review.py             --xpi dist/release/goreecloud-advanced-tab-manager-0.1.11.xpi             --source-revision "${{ github.event.pull_request.head.sha || github.sha }}"             --output dist/release/advanced-tab-manager-stable-security-review.json
+      - name: Qualify GLAZE UI 1.5.1 consumer adoption
+        run: |
+          python extensions/advanced-tab-manager/scripts/glaze_consumer_qualification.py             --source-revision "${{ github.event.pull_request.head.sha || github.sha }}"             --output dist/release/advanced-tab-manager-glaze-1.5.1-acceptance.json
+      - name: Retain release qualification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: goreecloud-advanced-tab-manager-release-qualification-${{ github.event.pull_request.head.sha || github.sha }}
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            dist/release/goreecloud-advanced-tab-manager-0.1.11.xpi
+            dist/release/candidate-sha256.txt
+            dist/release/advanced-tab-manager-stable-security-review.json
+            dist/release/advanced-tab-manager-glaze-1.5.1-acceptance.json
+            dist/advanced-tab-manager-large-session-qualification.json
