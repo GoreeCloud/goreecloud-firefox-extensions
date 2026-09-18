@@ -5,12 +5,12 @@ GoreeCloud Advanced Tab Manager is a local-first Firefox WebExtension for high-s
 ## Current source state
 
 - Version: `0.1.11`
-- Source state: `source-candidate`
-- Product lifecycle: Release Candidate / In Development
+- Source state: `stable`
+- Product lifecycle: Stable
 - Component class: Browser extension
 - Firefox add-on ID: `advanced-tab-manager@goreecloud.com`
 - Minimum Firefox version: `139.0`
-- Stable release: none
+- Stable release: `0.1.11`
 - Permissions: `alarms`, `sessions`, `storage`, `tabGroups`, `tabs`
 - Host permissions: none
 - Content scripts: none
@@ -77,6 +77,16 @@ CI also runs a deterministic core-scale qualification at 100, 500, and 1,000 syn
 Version 0.1.11 preserves the accepted 0.1.10 functional slice while advancing the manifest identity, making packaged popup/Manager lifecycle wording neutral, adding an explicit popup Forced Colors fallback, and introducing exact-revision Glaze 1.5.1 plus Stable-security qualification gates. It adds no permission and does not widen browser authority.
 
 The exact candidate remains a source candidate until Mozilla signing, signed-XPI parity/integrity verification, persistent signed installation, full Firefox restart acceptance, and a separate metadata-only Stable promotion complete.
+
+## Stable 0.1.11 release evidence
+
+GoreeCloud Advanced Tab Manager 0.1.11 is the accepted Stable Firefox release for Mozilla unlisted/self-distribution.
+
+Governed signing/restart run `35350654198` accepted authoritative source revision `34c27805c3b56f3ba858794c785f6b68d1f7b8f3`, deterministic unsigned XPI SHA-256 `9c0f44926ac1d2f213fd07f82dd18fa11bd54ceebc6cd871898fe82b962a5b02`, and Mozilla-signed XPI SHA-256 `e0f16901529cb8fa76e57d9aa056c98de9fa04e708f2232c151d5b75c1dfdb1d`.
+
+The governed gate re-ran repository validation, deterministic tests, 100/500/1,000-tab core-scale qualification, Stable Security Blockers, and GLAZE UI 1.5.1 consumer qualification; verified Mozilla signature metadata and governed signed-payload parity; installed the signed XPI persistently; fully restarted Firefox without reinstalling; verified persisted organizational state; and repeated release-critical Manager/tree/stash/snooze/duplicate/rule/session-snapshot/backup acceptance after restart.
+
+This lifecycle promotion changes release metadata and documentation only. The accepted signed runtime payload is unchanged.
 
 ## GoreeCloud platform dependency posture
 
