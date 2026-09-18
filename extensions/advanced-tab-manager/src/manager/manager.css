@@ -38,7 +38,6 @@ button, .file-button {
   border-radius: 11px;
   background: var(--surface);
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease, transform 120ms ease;
 }
 .file-button { display: inline-flex; align-items: center; }
 button:hover, .file-button:hover { background: var(--surface-raised); }
@@ -128,7 +127,6 @@ footer { margin: 18px 2px 0; color: var(--muted); font-size: 10px; line-height: 
   .snapshot-actions { justify-content: start; }
   .portability-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (prefers-reduced-motion: reduce) { button, .file-button { transition: none; } }
 @media (prefers-reduced-transparency: reduce) {
   :root { --surface: Canvas; --surface-raised: Canvas; --surface-strong: color-mix(in srgb, Canvas 90%, CanvasText 10%); }
   body { background: Canvas; }
