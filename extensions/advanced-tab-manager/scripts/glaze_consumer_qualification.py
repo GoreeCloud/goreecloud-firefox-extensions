@@ -49,8 +49,7 @@ def main() -> int:
     manager_js = read("src/manager/manager.js")
     manager_model = read("src/core/manager-model.js")
     rule_state = read("src/core/rule-state.js")
-    all_css = "
-".join((sidebar_css, palette_css, rules_css, popup_css, manager_css))
+    all_css = "\n".join((sidebar_css, palette_css, rules_css, popup_css, manager_css))
 
     # Stable presentation and accessibility obligations applicable to constrained Firefox surfaces.
     for token in ("Canvas", "CanvasText", "AccentColor", "AccentColorText"):
@@ -71,8 +70,7 @@ def main() -> int:
     require("animation:" not in all_css and "transition:" not in all_css, "unqualified motion is not permitted in the release candidate")
 
     # Authority, privacy, and fallback obligations.
-    require("browser.permissions.request" not in "
-".join((manager_js, palette_js)), "presentation layer must not request permissions")
+    require("browser.permissions.request" not in "\n".join((manager_js, palette_js)), "presentation layer must not request permissions")
     require("window.confirm" in manager_js, "consequential Manager operations require explicit confirmation")
     require("tab.title" not in manager_model and "tab.url" not in manager_model, "Manager diagnostics must remain privacy-minimized")
     require("enabled: false" in rule_state, "rule automation must remain fail-closed by default")
@@ -114,8 +112,7 @@ def main() -> int:
     }
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "
-", encoding="utf-8")
+    output.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(evidence, indent=2, sort_keys=True))
     return 0
 
