@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "capturedDate": "2026-09-18",
+  "status": "legacy-migration-source-pending-retirement",
+  "legacyRepository": {
+    "id": "1337282816",
+    "fullName": "GoreeCloud/goreecloud-redirector",
+    "defaultBranch": "main",
+    "visibility": "public",
+    "archived": false
+  },
+  "canonicalFirefoxSource": {
+    "repository": "GoreeCloud/goreecloud-firefox-extensions",
+    "path": "extensions/redirector/"
+  },
+  "archivedGitHistory": {
+    "repository": "GoreeCloud/goreecloud-firefox-extensions",
+    "refPrefix": "refs/tags/archive/redirector/"
+  },
+  "pullRequests": [
+    {
+      "number": 2,
+      "title": "Mark standalone Redirector repository for Firefox consolidation",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-09-18T20:32:20Z",
+      "updatedAt": "2026-09-18T20:33:29Z",
+      "closedAt": "2026-09-18T20:33:29Z",
+      "mergedAt": "2026-09-18T20:33:29Z",
+      "mergeCommitSha": "5347d1ef2aa1b180b72814523769e2fd097f8f06",
+      "head": {
+        "ref": "migration/consolidate-into-firefox-extensions-20260918",
+        "sha": "66f2c8d5a8b3e4e2030ae169d3ac3798fd483de3"
+      },
+      "base": {
+        "ref": "main",
+        "sha": "f2163b45a50d5a4fa2b80ae030ae866c3341a055"
+      },
+      "body": "GoreeCloud Redirector is now canonically maintained in `GoreeCloud/goreecloud-firefox-extensions` under `extensions/redirector/`.\n\nThis change marks the standalone repository as a legacy migration source pending provenance/history preservation and retirement, and points the add-on homepage to the canonical Firefox source. It does not change the Redirector product identity, Firefox add-on ID, or historically accepted Stable 0.2.0 release status.",
+      "formerUrl": "https://github.com/GoreeCloud/goreecloud-redirector/pull/2"
+    },
+    {
+      "number": 1,
+      "title": "Build GoreeCloud Redirector v0.2.0 release candidate",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-08-17T14:53:44Z",
+      "updatedAt": "2026-08-17T14:56:27Z",
+      "closedAt": "2026-08-17T14:56:27Z",
+      "mergedAt": "2026-08-17T14:56:27Z",
+      "mergeCommitSha": "92220cd5c796d00ad4fa1a81fcfd74b6c73c85cd",
+      "head": {
+        "ref": "agent/stable-foundation",
+        "sha": "d4c8bd249a7fb3930851b06730db483beb3ebd9d"
+      },
+      "base": {
+        "ref": "main",
+        "sha": "7e48786e4e7b94ccb60de41cf2313ea3a299b1b1"
+      },
+      "body": "## Summary\n\nEstablishes the first complete GoreeCloud Redirector source foundation in its canonical repository.\n\n## Changes\n\n- preserves the accepted Google Keep → GoreeCloud Memos redirect\n- adds the GoreeCloud Redirector product icon in SVG and raster sizes\n- aligns popup and settings surfaces with Glaze UI 1.0.0\n- adds custom redirect management with per-source optional host permissions\n- adds duplicate-source and redirect-loop validation\n- keeps the built-in required host permission limited to `https://keep.google.com/*`\n- declares no Firefox data collection\n- adds privacy and security documentation\n- adds source validation and exact-revision GitHub Actions CI\n- adds credential-safe Mozilla unlisted-signing documentation and helper\n\n## Validation completed before publication\n\n- `python3 scripts/validate.py`\n- `node --check popup.js`\n- `node --check options.js`\n- source archive structure verification\n- Git tree verification of all 25 prepared source files and expected icon byte sizes\n- functional v0.1.0 Firefox acceptance confirmed for Google Keep → GoreeCloud Memos\n\n## Release status\n\nThis is a source and unsigned-package release candidate. Stable persistent installation remains gated on Mozilla signing and acceptance testing of the signed XPI after Firefox restart.\n",
+      "formerUrl": "https://github.com/GoreeCloud/goreecloud-redirector/pull/1"
+    }
+  ],
+  "issues": [],
+  "pullRequestConversations": {
+    "verifiedDate": "2026-09-18",
+    "comments": 0,
+    "submittedReviews": 0,
+    "note": "All historical pull requests were checked through the connected GitHub source; no PR conversation comments or submitted reviews were present."
+  },
+  "workflowRuns": [
+    {
+      "id": 35392110267,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 9,
+      "headBranch": "main",
+      "headSha": "5347d1ef2aa1b180b72814523769e2fd097f8f06",
+      "createdAt": "2026-09-18T20:33:31Z",
+      "updatedAt": "2026-09-18T20:33:40Z",
+      "formerUrl": "https://github.com/GoreeCloud/goreecloud-redirector/actions/runs/35392110267"
+    },
+    {
+      "id": 35392001051,
+      "name": "Validate",
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 8,
+      "headBranch": "migration/consolidate-into-firefox-extensions-20260918",
+      "headSha": "66f2c8d5a8b3e4e2030ae169d3ac3798fd483de3",
+      "createdAt": "2026-09-18T20:32:23Z",
+      "updatedAt": "2026-09-18T20:33:16Z",
+      "formerUrl": "https://github.com/GoreeCloud/goreecloud-redirector/actions/runs/35392001051"
+    },
+    {
+      "id": 33134328227,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 7,
+      "headBranch": "main",
+      "headSha": "f2163b45a50d5a4fa2b80ae030ae866c3341a055",
+      "createdAt": "2026-08-28T01:55:22Z",
+      "updatedAt": "2026-08-28T02:10:33Z",
+      "formerUrl": "https://github.com/GoreeCloud/goreecloud-redirector/actions/runs/33134328227"
+    },
+    {
+      "id": 32738167941,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 6,
+      "headBranch": "main",
+      "headSha": "b81d899c92b5a72dd95f0f4ae57cec215dddc6a4",
+      "createdAt": "2026-08-24T14:21:13Z",
+      "updatedAt": "2026-08-24T14:45:36Z",
+      "formerUrl": "https://github.com/GoreeCloud/goreecloud-redirector/actions/runs/32738167941"
+    },
+    {
+      "id": 32076391980,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 5,
+      "headBranch": "main",
+      "headSha": "10dab0d1613385bcece6724d70eb2997f42ce842",
+      "createdAt": "2026-08-17T22:31:32Z",
+      "updatedAt": "2026-08-17T22:31:40Z",
+      "formerUrl": "https://github.com/GoreeCloud/goreecloud-redirector/actions/runs/32076391980"
+    },
+    {
+      "id": 32076379171,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 4,
+      "headBranch": "main",
+      "headSha": "e3fcb92ca796164c0c074098c22053da2ea096d3",
+      "createdAt": "2026-08-17T22:31:21Z",
+      "updatedAt": "2026-08-17T22:31:31Z",
+      "formerUrl": "https://github.com/GoreeCloud/goreecloud-redirector/actions/runs/32076379171"
+    },
+    {
+      "id": 32076369637,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 3,
+      "headBranch": "main",
+      "headSha": "50644c5cf6c2628c93b07ed8bfcdd66407db9299",
+      "createdAt": "2026-08-17T22:31:12Z",
+      "updatedAt": "2026-08-17T22:31:22Z",
+      "formerUrl": "https://github.com/GoreeCloud/goreecloud-redirector/actions/runs/32076369637"
+    },
+    {
+      "id": 32040747632,
+      "name": "Validate",
+      "event": "push",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 2,
+      "headBranch": "main",
+      "headSha": "92220cd5c796d00ad4fa1a81fcfd74b6c73c85cd",
+      "createdAt": "2026-08-17T14:56:29Z",
+      "updatedAt": "2026-08-17T14:56:39Z",
+      "formerUrl": "https://github.com/GoreeCloud/goreecloud-redirector/actions/runs/32040747632"
+    },
+    {
+      "id": 32040634348,
+      "name": "Validate",
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "runNumber": 1,
+      "headBranch": "agent/stable-foundation",
+      "headSha": "d4c8bd249a7fb3930851b06730db483beb3ebd9d",
+      "createdAt": "2026-08-17T14:54:24Z",
+      "updatedAt": "2026-08-17T14:54:32Z",
+      "formerUrl": "https://github.com/GoreeCloud/goreecloud-redirector/actions/runs/32040634348"
+    }
+  ],
+  "releases": [],
+  "releaseArchiveNote": "The standalone Redirector repository had no GitHub Releases. Historical Stable 0.2.0 release/signing/privacy/security records are preserved under extensions/redirector/docs/legacy-standalone/."
+}
