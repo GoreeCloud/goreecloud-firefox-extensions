@@ -12,6 +12,7 @@
 - Refactored candidate security/Glaze/release-qualification tooling to bind to the exact current manifest version while preserving historical Stable 0.1.11 release/signing evidence.
 - Added no Firefox permission, host permission, content script, telemetry path, remote dependency, private-browsing access, storage schema, or new browser mutation authority.
 - Removed the unsupported Manifest V3 `background.persistent` key after Firefox 156 surfaced it as a temporary-load warning; non-persistent event-page behavior remains the intended MV3 model.
+- Corrected deterministic large-session evidence generation so `sourceVersion` is read from the exact candidate manifest instead of retaining the historical 0.1.11 label.
 - Refined the sidebar toolbar after representative Firefox rendering showed the injected command trigger forcing Refresh onto a second row; the command trigger is now a compact `⌘K` control in the shared toolbar system, and row actions remain quieter than primary content without becoming nearly invisible.
 - No new product icon or other image asset is introduced in this candidate.
 
