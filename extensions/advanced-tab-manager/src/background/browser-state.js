@@ -71,6 +71,46 @@ export function createBrowserState({ browser, broadcastChange, idFactory }) {
     if (!persisted.ok) throw new Error("tree parent verification failed");
   }
 
+  async function clearTreeRelationships() {
+    const windows = await browser.windows.getAll({ populate: true, windowTypes: ["normal"] });
+    const previous = [];
+
+    for (const tab of windows.flatMap((window) => window.tabs || [])) {
+      if (!Number.isInteger(tab.id) || tab.incognito) continue;
+      try {
+        const value = await readTreeParentLogicalId(tab.id);
+        if (value) previous.push({ tabId: tab.id, value });
+      } catch {
+        return { ok: false, reason: "tree-metadata-read-failed", cleared: 0, rolledBack: true };
+      }
+    }
+
+    const cleared = [];
+    for (const item of previous) {
+      const result = await persistVerifiedTabString({
+        sessions: browser.sessions,
+        tabId: item.tabId,
+        key: TREE_PARENT_LOGICAL_ID_KEY,
+        value: null
+      });
+      if (!result.ok) {
+        let rolledBack = true;
+        for (const restore of cleared.reverse()) {
+          const restored = await persistVerifiedTabString({
+            sessions: browser.sessions,
+            tabId: restore.tabId,
+            key: TREE_PARENT_LOGICAL_ID_KEY,
+            value: restore.value
+          });
+          rolledBack = rolledBack && restored.ok;
+        }
+        return { ok: false, reason: "tree-metadata-clear-failed", cleared: cleared.length, rolledBack };
+      }
+      cleared.push(item);
+    }
+    return { ok: true, cleared: cleared.length };
+  }
+
   async function setTreeParent(tabId, parentTabId) {
     const child = await browser.tabs.get(tabId);
     if (child.incognito) return { ok: false, reason: "private-window" };
@@ -119,6 +159,7 @@ export function createBrowserState({ browser, broadcastChange, idFactory }) {
 
   return {
     adoptOpenerRelationship,
+    clearTreeRelationships,
     ensureLogicalId,
     readLiveSnapshot,
     setTreeParent
