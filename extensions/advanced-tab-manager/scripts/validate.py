@@ -132,6 +132,8 @@ for control_id in ("create-snapshot", "snapshot-retention", "save-retention", "s
 assert "sessionSnapshots" in manager_model and "snapshotRetention" in manager_model
 assert "snapshot.test" not in manager_model, "manager model must not encode fixture browsing content"
 assert "SIZES = [100, 500, 1000]" in large_session_qualification
+assert "readFileSync(new URL(\"../manifest.json\", import.meta.url)" in large_session_qualification, "large-session evidence must bind to the current manifest version"
+assert 'sourceVersion: "0.1.11"' not in large_session_qualification, "large-session evidence must not retain a stale Stable version"
 assert "representative Firefox rendered/runtime performance remains separate" in large_session_qualification
 
 assert 'EXPECTED_ADDON_ID = "advanced-tab-manager@goreecloud.com"' in runtime_smoke
