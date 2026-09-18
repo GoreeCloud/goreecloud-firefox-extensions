@@ -4,7 +4,7 @@ import test from "node:test";
 import { createManagerState } from "../src/background/manager.js";
 
 const manifest = {
-  version: "0.1.10",
+  version: "0.1.11",
   permissions: ["alarms", "sessions", "storage", "tabGroups", "tabs"],
   incognito: "not_allowed",
   browser_specific_settings: { gecko: { strict_min_version: "139.0" } }
@@ -36,7 +36,7 @@ test("manager state reads all established stores and returns one bounded model",
   const result = await manager.readManagerState();
   assert.equal(result.ok, true);
   assert.equal(result.model.generatedAt, 42);
-  assert.equal(result.model.source.version, "0.1.10");
+  assert.equal(result.model.source.version, "0.1.11");
   assert.deepEqual(new Set(calls), new Set(["dashboard", "snooze", "rules"]));
 });
 
