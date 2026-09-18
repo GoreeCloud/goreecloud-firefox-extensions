@@ -1,6 +1,6 @@
 # GoreeCloud Advanced Tab Manager — Privacy
 
-Version `0.1.10` remains local-first and has no remote service dependency.
+Version `0.1.11` remains local-first and has no remote service dependency.
 
 The source candidate requests no host permissions and injects no content scripts. It does not inspect page contents, cookies, form contents, authentication data, or network requests.
 
@@ -29,3 +29,10 @@ Snapshot capture is explicit and reads a fresh Firefox snapshot. Private windows
 Snapshot restore opens saved state into new windows without replacing or closing the user's existing live windows. A failed restore attempts to remove only windows created by that restore. Snapshot deletion and retention reduction are explicit destructive actions in the Manager.
 
 The deterministic 100/500/1,000-tab qualification harness uses generated synthetic URLs and titles only. Its JSON report contains timing and tab-count measurements, not user browsing data.
+
+
+## Release-candidate privacy continuity — 0.1.11
+
+0.1.11 changes lifecycle-neutral presentation text, version identity, and an explicit Forced Colors popup border fallback only. It adds no host permission, content script, telemetry, remote synchronization, page-content inspection, or private-browsing access.
+
+Release qualification evidence is privacy-minimized: the Glaze and security records contain source/version/digest/control outcomes and do not contain browsing URLs, titles, rules, cookies, credentials, page content, or profile paths.
