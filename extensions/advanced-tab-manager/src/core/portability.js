@@ -168,12 +168,14 @@ export function buildImportPreview({ current, imported }) {
     importedCounts: {
       tabSets: Array.isArray(imported.organizational.tabSets) ? imported.organizational.tabSets.length : 0,
       stashed: Array.isArray(imported.organizational.stashedItems) ? imported.organizational.stashedItems.length : 0,
+      sessionSnapshots: Array.isArray(imported.organizational.sessionSnapshots) ? imported.organizational.sessionSnapshots.length : 0,
       snoozed: Array.isArray(imported.snooze.items) ? imported.snooze.items.length : 0,
       rules: Array.isArray(imported.rules.rules) ? imported.rules.rules.length : 0
     },
     conflictCounts: {
       tabSets: intersectionCount(current.organizational.tabSets, imported.organizational.tabSets),
       stashed: intersectionCount(current.organizational.stashedItems, imported.organizational.stashedItems),
+      sessionSnapshots: intersectionCount(current.organizational.sessionSnapshots, imported.organizational.sessionSnapshots),
       snoozed: intersectionCount(current.snooze.items, imported.snooze.items),
       rules: intersectionCount(current.rules.rules, imported.rules.rules)
     }
