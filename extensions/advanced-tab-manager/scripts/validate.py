@@ -18,7 +18,7 @@ assert set(manifest["permissions"]) == {"alarms", "sessions", "storage", "tabGro
 assert not manifest.get("host_permissions"), "Stable source must not request host permissions"
 assert "content_scripts" not in manifest, "Stable source must not inspect page content"
 assert "unlimitedStorage" not in manifest["permissions"], "bounded Stable saved state must not request unlimited storage"
-assert manifest["background"].get("persistent") is False
+assert "persistent" not in manifest["background"], "Manifest V3 background must not declare unsupported persistent"
 assert manifest["background"].get("type") == "module"
 assert inventory_entry["source_version"] == "0.1.12"
 assert inventory_entry["source_state"] == "source-candidate"
