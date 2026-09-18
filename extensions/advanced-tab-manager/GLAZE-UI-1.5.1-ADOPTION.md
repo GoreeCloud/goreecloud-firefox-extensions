@@ -56,12 +56,15 @@ The 0.1.12 source candidate retains GLAZE UI V1.5 / machine version 1.5.1 as its
 
 Fresh qualification must be bound to the exact 0.1.12 candidate revision. Source/machine validation through `scripts/glaze_consumer_qualification.py` is necessary but is not, by itself, a substitute for representative rendered Firefox visual, keyboard, accessibility, narrow-window, Forced Colors, and Reduced Transparency review.
 
-Until those applicable acceptance steps and the later signing/release gates pass:
+Exact-revision source/machine qualification passed on candidate revision `d00a552a18934b261e6aec190bd6ffb71fd81745` in Advanced Tab Manager Release Qualification run `35357010882`. The retained evidence reports `status: accepted-v1`, `productStableStatusImplied: false`, no inherited shared performance/posture acceptance, and preservation of the authority/privacy/accessibility source obligations.
+
+This machine/source result does not substitute for the outstanding representative rendered Firefox visual and accessibility review. Until those rendered acceptance steps and the later signing/release gates pass:
 
 - source version: `0.1.12`;
 - source lifecycle: Development / source candidate;
 - accepted Stable release: `0.1.11`;
-- 0.1.12 Glaze consumer acceptance: pending exact-revision qualification;
+- 0.1.12 Glaze source/machine qualification: passed at `d00a552a18934b261e6aec190bd6ffb71fd81745`;
+- representative rendered/accessibility acceptance: pending;
 - 0.1.12 Stable status: not established.
 
 The lack of an approved Advanced Tab Manager product icon in the canonical branding catalog remains separate from Glaze source qualification. This candidate does not invent or substitute an unofficial product identity asset.
