@@ -120,7 +120,7 @@ h1 {
 .search-field input:focus-visible,
 button:focus-visible,
 select:focus-visible,
-.tab-row:focus-visible,
+.tab-activate:focus-visible,
 .duplicate-member:focus-within {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -195,6 +195,19 @@ select:focus-visible,
   background: var(--surface-accent);
   box-shadow: inset 3px 0 0 var(--accent);
 }
+.tab-activate {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tab-activate:hover { background: transparent; }
 .tab-main, .saved-main, .duplicate-main { min-width: 0; }
 .tab-title, .tab-url, .saved-title, .saved-meta, .duplicate-url {
   overflow: hidden;
