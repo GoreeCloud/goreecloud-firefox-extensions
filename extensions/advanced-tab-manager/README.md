@@ -4,9 +4,9 @@ GoreeCloud Advanced Tab Manager is a local-first Firefox WebExtension for high-s
 
 ## Current source state
 
-- Version: `0.1.11`
-- Source state: `stable`
-- Product lifecycle: Stable
+- Version: `0.1.12`
+- Source state: `source-candidate`
+- Product lifecycle: Development
 - Component class: Browser extension
 - Firefox add-on ID: `advanced-tab-manager@goreecloud.com`
 - Minimum Firefox version: `139.0`
@@ -21,6 +21,23 @@ The current source implements live Firefox tab/window/native-group reconstructio
 Firefox runtime tab/group IDs remain transient. Tree relationships use extension-owned logical IDs. Tab Set/stash, snooze, and rule data remain in separate versioned local records so one capability does not silently reinterpret another capability's saved state.
 
 The restorable URL boundary is `http:`, `https:`, and `about:blank`. Privileged or executable schemes are not persisted for reconstruction.
+
+### Interface refinement — 0.1.12
+
+Version 0.1.12 starts a new Development/source-candidate line from the accepted Stable 0.1.11 baseline. The accepted 0.1.11 signed artifact remains the rollback and production baseline while the new presentation is qualified.
+
+The 0.1.12 candidate:
+
+- redesigns the toolbar popup into a compact command surface with glanceable live metrics, one clear primary action, quieter navigation actions, and lifecycle-neutral runtime copy;
+- restructures the sidebar into a stronger Firefox-native/GoreeCloud workspace with clearer product hierarchy, sticky search/view controls, compact state chips, stronger active-tab treatment, and reduced visual noise;
+- reorganizes the full Manager around live-browser overview, saved workspace, recovery, portability, and secondary technical status instead of giving every diagnostic card equal visual weight;
+- removes stale embedded `In Development · source-candidate` text from the Manager model so runtime UI does not manufacture canonical release lifecycle truth;
+- fixes the Manager so retained session-snapshot count is actually rendered instead of remaining an em dash;
+- strengthens interactive tab-row semantics with explicit button/current-page semantics;
+- preserves the existing permission, privacy, storage, recovery, and browser-authority boundaries with no new Firefox permission, host permission, content script, telemetry path, remote dependency, or private-browsing access.
+
+This is a material presentation change. Fresh exact-revision Glaze UI 1.5.1 consumer qualification, real-Firefox runtime acceptance, rendered visual/accessibility review, packaging, signing, and Stable promotion are separate gates. The candidate must not inherit 0.1.11 Stable status.
+
 
 ### Source-preserving operations
 
@@ -38,11 +55,11 @@ The command palette is sidebar-local and opened by its visible control or `Ctrl/
 
 Version 0.1.8 adds a full-window Manager surface reachable from the sidebar, toolbar popup, and command palette. This first manager slice is intentionally read-only.
 
-The background aggregates a privacy-minimized manager model containing only live/saved counts, store availability/schema/revision metadata, source/lifecycle metadata, and manifest-declared permission posture. It does **not** serialize tab titles, tab URLs, saved-item URLs, rule contents, or browsing history into the manager model.
+The background aggregates a privacy-minimized manager model containing only live/saved counts, store availability/schema/revision metadata, immutable source/build metadata, and manifest-declared permission posture. It does **not** serialize tab titles, tab URLs, saved-item URLs, rule contents, or browsing history into the manager model.
 
 The Manager displays:
 
-- current source version/lifecycle/component class and Firefox baseline;
+- current source version/component class and Firefox baseline, with release lifecycle delegated to canonical release records;
 - live tab/window/native-group/tree/pinned/discarded counts;
 - Tab Set, stash, snooze, and rule counts;
 - organizational/snooze/rule store schema/revision availability;
@@ -76,7 +93,7 @@ CI also runs a deterministic core-scale qualification at 100, 500, and 1,000 syn
 
 Version 0.1.11 preserves the accepted 0.1.10 functional slice while advancing the manifest identity, making packaged popup/Manager lifecycle wording neutral, adding an explicit popup Forced Colors fallback, and introducing exact-revision Glaze 1.5.1 plus Stable-security qualification gates. It adds no permission and does not widen browser authority.
 
-The exact candidate remains a source candidate until Mozilla signing, signed-XPI parity/integrity verification, persistent signed installation, full Firefox restart acceptance, and a separate metadata-only Stable promotion complete.
+Those exact-candidate gates subsequently passed for 0.1.11; the accepted Stable evidence is recorded below. The new 0.1.12 source candidate does not inherit that acceptance.
 
 ## Stable 0.1.11 release evidence
 
@@ -92,7 +109,7 @@ This lifecycle promotion changes release metadata and documentation only. The ac
 
 Required GoreeCloud runtime dependencies: none. Core tab management remains local and Firefox-native.
 
-The current UI follows GoreeCloud Glaze presentation principles where practical for a Firefox extension surface, and 0.1.11 is qualified against the current Stable Glaze V1.5 / 1.5.1 consumer contract through `scripts/glaze_consumer_qualification.py`; shared performance/posture evidence is not inherited. Webspaces integration and other platform-system integrations remain optional/planned and are not represented as implemented.
+Stable 0.1.11 is qualified against the current Stable Glaze V1.5 / 1.5.1 consumer contract. The material 0.1.12 presentation change requires fresh repository-local qualification through `scripts/glaze_consumer_qualification.py`; shared performance/posture evidence is not inherited. Webspaces integration and other platform-system integrations remain optional/planned and are not represented as implemented.
 
 ## Development validation
 
@@ -107,4 +124,4 @@ python -m py_compile extensions/advanced-tab-manager/tests/firefox_runtime_smoke
 
 The permanent **Advanced Tab Manager Firefox Runtime** workflow packages the exact candidate and exercises release-critical paths in a clean real Firefox profile against controlled local fixtures. That workflow is an unsigned temporary-install gate; it does not substitute for Mozilla signing, persistent signed installation, full Firefox restart acceptance, current-Stable Glaze UI consumer acceptance, or Stable qualification.
 
-Packaging produces a deterministic unsigned XPI under `dist/`. See `RELEASE-ACCEPTANCE-0.1.11.md`, `GLAZE-UI-1.5.1-ADOPTION.md`, and `STABLE-SECURITY-REVIEW-0.1.11.md` for the release boundary and remaining Mozilla-signed restart gate.
+Packaging produces a deterministic unsigned XPI under `dist/`. `RELEASE-ACCEPTANCE-0.1.11.md` and `STABLE-SECURITY-REVIEW-0.1.11.md` remain the historical accepted Stable evidence; `GLAZE-UI-1.5.1-ADOPTION.md` also records the fresh-qualification boundary for the 0.1.12 presentation candidate.
