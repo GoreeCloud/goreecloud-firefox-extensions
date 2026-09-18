@@ -68,3 +68,13 @@ This machine/source result does not substitute for the outstanding representativ
 - 0.1.12 Stable status: not established.
 
 The lack of an approved Advanced Tab Manager product icon in the canonical branding catalog remains separate from Glaze source qualification. This candidate does not invent or substitute an unofficial product identity asset.
+
+
+### Representative Firefox review note — 2026-09-18
+
+A Firefox 156 representative screenshot of the 0.1.12 temporary installation identified two presentation/runtime-quality issues before acceptance:
+
+- Firefox reported that Manifest V3 does not support the `background.persistent` property.
+- The dynamically inserted command-palette trigger caused the narrow sidebar toolbar to wrap Refresh onto a separate row.
+
+The candidate source removes the unsupported manifest property and integrates a compact `⌘K` command trigger into the same no-wrap toolbar layout. These corrections require fresh exact-head qualification and a new representative rendered check; this note is not itself rendered acceptance.
