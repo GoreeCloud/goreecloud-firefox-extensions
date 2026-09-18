@@ -94,7 +94,6 @@ function renderSnapshotList(snapshotState) {
 function render(model) {
   lastManagerModel = model;
   setText("source-version", model.source.version);
-  setText("source-lifecycle", `${model.source.lifecycle} · ${model.source.state}`);
   setText("component-class", model.source.componentClass);
   setText("firefox-baseline", `${model.source.minimumFirefoxVersion}+`);
 
@@ -108,6 +107,7 @@ function render(model) {
   setText("count-stashed", model.counts.stashed);
   setText("count-snoozed", model.counts.snoozed);
   setText("count-rules", model.counts.rules);
+  setText("count-session-snapshots", model.counts.sessionSnapshots);
 
   setText("extension-permissions", model.permissions.extension.join(", ") || "None");
   setText("host-permissions", model.permissions.hosts.join(", ") || "None");
