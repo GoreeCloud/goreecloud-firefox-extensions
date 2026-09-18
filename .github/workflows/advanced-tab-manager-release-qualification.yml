@@ -51,7 +51,7 @@ jobs:
           test -n "$B"
           cmp "$A" "$B"
           unzip -t "$A"
-          VERSION="$(python -c \"import json; print(json.load(open('extensions/advanced-tab-manager/manifest.json', encoding='utf-8'))['version'])\")"
+          VERSION="$(python -c "import json; print(json.load(open('extensions/advanced-tab-manager/manifest.json', encoding='utf-8'))['version'])")"
           echo "ATM_CANDIDATE_VERSION=$VERSION" >> "$GITHUB_ENV"
           mkdir -p dist/release
           cp "$A" "dist/release/goreecloud-advanced-tab-manager-${VERSION}.xpi"
