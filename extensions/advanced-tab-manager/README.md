@@ -4,7 +4,7 @@ GoreeCloud Advanced Tab Manager is a local-first Firefox WebExtension for high-s
 
 ## Current source state
 
-- Version: `0.1.8`
+- Version: `0.1.9`
 - Source state: `source-candidate`
 - Product lifecycle: In Development
 - Component class: Browser extension
@@ -16,7 +16,7 @@ GoreeCloud Advanced Tab Manager is a local-first Firefox WebExtension for high-s
 - Content scripts: none
 - Private browsing: explicitly not allowed by manifest
 
-The current source implements live Firefox tab/window/native-group reconstruction, durable logical-ID trees, persistent Tab Sets, transactional tab stashing, reviewed exact-URL duplicate cleanup, restart-safe one-shot snoozing, deterministic local rules with bounded explicit actions, a keyboard-first command palette, and the ATM-008C read-only manager/diagnostics foundation.
+The current source implements live Firefox tab/window/native-group reconstruction, durable logical-ID trees, persistent Tab Sets, transactional tab stashing, reviewed exact-URL duplicate cleanup, restart-safe one-shot snoozing, deterministic local rules with bounded explicit actions, a keyboard-first command palette, and the ATM-008C manager/diagnostics foundation, and ATM-008D source-preserving local backup portability.
 
 Firefox runtime tab/group IDs remain transient. Tree relationships use extension-owned logical IDs. Tab Set/stash, snooze, and rule data remain in separate versioned local records so one capability does not silently reinterpret another capability's saved state.
 
@@ -50,13 +50,23 @@ The Manager displays:
 
 A failure in one extension-owned store degrades that section without preventing the remaining diagnostics from rendering. The surface includes Reduced Transparency and Forced Colors fallbacks and uses native Firefox/system color semantics consistent with the existing constrained-browser Glaze presentation approach.
 
-The Manager does not yet provide import/export, session snapshots, bulk organization, destructive settings, automatic rule execution, remote management, synchronization, or new Firefox permissions.
+### ATM-008D local backup portability — 0.1.9
+
+Version 0.1.9 adds explicit Manager controls to export and import implemented extension-owned state without widening Firefox authority.
+
+Exports are versioned JSON envelopes containing organizational state (Tab Sets and stashed items), snooze recovery state, and rule state. The envelope records the extension identity/version and a SHA-256 integrity digest. Because backups can contain saved URLs, titles, and user-authored rules, exported files must be treated as private user data.
+
+Imports use **parse → verify envelope/integrity/identity → validate every store → preview counts/conflicts → explicit confirmation → fresh-revision check → replace all three stores → readback verify → reconstruct snooze alarms**. The import itself never opens or closes Firefox tabs. A changed local revision after preview fails closed. Failed readback or snooze reconstruction attempts exact rollback to the pre-import records.
+
+The Manager caps a selected import file at 16 MiB before JSON parsing. Import preview is deliberately privacy-minimized: it returns counts, conflict counts, source version/time, integrity status, and expected current revisions rather than browsing URLs or titles.
+
+Session snapshots, broader settings, bulk organization, automatic rule execution, remote management, synchronization, representative Firefox portability acceptance, and new Firefox permissions remain outside this milestone.
 
 ## GoreeCloud platform dependency posture
 
 Required GoreeCloud runtime dependencies: none. Core tab management remains local and Firefox-native.
 
-The current UI follows GoreeCloud Glaze presentation principles where practical for a Firefox extension surface, but 0.1.8 does not claim a separate Glaze runtime-package integration or product-level Glaze V1.5 acceptance. Webspaces integration and other platform-system integrations remain optional/planned and are not represented as implemented.
+The current UI follows GoreeCloud Glaze presentation principles where practical for a Firefox extension surface, but 0.1.9 does not claim a separate Glaze runtime-package integration or product-level Glaze V1.5 acceptance. Webspaces integration and other platform-system integrations remain optional/planned and are not represented as implemented.
 
 ## Development validation
 

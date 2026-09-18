@@ -7,7 +7,7 @@ manifest = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
 
 assert manifest["manifest_version"] == 3
 assert manifest["name"] == "GoreeCloud Advanced Tab Manager"
-assert manifest["version"] == "0.1.8"
+assert manifest["version"] == "0.1.9"
 assert manifest["browser_specific_settings"]["gecko"]["id"] == "advanced-tab-manager@goreecloud.com"
 assert manifest["browser_specific_settings"]["gecko"]["strict_min_version"] == "139.0"
 assert manifest["incognito"] == "not_allowed"
@@ -21,11 +21,11 @@ assert manifest["background"].get("type") == "module"
 required = [
     "README.md", "FEATURES.md", "FEATURE-ROADMAP.md", "SPECIFICATIONS.md", "ARCHITECTURE.md",
     "PRIVACY.md", "SECURITY.md", "CHANGELOG.md", "LICENSE",
-    "src/background/background.js", "src/background/browser-state.js", "src/background/saved-state.js", "src/background/duplicate-cleanup.js", "src/background/snooze.js", "src/background/rules.js", "src/background/manager.js",
+    "src/background/background.js", "src/background/browser-state.js", "src/background/saved-state.js", "src/background/duplicate-cleanup.js", "src/background/snooze.js", "src/background/rules.js", "src/background/manager.js", "src/background/portability.js",
     "src/core/state.js", "src/core/tree.js", "src/core/tree-session.js", "src/core/duplicates.js",
     "src/core/persistent-state.js", "src/core/tab-sets.js", "src/core/stash-transaction.js",
     "src/core/snooze-store.js", "src/core/snooze.js", "src/core/snooze-transaction.js",
-    "src/core/rule-state.js", "src/core/rules.js", "src/core/commands.js", "src/core/manager-model.js",
+    "src/core/rule-state.js", "src/core/rules.js", "src/core/commands.js", "src/core/manager-model.js", "src/core/portability.js",
     "src/sidebar/sidebar.html", "src/sidebar/sidebar.js", "src/sidebar/open-tabs-view.js", "src/sidebar/saved-view.js", "src/sidebar/duplicates-view.js", "src/sidebar/snoozed-view.js", "src/sidebar/rules-view.js", "src/sidebar/command-palette.js", "src/sidebar/command-palette.css", "src/sidebar/manager-link.js", "src/sidebar/rules.css", "src/sidebar/ui.js", "src/sidebar/sidebar.css",
     "src/popup/popup.html", "src/popup/popup.js", "src/popup/popup.css",
     "src/manager/manager.html", "src/manager/manager.js", "src/manager/manager.css",
@@ -34,7 +34,7 @@ required = [
     "tests/duplicates.test.mjs", "tests/duplicate-cleanup.test.mjs",
     "tests/snooze-store.test.mjs", "tests/snooze.test.mjs", "tests/snooze-transaction.test.mjs", "tests/background-snooze.test.mjs",
     "tests/rule-state.test.mjs", "tests/rules.test.mjs", "tests/background-rules.test.mjs", "tests/commands.test.mjs",
-    "tests/manager-model.test.mjs", "tests/background-manager.test.mjs"
+    "tests/manager-model.test.mjs", "tests/background-manager.test.mjs", "tests/portability.test.mjs", "tests/background-portability.test.mjs"
 ]
 for relative in required:
     assert (ROOT / relative).is_file(), f"missing required source-candidate file: {relative}"
@@ -45,6 +45,8 @@ manager_model = (ROOT / "src/core/manager-model.js").read_text(encoding="utf-8")
 manager_page = (ROOT / "src/manager/manager.js").read_text(encoding="utf-8")
 manager_html = (ROOT / "src/manager/manager.html").read_text(encoding="utf-8")
 manager_css = (ROOT / "src/manager/manager.css").read_text(encoding="utf-8")
+portability_core = (ROOT / "src/core/portability.js").read_text(encoding="utf-8")
+portability_background = (ROOT / "src/background/portability.js").read_text(encoding="utf-8")
 rule_background = (ROOT / "src/background/rules.js").read_text(encoding="utf-8")
 rule_state = (ROOT / "src/core/rule-state.js").read_text(encoding="utf-8")
 rules_core = (ROOT / "src/core/rules.js").read_text(encoding="utf-8")
@@ -95,9 +97,24 @@ assert "tab.title" not in manager_model and "tab.url" not in manager_model, "man
 assert "atm:get-manager-state" in manager_page
 assert "browser.runtime.sendMessage" in manager_page
 assert "browser.tabs.remove" not in manager_page and "browser.tabs.update" not in manager_page and "browser.tabs.discard" not in manager_page
-assert "Read-only" in manager_html and "does not expose saved URLs" in manager_html
+assert "Local backup and portability" in manager_html and 'id="export-backup"' in manager_html and 'id="import-file"' in manager_html
+assert 'id="apply-import"' in manager_html and 'id="clear-import"' in manager_html
 assert "prefers-reduced-transparency" in manager_css and "forced-colors" in manager_css
 assert "browser.tabs.create" in manager_link and "src/manager/manager.html" in manager_link
-assert 'id="open-manager"' in popup_html and "0.1.8 source candidate" in popup_html
+assert 'id="open-manager"' in popup_html and "0.1.9 source candidate" in popup_html
 assert "src/manager/manager.html" in popup_js
-print("Validated Advanced Tab Manager 0.1.8 privacy-minimized manager/diagnostics source candidate.")
+
+assert "createPortabilityManager" in background
+assert "atm:export-backup" in background and "atm:preview-import" in background and "atm:apply-import" in background
+assert "PORTABILITY_FORMAT" in portability_core and "PORTABILITY_SCHEMA_VERSION" in portability_core and "PORTABILITY_MAX_BYTES" in portability_core
+assert "SHA-256" in portability_core and "backup-integrity-mismatch" in portability_core and "backup-too-large" in portability_core
+assert "validatePersistentState" in portability_background and "validateSnoozeState" in portability_background and "validateRuleState" in portability_background
+assert "state-changed-since-preview" in portability_background and "import-verification-failed" in portability_background
+assert "browser.tabs.create" not in portability_background and "browser.tabs.remove" not in portability_background
+assert "browser.tabs.update" not in portability_background and "browser.tabs.discard" not in portability_background
+assert "MAX_IMPORT_BYTES = 16 * 1024 * 1024" in manager_page
+assert "atm:export-backup" in manager_page and "atm:preview-import" in manager_page and "atm:apply-import" in manager_page
+assert "new Blob" in manager_page and "JSON.parse" in manager_page and "window.confirm" in manager_page
+assert "file.size > MAX_IMPORT_BYTES" in manager_page
+assert "prefers-reduced-transparency" in manager_css and "forced-colors" in manager_css
+print("Validated Advanced Tab Manager 0.1.9 source-preserving local portability source candidate.")

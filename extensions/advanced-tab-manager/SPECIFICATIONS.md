@@ -1,6 +1,6 @@
 # GoreeCloud Advanced Tab Manager — Repository Specifications
 
-This repository document describes the implemented source boundary for version `0.1.8`. The broader product direction is governed by the canonical Drive project specification.
+This repository document describes the implemented source boundary for version `0.1.9`. The broader product direction is governed by the canonical Drive project specification.
 
 ## Component and dependency contract
 
@@ -8,7 +8,7 @@ This repository document describes the implemented source boundary for version `
 - Supported platform: Firefox 139+.
 - Source state: `source-candidate`; product lifecycle: In Development.
 - Required GoreeCloud runtime dependencies: none.
-- Optional/planned integrations such as Webspaces are not implemented dependencies in 0.1.8.
+- Optional/planned integrations such as Webspaces are not implemented dependencies in 0.1.9.
 - Browser-surface presentation follows current GoreeCloud Glaze principles where practical without claiming a separate Glaze runtime-package or product-level acceptance state.
 
 ## Implemented source contract
@@ -34,8 +34,22 @@ This repository document describes the implemented source boundary for version `
 - The manager can be opened from the sidebar, popup, or command palette. The command palette still routes through an existing UI control and contains no direct browser API calls.
 - The manager adds no new manifest permission, host permission, content script, remote dependency, telemetry, or private-browsing access.
 - Reduced Transparency, responsive layout, keyboard focus indication, and Forced Colors fallbacks are included in source.
-- Import/export, snapshots, bulk organization, destructive settings, automatic rule execution, remote management, and synchronization remain outside the 0.1.8 boundary.
+- Session snapshots, bulk organization, destructive settings, automatic rule execution, remote management, and synchronization remain outside the current boundary.
+
+### ATM-008D local backup portability boundary — 0.1.9
+
+- `src/core/portability.js` defines a versioned GoreeCloud Advanced Tab Manager backup envelope with exact Gecko identity, source extension version, export timestamp, implemented store payloads, canonical JSON hashing, and SHA-256 integrity verification.
+- Imported organizational, snooze, and rule payloads are revalidated through their existing authoritative store validators before replacement.
+- Preview returns only imported counts, ID-conflict counts, source version/time, integrity status, and expected current revisions; it does not return imported URLs or titles to the Manager UI.
+- `src/background/portability.js` serializes export/preview/apply operations and does not call live-tab create/update/remove/discard APIs.
+- Apply requires the exact revisions observed during preview. Drift fails closed with `state-changed-since-preview`.
+- Imported store revision numbers are not trusted as local chronology; successful replacement writes each imported payload at the current local revision + 1.
+- One storage write replaces the three implemented extension-owned stores, readback verifies all three, and snooze alarms are reconstructed from imported deadlines.
+- Readback or snooze-reconstruction failure attempts exact restoration of all pre-import records and then reconstructs the prior snooze alarms.
+- The Manager enforces a 16 MiB selected-file cap before JSON parsing and requires explicit confirmation before replacement.
+- Import itself never opens or closes Firefox tabs. Restoring saved records and opening live browser tabs remain separate user actions.
+- Version 0.1.9 adds no Firefox permission and preserves the existing no-host/no-content-script/private-browsing boundary.
 
 ## Release boundary
 
-`0.1.8` is a source candidate. Source tests, CI, deterministic packaging, or merge do not establish representative Firefox manager runtime/accessibility acceptance, browser-restart acceptance, Mozilla signing, signed-XPI acceptance, production release, or Stable qualification.
+`0.1.9` is a source candidate. Source tests, CI, deterministic packaging, or merge do not establish representative Firefox manager/portability runtime/accessibility acceptance, browser-restart acceptance, Mozilla signing, signed-XPI acceptance, production release, or Stable qualification.
