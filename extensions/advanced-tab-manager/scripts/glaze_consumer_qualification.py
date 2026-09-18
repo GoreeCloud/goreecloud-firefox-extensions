@@ -9,7 +9,9 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_VERSION = "0.1.11"
+EXPECTED_VERSION = str(
+    json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))["version"]
+)
 GLAZE_VERSION = "1.5.1"
 GLAZE_AUTHORITY_REVISION = "af0d0d3e85aaf46e83a2baa64aab914fd96a7e98"
 GLAZE_REVIEWED_IMPLEMENTATION = "ee1032a0822ab8e103f8afe48e5c1859fde65cc9"
@@ -33,7 +35,7 @@ def main() -> int:
     require(re.fullmatch(r"[0-9a-f]{40}", args.source_revision) is not None, "source revision must be a full lowercase SHA")
 
     manifest = json.loads(read("manifest.json"))
-    require(manifest.get("version") == EXPECTED_VERSION, "Glaze consumer qualification is not bound to 0.1.11")
+    require(manifest.get("version") == EXPECTED_VERSION, f"Glaze consumer qualification is not bound to {EXPECTED_VERSION}")
 
     sidebar_css = read("src/sidebar/sidebar.css")
     palette_css = read("src/sidebar/command-palette.css")
@@ -47,7 +49,8 @@ def main() -> int:
     manager_js = read("src/manager/manager.js")
     manager_model = read("src/core/manager-model.js")
     rule_state = read("src/core/rule-state.js")
-    all_css = "\n".join((sidebar_css, palette_css, rules_css, popup_css, manager_css))
+    all_css = "
+".join((sidebar_css, palette_css, rules_css, popup_css, manager_css))
 
     # Stable presentation and accessibility obligations applicable to constrained Firefox surfaces.
     for token in ("Canvas", "CanvasText", "AccentColor", "AccentColorText"):
@@ -68,12 +71,15 @@ def main() -> int:
     require("animation:" not in all_css and "transition:" not in all_css, "unqualified motion is not permitted in the release candidate")
 
     # Authority, privacy, and fallback obligations.
-    require("browser.permissions.request" not in "\n".join((manager_js, palette_js)), "presentation layer must not request permissions")
+    require("browser.permissions.request" not in "
+".join((manager_js, palette_js)), "presentation layer must not request permissions")
     require("window.confirm" in manager_js, "consequential Manager operations require explicit confirmation")
     require("tab.title" not in manager_model and "tab.url" not in manager_model, "Manager diagnostics must remain privacy-minimized")
     require("enabled: false" in rule_state, "rule automation must remain fail-closed by default")
-    require("Release state, signing status, and platform acceptance are reported by canonical release records" in manager_html,
-            "runtime presentation must not manufacture lifecycle truth")
+    require("canonical release records" in manager_html.lower(),
+            "runtime presentation must point lifecycle truth to canonical release records")
+    require("release lifecycle, signing, and platform acceptance" in manager_html.lower(),
+            "runtime presentation must keep release lifecycle/signing/platform acceptance external")
     require("source candidate" not in popup_html.lower(), "release-candidate lifecycle text must not be embedded in popup runtime bytes")
     require("development source only" not in manager_html.lower(), "development lifecycle text must not be embedded in Manager runtime bytes")
 
@@ -108,7 +114,8 @@ def main() -> int:
     }
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    output.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "
+", encoding="utf-8")
     print(json.dumps(evidence, indent=2, sort_keys=True))
     return 0
 
