@@ -10,19 +10,41 @@
 </head>
 <body>
   <main class="shell">
-    <header class="topbar">
-      <div><p class="eyebrow">GoreeCloud</p><h1>Advanced Tab Manager</h1></div>
-      <div class="topbar-actions">
-        <button id="open-manager" class="icon-button" type="button" aria-label="Open Advanced Tab Manager manager">⚙</button>
-        <button id="save-window" class="icon-button" type="button" aria-label="Save focused window as a Tab Set">＋</button>
-        <button id="refresh" class="icon-button" type="button" aria-label="Refresh live browser and saved state">↻</button>
+    <div class="sidebar-chrome">
+      <header class="topbar">
+        <div class="product-title">
+          <p class="eyebrow">GoreeCloud</p>
+          <h1>Advanced Tab Manager</h1>
+          <p class="subtitle">Organize this Firefox profile</p>
+        </div>
+        <div class="topbar-actions" aria-label="Advanced Tab Manager actions">
+          <button id="open-manager" class="toolbar-button" type="button">Manager</button>
+          <button id="save-window" class="toolbar-button primary" type="button">Save</button>
+          <button id="refresh" class="toolbar-button" type="button">Refresh</button>
+        </div>
+      </header>
+
+      <div class="controls">
+        <label class="search-field">
+          <span class="sr-only">Search tabs and saved items</span>
+          <input id="search" type="search" autocomplete="off" placeholder="Search tabs, saved items, and rules…">
+        </label>
+        <label class="view-field">
+          <span class="sr-only">Sidebar view</span>
+          <select id="view-mode" aria-label="Sidebar view">
+            <option value="tree">Tree view</option>
+            <option value="groups">Native groups</option>
+            <option value="duplicates">Duplicates</option>
+            <option value="saved">Saved items</option>
+            <option value="snoozed">Snoozed</option>
+            <option value="rules">Rules</option>
+          </select>
+        </label>
       </div>
-    </header>
-    <div class="controls">
-      <label class="search-field"><span class="sr-only">Search tabs and saved items</span><input id="search" type="search" autocomplete="off" placeholder="Search open tabs, saved items, and rules…"></label>
-      <label class="view-field"><span class="sr-only">Sidebar view</span><select id="view-mode" aria-label="Sidebar view"><option value="tree">Tree view</option><option value="groups">Native groups</option><option value="duplicates">Duplicates</option><option value="saved">Saved items</option><option value="snoozed">Snoozed</option><option value="rules">Rules</option></select></label>
+
+      <section id="summary" class="summary" aria-live="polite" aria-label="Current browser state"></section>
     </div>
-    <section id="summary" class="summary" aria-live="polite"></section>
+
     <section id="content" class="content" aria-live="polite"></section>
   </main>
   <script type="module" src="manager-link.js"></script>
