@@ -17,14 +17,17 @@ function previousBrowserTab(window, tab) {
 function createTabRow(tab, { depth = 0, treeStatus = "root", groupsById, window }) {
   const row = document.createElement("div");
   row.className = "tab-row";
-  row.tabIndex = 0;
-  row.setAttribute("role", "button");
-  row.setAttribute("aria-label", `Activate tab: ${tab.title}`);
-  if (tab.active) row.setAttribute("aria-current", "page");
   row.dataset.tabId = String(tab.id);
   row.dataset.active = String(tab.active);
   row.dataset.treeStatus = treeStatus;
   row.style.setProperty("--tree-depth", String(depth));
+
+  const activation = document.createElement("button");
+  activation.className = "tab-activate";
+  activation.type = "button";
+  activation.dataset.tabId = String(tab.id);
+  activation.setAttribute("aria-label", `Activate tab: ${tab.title}`);
+  if (tab.active) activation.setAttribute("aria-current", "page");
 
   const main = document.createElement("div");
   main.className = "tab-main";
@@ -62,7 +65,8 @@ function createTabRow(tab, { depth = 0, treeStatus = "root", groupsById, window 
   if (!tab.active && !tab.pinned && !tab.audible) actions.append(actionButton("◌", "Discard tab", "discard", tab.id));
   actions.append(actionButton("×", "Close tab", "close", tab.id));
 
-  row.append(main, actions);
+  activation.append(main);
+  row.append(activation, actions);
   return row;
 }
 
