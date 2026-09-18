@@ -3,7 +3,7 @@
   "name": "GoreeCloud Redirector",
   "version": "0.2.0",
   "description": "Privacy-first URL redirects for GoreeCloud services. Includes Google Keep to GoreeCloud Memos by default.",
-  "homepage_url": "https://github.com/GoreeCloud/goreecloud-redirector",
+  "homepage_url": "https://github.com/GoreeCloud/redirector",
   "icons": {
     "16": "icons/redirector-16.png",
     "32": "icons/redirector-32.png",
