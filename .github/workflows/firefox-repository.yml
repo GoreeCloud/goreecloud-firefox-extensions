@@ -7,7 +7,6 @@ on:
       - 'shared/**'
       - 'docs/extension-inventory.json'
       - '.github/workflows/firefox-repository.yml'
-      - '.github/workflows/download-manager-mozilla-signing.yml'
   push:
     branches: [main]
     paths:
@@ -15,7 +14,6 @@ on:
       - 'shared/**'
       - 'docs/extension-inventory.json'
       - '.github/workflows/firefox-repository.yml'
-      - '.github/workflows/download-manager-mozilla-signing.yml'
 
 permissions:
   contents: read
@@ -56,21 +54,6 @@ jobs:
         run: node extensions/privacy-shield/scripts/test_logger_privacy.js
       - name: Test Privacy Shield unified background activity
         run: node extensions/privacy-shield/scripts/test_background_activity.js
-      - name: Compile Download Manager native and signing acceptance sources
-        run: |
-          python -m py_compile \
-            extensions/download-manager/scripts/native-host/goreecloud_download_manager_native.py \
-            extensions/download-manager/tests/signed_restart_smoke.py
-      - name: Test Download Manager native core and source contracts
-        run: python -m unittest discover -s extensions/download-manager/tests -p 'test_*.py'
-      - name: Test Download Manager Firefox scheduler
-        run: node extensions/download-manager/tests/test_browser_scheduler.js
-      - name: Test Download Manager mixed Firefox/native scheduler
-        run: node extensions/download-manager/tests/test_mixed_scheduler.js
-      - name: Test Download Manager lifecycle faults
-        run: node extensions/download-manager/tests/test_lifecycle_faults.js
-      - name: Test Download Manager retry snapshots
-        run: node extensions/download-manager/tests/test_retry_snapshots.js
       - name: Check maintained JavaScript syntax
         shell: bash
         run: |
@@ -81,7 +64,6 @@ jobs:
       - name: Build deterministic unsigned packages
         run: |
           python shared/scripts/package_extension.py advanced-tab-manager
-          python shared/scripts/package_extension.py download-manager
           python shared/scripts/package_extension.py redirector
           python shared/scripts/package_extension.py source-resync
           python shared/scripts/package_extension.py privacy-shield
