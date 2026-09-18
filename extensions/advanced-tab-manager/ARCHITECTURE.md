@@ -20,7 +20,7 @@ Session snapshots are recovery records, not a replacement Firefox session engine
 
 `src/core/commands.js` is a browser-API-independent command catalog/search layer. `src/sidebar/command-palette.js` renders the palette and routes execution through existing sidebar controls.
 
-## Manager, portability, and snapshot layers — 0.1.10
+## Manager, portability, and snapshot layers — 0.1.10 functional baseline carried into 0.1.11
 
 `src/core/manager-model.js` produces a privacy-minimized diagnostic projection from dashboard/snooze/rule responses plus manifest metadata. Snapshot presentation is limited to snapshot ID, capture time, window count, and tab count; it does not expose saved URLs or titles.
 
@@ -57,6 +57,14 @@ Session snapshots are recovery records, not a replacement Firefox session engine
 - `src/manager/` — diagnostics, portability, snapshot, and bounded settings controls.
 - `scripts/large-session-qualification.mjs` — deterministic 100/500/1,000-tab core-scale measurement.
 - `tests/` — deterministic state, transaction, policy, manager, portability, snapshot, and background integration tests.
+
+## Release qualification layer — 0.1.11
+
+`scripts/glaze_consumer_qualification.py` validates the applicable GLAZE UI 1.5.1 browser-surface contract and emits exact-revision evidence without inheriting shared performance or posture claims.
+
+`scripts/stable_security_review.py` validates the exact candidate manifest/runtime/XPI and scans full Advanced Tab Manager Git history for recognized secret patterns. The dedicated release-qualification workflow uses a non-shallow checkout, proves deterministic package bytes, and retains candidate digest, Glaze evidence, security evidence, and large-session evidence.
+
+These release tools are maintenance-only and are excluded from the packaged XPI.
 
 ## Qualification boundary
 
