@@ -13,7 +13,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO = ROOT.parents[1]
-EXPECTED_VERSION = "0.1.11"
+EXPECTED_VERSION = str(
+    json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))["version"]
+)
 EXPECTED_ID = "advanced-tab-manager@goreecloud.com"
 EXPECTED_PERMISSIONS = {"alarms", "sessions", "storage", "tabGroups", "tabs"}
 
@@ -177,7 +179,8 @@ def main() -> int:
     }
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    output.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "
+", encoding="utf-8")
     print(json.dumps(evidence, indent=2, sort_keys=True))
     return 0
 
