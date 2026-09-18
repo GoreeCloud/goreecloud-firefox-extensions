@@ -102,3 +102,22 @@ The pass:
 - preserves keyboard-visible focus, Forced Colors, Reduced Transparency, semantic system colors, current permission authority, and lifecycle-truth separation.
 
 These changes remain part of the 0.1.12 Development/source-candidate line and require fresh exact-head source/runtime qualification plus representative rendered verification before they can contribute to Release Candidate or Stable acceptance.
+
+
+### Exact-head normal-light rendered acceptance — 35c4d2d
+
+Owner-supplied Firefox 156/Linux screenshots were reviewed against exact candidate revision `35c4d2dd8aa2a3fcd5742f430d8c8388ab85846a`.
+
+The normal-light rendered review verifies, for the observed conditions:
+
+- no visible Manifest V3 `background.persistent` warning in Firefox temporary-extension diagnostics;
+- a single-row constrained-width sidebar toolbar;
+- readable sidebar search/view/status/tab-row composition;
+- Manager snapshot count, snapshot limit `10`, retention input `10`, and visible no-snapshot empty state;
+- balanced 3×2 Manager Live browser and Saved workspace metric compositions;
+- human-readable `None` permission-boundary values where zero/absent;
+- popup 2×2 metrics, clear primary Save action, and readable secondary navigation/actions.
+
+The detailed scope and limitations are recorded in `RENDERED-ACCEPTANCE-0.1.12.md`.
+
+This review does **not** establish full keyboard/assistive-technology, Forced Colors, Reduced Transparency, dark appearance, high-zoom/text-scaling, cross-platform, signed-runtime, or Stable acceptance. Those gates remain separate.
