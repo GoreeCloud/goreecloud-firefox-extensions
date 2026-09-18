@@ -3,7 +3,7 @@
 ## Status
 
 **Product:** GoreeCloud Advanced Tab Manager  
-**Candidate:** 0.1.11  
+**Accepted release:** Stable 0.1.11  
 **Platform:** Firefox browser extension  
 **Target:** GLAZE UI V1.5 / machine version 1.5.1 Stable  
 **Shared authority reviewed:** `GoreeCloud/goreecloud-glaze-ui` main `af0d0d3e85aaf46e83a2baa64aab914fd96a7e98`  
@@ -16,7 +16,7 @@ This is repository-local consumer adoption for the constrained Firefox surfaces.
 
 Advanced Tab Manager adopts the current Stable presentation contract through its local Firefox surfaces rather than by embedding a separate Glaze runtime package.
 
-The release-candidate qualification must prove:
+The accepted Stable 0.1.11 qualification proves:
 
 - truthful system/source/permission state;
 - presentation-only adaptation without inferred authorization;
@@ -45,4 +45,4 @@ Advanced Tab Manager has its own deterministic large-session core qualification 
 
 `dist/advanced-tab-manager-glaze-1.5.1-acceptance.json`
 
-The evidence is bound to the exact candidate revision supplied by CI. A later material presentation or authority change requires requalification.
+The accepted evidence is bound to the exact qualified 0.1.11 release lineage. Governed signing/restart run `35350654198` re-ran this qualification on authoritative source revision `34c27805c3b56f3ba858794c785f6b68d1f7b8f3`. A later material presentation or authority change requires requalification.
