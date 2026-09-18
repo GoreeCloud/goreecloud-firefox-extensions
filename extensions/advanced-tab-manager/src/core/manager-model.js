@@ -16,6 +16,22 @@ function manifestArray(manifest, key) {
   return asArray(manifest?.[key]).map(String).sort();
 }
 
+function snapshotTabCount(snapshot) {
+  return asArray(snapshot?.windows).reduce(
+    (sum, window) => sum + asArray(window?.items).length,
+    0
+  );
+}
+
+function snapshotMetadata(snapshot) {
+  return {
+    id: String(snapshot?.id ?? ""),
+    createdAt: Number.isInteger(snapshot?.createdAt) ? snapshot.createdAt : 0,
+    windows: asArray(snapshot?.windows).length,
+    tabs: snapshotTabCount(snapshot)
+  };
+}
+
 export function buildManagerModel({ dashboard, snooze, rules, manifest, generatedAt = Date.now() }) {
   const snapshot = dashboard?.snapshot ?? { windows: [], groups: [] };
   const windows = asArray(snapshot.windows);
@@ -59,7 +75,12 @@ export function buildManagerModel({ dashboard, snooze, rules, manifest, generate
       tabSets: asArray(organizationalState?.tabSets).length,
       stashed: asArray(organizationalState?.stashedItems).length,
       snoozed: asArray(snoozeState?.items).length,
-      rules: asArray(ruleState?.rules).length
+      rules: asArray(ruleState?.rules).length,
+      sessionSnapshots: asArray(organizationalState?.sessionSnapshots).length
+    },
+    snapshots: {
+      retention: Number.isInteger(organizationalState?.snapshotRetention) ? organizationalState.snapshotRetention : 10,
+      items: asArray(organizationalState?.sessionSnapshots).map(snapshotMetadata)
     },
     stores: {
       organizational: {
