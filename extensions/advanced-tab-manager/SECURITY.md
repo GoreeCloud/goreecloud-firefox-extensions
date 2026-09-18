@@ -18,6 +18,7 @@
 - Retained session snapshots reuse validated organizational state, exclude private/unsupported URLs, enforce 1–50 record retention, and restore additively into new windows with created-window rollback on failure.
 - Snapshot diagnostic metadata excludes saved URLs and titles.
 - Deterministic 100/500/1,000-tab core-scale qualification is CI-enforced and produces exact-candidate evidence, but is not representative browser-runtime acceptance.
+- A dedicated real-Firefox unsigned runtime workflow uses only controlled localhost fixtures and privacy-minimized evidence; temporary installation is explicitly distinct from Mozilla-signed persistent-install/restart acceptance.
 - No `unlimitedStorage` permission is requested.
 
 ## Release boundary
