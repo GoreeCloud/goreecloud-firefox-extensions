@@ -16,6 +16,10 @@ concurrency:
   group: advanced-tab-manager-mozilla-signing
   cancel-in-progress: false
 
+# Stable lifecycle evidence rerun: this source-only comment intentionally changes
+# the workflow file so canonical Stable promotion on main triggers the governed
+# signing/restart path again and records stablePromoted=true without changing
+# the accepted 0.1.11 runtime payload.
 env:
   ATM_RELEASE_VERSION: '0.1.11'
   ATM_RELEASE_CANDIDATE_SHA256: '9c0f44926ac1d2f213fd07f82dd18fa11bd54ceebc6cd871898fe82b962a5b02'
