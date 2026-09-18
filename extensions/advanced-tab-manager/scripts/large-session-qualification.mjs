@@ -1,10 +1,13 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { performance } from "node:perf_hooks";
 import { buildManagerModel } from "../src/core/manager-model.js";
 import { captureSessionSnapshot, snapshotTabCount } from "../src/core/session-snapshots.js";
 
 const SIZES = [100, 500, 1000];
 const MAX_CORE_MILLISECONDS = 2000;
+const sourceVersion = String(
+  JSON.parse(readFileSync(new URL("../manifest.json", import.meta.url), "utf8")).version
+);
 
 function makeInput(tabCount) {
   const tabs = Array.from({ length: tabCount }, (_, index) => ({
@@ -33,7 +36,7 @@ function makeInput(tabCount) {
 let idCounter = 0;
 const idFactory = () => `benchmark-${++idCounter}`;
 const manifest = {
-  version: "0.1.11",
+  version: sourceVersion,
   permissions: ["alarms", "sessions", "storage", "tabGroups", "tabs"],
   incognito: "not_allowed",
   browser_specific_settings: { gecko: { strict_min_version: "139.0" } }
@@ -86,7 +89,7 @@ for (const tabCount of SIZES) {
 
 const report = {
   product: "GoreeCloud Advanced Tab Manager",
-  sourceVersion: "0.1.11",
+  sourceVersion,
   qualification: "deterministic core-scale only; representative Firefox rendered/runtime performance remains separate",
   sizes: results
 };
