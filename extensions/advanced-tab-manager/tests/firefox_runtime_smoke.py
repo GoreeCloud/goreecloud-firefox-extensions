@@ -27,6 +27,7 @@ from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 
 EXPECTED_ADDON_ID = "advanced-tab-manager@goreecloud.com"
@@ -133,6 +134,22 @@ def navigate_extension(driver: webdriver.Firefox, path: str) -> None:
     new_handle = list(set(driver.window_handles) - previous_handles)[0]
     driver.switch_to.window(new_handle)
     wait_until(lambda: driver.current_url == target, 15, f"extension navigation completed for {path}")
+
+
+def grid_shape(driver: webdriver.Firefox, selector: str) -> tuple[int, int]:
+    boxes = driver.execute_script(
+        """
+        return Array.from(document.querySelectorAll(arguments[0])).map(element => {
+          const rect = element.getBoundingClientRect();
+          return {x: Math.round(rect.x), y: Math.round(rect.y)};
+        });
+        """,
+        selector,
+    )
+    require(isinstance(boxes, list) and len(boxes) > 0, f"grid elements exist for {selector}", repr(boxes))
+    columns = len({int(box["x"]) for box in boxes})
+    rows = len({int(box["y"]) for box in boxes})
+    return columns, rows
 
 
 def extension_message(driver: webdriver.Firefox, message: dict) -> object:
@@ -251,7 +268,85 @@ def main() -> int:
             )
             require(driver.find_element("id", "create-snapshot").is_enabled(), "Manager snapshot control is interactive")
             require(driver.find_element("id", "export-backup").is_enabled(), "Manager backup export control is interactive")
+            require(
+                driver.find_element("id", "snapshot-retention").get_attribute("value") == "10",
+                "Manager renders configured snapshot retention",
+            )
+            require(
+                "No local session snapshots yet." in driver.find_element("id", "snapshot-list").text,
+                "Manager renders no-snapshot empty state",
+            )
+            require(
+                driver.find_element("id", "count-snapshot-retention").text.strip() == "10",
+                "Manager Saved workspace renders snapshot limit",
+            )
+            require(
+                driver.find_element("id", "content-scripts").text.strip() == "None",
+                "Manager renders zero content scripts as None",
+            )
+            require(
+                grid_shape(driver, ".overview-panel:first-child .metrics > div") == (3, 2),
+                "Manager Live browser metrics render as 3x2",
+            )
+            require(
+                grid_shape(driver, ".saved-metrics > div") == (3, 2),
+                "Manager Saved workspace metrics render as 3x2",
+            )
             passes.append("manager-render")
+
+            manager_handle = driver.current_window_handle
+
+            navigate_extension(driver, "src/sidebar/sidebar.html")
+            WebDriverWait(driver, 15).until(
+                lambda d: len(d.find_elements("css selector", ".tab-activate")) >= 1
+            )
+            sidebar_semantics = driver.execute_script(
+                """
+                const rows = Array.from(document.querySelectorAll(".tab-row"));
+                return rows.length > 0 && rows.every(row => {
+                  const activation = row.querySelector(":scope > .tab-activate");
+                  const actions = row.querySelector(":scope > .actions");
+                  return row.getAttribute("role") === null
+                    && activation?.tagName === "BUTTON"
+                    && actions instanceof HTMLElement
+                    && Array.from(actions.querySelectorAll(":scope > button")).every(button => button.tagName === "BUTTON");
+                });
+                """
+            )
+            require(sidebar_semantics is True, "sidebar tab activation uses native sibling-button semantics")
+            command_button = driver.find_element("id", "open-command-palette")
+            require(command_button.get_attribute("aria-label") == "Open command palette", "command trigger has accessible name")
+            require(
+                command_button.get_attribute("aria-keyshortcuts") == "Control+K Meta+K",
+                "command trigger exposes keyboard shortcuts",
+            )
+            command_button.click()
+            WebDriverWait(driver, 5).until(
+                lambda d: d.find_element("id", "command-palette").get_attribute("hidden") is None
+            )
+            require(
+                driver.switch_to.active_element.get_attribute("id") == "command-query",
+                "command palette moves focus to command search",
+            )
+            driver.switch_to.active_element.send_keys(Keys.ESCAPE)
+            WebDriverWait(driver, 5).until(
+                lambda d: d.find_element("id", "command-palette").get_attribute("hidden") is not None
+            )
+            require(
+                driver.switch_to.active_element.get_attribute("id") == "open-command-palette",
+                "command palette restores focus to trigger",
+            )
+            passes.append("sidebar-accessibility")
+
+            navigate_extension(driver, "src/popup/popup.html")
+            WebDriverWait(driver, 15).until(
+                lambda d: d.find_element("id", "metric-tabs").text.strip() not in {"", "—"}
+            )
+            require(grid_shape(driver, ".metrics > div") == (2, 2), "popup metrics render as 2x2")
+            require(driver.find_element("id", "save-window").is_enabled(), "popup primary Save action is interactive")
+            passes.append("popup-layout")
+
+            driver.switch_to.window(manager_handle)
 
             manager = extension_message(driver, {"type": "atm:get-manager-state"})
             require(isinstance(manager, dict) and manager.get("ok") is True, "Manager background model available", repr(manager))
@@ -374,7 +469,7 @@ def main() -> int:
             server.shutdown()
             server.server_close()
 
-    require(len(passes) == 11, "all release-critical unsigned runtime checks passed", str(passes))
+    require(len(passes) == 13, "all release-critical unsigned runtime checks passed", str(passes))
     print("Advanced Tab Manager unsigned real-Firefox runtime acceptance passed.")
     return 0
 
