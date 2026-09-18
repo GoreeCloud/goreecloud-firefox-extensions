@@ -2,10 +2,10 @@
 
 ## Status
 
-**Candidate:** 0.1.11  
+**Release:** Stable 0.1.11  
 **Firefox add-on ID:** `advanced-tab-manager@goreecloud.com`  
 **Security exceptions:** None  
-**Stable promotion:** Blocked until all remaining release gates are complete
+**Stable promotion:** Accepted after exact signed-runtime gates passed
 
 This review applies the GoreeCloud Stable Release Security Blockers to the exact Advanced Tab Manager release candidate.
 
@@ -63,6 +63,6 @@ Implemented local state is schema-validated and versioned. Relevant destructive 
 - duplicate cleanup is reviewed and fresh-state checked;
 - rule automation defaults disabled and explicit rule actions are bounded.
 
-## Remaining security release boundary
+## Accepted signed security boundary
 
-Passing this review does not establish Mozilla signing or signed-XPI integrity. Stable remains blocked until the exact accepted unsigned candidate is signed through the governed Mozilla path, the returned signed artifact passes parity/integrity checks, and persistent signed-install/full-Firefox-restart acceptance succeeds.
+Governed signing/restart run `35350654198` re-ran this Stable Security Blocker qualification on authoritative source revision `34c27805c3b56f3ba858794c785f6b68d1f7b8f3`, verified Mozilla-signed payload parity/integrity, and completed persistent signed-install/full-Firefox-restart acceptance. No security exception is recorded for Stable 0.1.11.
