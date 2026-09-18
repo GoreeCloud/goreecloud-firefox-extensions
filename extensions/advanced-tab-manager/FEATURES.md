@@ -1,6 +1,6 @@
 # GoreeCloud Advanced Tab Manager — Features
 
-## Implemented in source candidate 0.1.9
+## Implemented in source candidate 0.1.10
 
 - Firefox Manifest V3 identity, canonical component directory, Firefox 139+ baseline, and deterministic packaging integration.
 - Non-persistent ES-module background event page with cold-start Firefox state reconstruction.
@@ -17,6 +17,9 @@
 - ATM-008D versioned local JSON backup export and validated replacement import for implemented organizational, snooze, and rule stores.
 - SHA-256 backup integrity, exact GoreeCloud Advanced Tab Manager identity validation, strict existing-store schema validation, stale-preview rejection, readback verification, and exact-record rollback on failed import.
 - Import preview with counts/conflicts only, explicit replacement confirmation, 16 MiB file safety cap, and no live-tab opening/closing by the import path.
+- ATM-008E retained local session snapshots with configurable 1–50 record retention, restorable non-private URL filtering, window/group/tree/pin/active-state preservation, additive new-window restore, and created-window rollback on restore failure.
+- Privacy-minimized Manager snapshot metadata limited to snapshot ID, capture time, window count, and tab count.
+- Deterministic CI core-scale qualification at 100, 500, and 1,000 synthetic tabs, with candidate report, unsigned XPI, and SHA-256 checksum retained as workflow artifacts.
 - Manager aggregation limited to counts, source/lifecycle metadata, store availability/schema/revisions, and manifest permission posture; tab titles/URLs, saved URLs, rule contents, and browsing history are not included in the manager model.
 - Degraded manager rendering when one local store is unavailable.
 - Manager entry points from sidebar, toolbar popup, and command palette.
@@ -25,4 +28,4 @@
 
 ## Planned / not yet implemented
 
-Tree drag-and-drop and branch bulk actions, normalized duplicate matching, durable protected-tab rules, richer arbitrary-date/recurring snoozing, event-driven automatic rule application, richer rule editing, automatic discard policy, session snapshots, richer command actions, full manager mutation/settings workflows, Webspaces integration, optional hidden-tab Focus Mode, large-session qualification, representative Firefox runtime/accessibility acceptance, Mozilla signing, signed-XPI acceptance, production release, and Stable qualification remain future work.
+Tree drag-and-drop and branch bulk actions, normalized duplicate matching, durable protected-tab rules, richer arbitrary-date/recurring snoozing, event-driven automatic rule application, richer rule editing, automatic discard policy, richer command actions, broader manager/settings workflows, Webspaces integration, optional hidden-tab Focus Mode, representative rendered Firefox large-session qualification, representative Firefox runtime/accessibility acceptance, Mozilla signing, signed-XPI acceptance, production release, and Stable qualification remain future work.
