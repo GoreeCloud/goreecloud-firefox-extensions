@@ -1,5 +1,18 @@
 # GoreeCloud Advanced Tab Manager — Features
 
+## In development — 0.1.12
+
+- Redesigned popup command surface with glanceable open-tab, Tab Set, snoozed, and exact-duplicate counts.
+- Redesigned sidebar chrome, search/view composition, compact state chips, active-tab treatment, responsive density, and clearer primary/secondary actions.
+- Reorganized full Manager around overview, recovery, portability, and secondary technical-status sections.
+- Removed stale embedded lifecycle/source-candidate labels from the runtime Manager model; canonical release records remain authoritative for lifecycle and signing truth.
+- Corrected Manager rendering of retained session-snapshot count.
+- Strengthened sidebar tab-row keyboard and assistive semantics.
+- Preserved existing Firefox permissions, host/content/private-browsing boundaries, storage schemas, recovery semantics, automation boundaries, and local-first behavior.
+- Current Stable Glaze UI target remains V1.5 / 1.5.1. The 0.1.12 material presentation change requires fresh exact-revision consumer qualification and representative rendered/accessibility acceptance.
+- Stable 0.1.11 remains the accepted signed rollback/production baseline until a later release completes all required gates.
+
+
 ## Implemented in Stable 0.1.11
 
 - Firefox Manifest V3 identity, canonical component directory, Firefox 139+ baseline, and deterministic packaging integration.
