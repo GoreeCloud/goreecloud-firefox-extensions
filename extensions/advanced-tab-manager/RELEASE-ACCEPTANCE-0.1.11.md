@@ -20,6 +20,16 @@ The packaged runtime delta is deliberately narrow:
 
 Permissions, add-on ID, storage schemas, browser authority, rule semantics, recovery semantics, import/export semantics, and feature behavior are otherwise unchanged.
 
+## Accepted unsigned candidate
+
+The 0.1.11 release-candidate source is authoritative on `main` at `216abf8f6f4ac11f21b97a77a23676bf004463d7`.
+
+The exact deterministic unsigned XPI accepted before signing has SHA-256:
+
+`9c0f44926ac1d2f213fd07f82dd18fa11bd54ceebc6cd871898fe82b962a5b02`
+
+That digest was produced from exact PR #94 head `677967fa56baef8ec7816d9101d10fed02d2e862`, which passed repository CI, deterministic double-build equality, full-history Stable security qualification, GLAZE UI 1.5.1 consumer qualification, and Firefox 155.0 runtime acceptance. The runtime package content was promoted unchanged to authoritative main. The signing workflow must rebuild main and reproduce the same digest before Mozilla submission.
+
 ## Qualification gates
 
 The exact 0.1.11 candidate must pass:
@@ -31,7 +41,7 @@ The exact 0.1.11 candidate must pass:
 5. real-Firefox release-critical runtime acceptance on the exact candidate;
 6. repository-local GLAZE UI 1.5.1 consumer qualification;
 7. Stable Security Blockers qualification including full relevant Git-history secret scan and package runtime scan;
-8. governed Mozilla unlisted signing of the exact accepted unsigned digest;
+8. governed Mozilla unlisted signing through `.github/workflows/advanced-tab-manager-mozilla-signing.yml` of the exact accepted unsigned digest;
 9. signed-artifact identity/parity/integrity verification;
 10. persistent signed installation and full Firefox process restart without reinstalling;
 11. post-restart release-critical acceptance;

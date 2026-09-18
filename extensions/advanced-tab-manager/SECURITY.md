@@ -53,3 +53,12 @@ The 0.1.11 release candidate is gated by real-Firefox runtime acceptance, reposi
 The dedicated release qualification workflow uses full Git history, deterministic double-build comparison, candidate archive inspection, recognized secret-pattern scanning, runtime remote/dynamic-code scanning, exact permission verification, and repository-local Glaze UI 1.5.1 qualification. Security exceptions: none.
 
 Passing these source/package gates does not replace Mozilla-signed artifact verification. The returned signed XPI must still pass identity, version, payload parity/integrity, persistent installation, full-process restart, and post-restart acceptance before Stable promotion.
+
+
+## Mozilla-signed artifact gate — 0.1.11
+
+The governed signing workflow is bound to unsigned candidate SHA-256 `9c0f44926ac1d2f213fd07f82dd18fa11bd54ceebc6cd871898fe82b962a5b02`. It rebuilds authoritative main and fails if the deterministic bytes differ.
+
+Mozilla-returned payload acceptance requires signature metadata, exact non-manifest payload inventory and byte parity, and manifest semantic parity except for the narrowly governed no-data `data_collection_permissions` materialization used by AMO. Existing-version recovery authenticates to AMO, suppresses automatic credential-bearing redirects, and follows any HTTPS mirror redirect without the developer JWT.
+
+The signed XPI must then install persistently, survive a full Firefox process restart on the same profile without reinstalling, preserve extension-owned recovery state, and pass release-critical post-restart runtime checks.

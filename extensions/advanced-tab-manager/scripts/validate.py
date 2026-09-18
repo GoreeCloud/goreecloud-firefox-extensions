@@ -37,7 +37,8 @@ required = [
     "tests/rule-state.test.mjs", "tests/rules.test.mjs", "tests/background-rules.test.mjs", "tests/commands.test.mjs",
     "tests/manager-model.test.mjs", "tests/background-manager.test.mjs", "tests/portability.test.mjs", "tests/background-portability.test.mjs",
     "tests/session-snapshots.test.mjs", "tests/background-session-snapshots.test.mjs",
-    "tests/firefox_runtime_smoke.py", "RELEASE-ACCEPTANCE-0.1.10.md",
+    "tests/firefox_runtime_smoke.py", "tests/signed_restart_smoke.py", "tests/amo_signed_version_recovery.py", "tests/verify_signed_xpi.py",
+    "RELEASE-ACCEPTANCE-0.1.10.md",
     "scripts/large-session-qualification.mjs", "scripts/stable_security_review.py", "scripts/glaze_consumer_qualification.py"
 ]
 for relative in required:
@@ -170,6 +171,10 @@ release_acceptance_011 = (ROOT / "RELEASE-ACCEPTANCE-0.1.11.md").read_text(encod
 security_script = (ROOT / "scripts/stable_security_review.py").read_text(encoding="utf-8")
 glaze_script = (ROOT / "scripts/glaze_consumer_qualification.py").read_text(encoding="utf-8")
 release_workflow = (REPOSITORY_ROOT / ".github/workflows/advanced-tab-manager-release-qualification.yml").read_text(encoding="utf-8")
+signing_workflow = (REPOSITORY_ROOT / ".github/workflows/advanced-tab-manager-mozilla-signing.yml").read_text(encoding="utf-8")
+signed_restart = (ROOT / "tests/signed_restart_smoke.py").read_text(encoding="utf-8")
+signed_parity = (ROOT / "tests/verify_signed_xpi.py").read_text(encoding="utf-8")
+amo_recovery = (ROOT / "tests/amo_signed_version_recovery.py").read_text(encoding="utf-8")
 assert "GLAZE UI V1.5 / machine version 1.5.1 Stable" in glaze_adoption
 assert "af0d0d3e85aaf46e83a2baa64aab914fd96a7e98" in glaze_adoption
 assert "Security exceptions:** None" in security_review
@@ -183,4 +188,28 @@ assert "fetch-depth: 0" in release_workflow
 assert "github.event.pull_request.head.sha || github.sha" in release_workflow
 assert "stable_security_review.py" in release_workflow and "glaze_consumer_qualification.py" in release_workflow
 assert "cmp \"$A\" \"$B\"" in release_workflow
-print("Validated Advanced Tab Manager 0.1.11 release-candidate source and qualification contracts.")
+
+assert "ATM_RELEASE_VERSION: '0.1.11'" in signing_workflow
+assert "ATM_RELEASE_CANDIDATE_SHA256: '9c0f44926ac1d2f213fd07f82dd18fa11bd54ceebc6cd871898fe82b962a5b02'" in signing_workflow
+assert "Bind signing to authoritative main" in signing_workflow
+assert "web-ext@10.5.0 sign" in signing_workflow and "--channel=unlisted" in signing_workflow
+assert "AMO_JWT_ISSUER" in signing_workflow and "AMO_JWT_SECRET" in signing_workflow
+assert "stable_security_review.py" in signing_workflow and "glaze_consumer_qualification.py" in signing_workflow
+assert "verify_signed_xpi.py" in signing_workflow and "signed_restart_smoke.py" in signing_workflow
+assert "advanced-tab-manager-signing-evidence.json" in signing_workflow
+
+assert "temporary=False" in signed_restart, "signed restart acceptance must use persistent installation"
+assert signed_restart.count("install_addon(") == 1, "signed restart acceptance must not reinstall after restart"
+assert "post-restart organizational state readable" in signed_restart
+assert "advanced-tab-manager-signed-restart.json" in signed_restart
+
+assert 'EXPECTED_ADDON_ID = "advanced-tab-manager@goreecloud.com"' in signed_parity
+assert "META-INF/" in signed_parity and "nonManifestPayloadByteExact" in signed_parity
+assert "data_collection_permissions" in signed_parity
+
+assert 'ADDON_ID = "advanced-tab-manager@goreecloud.com"' in amo_recovery
+assert "NoRedirect" in amo_recovery and "/api/v4/file/" in amo_recovery
+assert '"Authorization": f"JWT {token}"' in amo_recovery
+assert 'mirror_request = Request(location, headers={"User-Agent": USER_AGENT})' in amo_recovery
+
+print("Validated Advanced Tab Manager 0.1.11 release-candidate source, qualification, and signing contracts.")
