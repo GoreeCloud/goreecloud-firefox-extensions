@@ -51,12 +51,14 @@ jobs:
           test -n "$B"
           cmp "$A" "$B"
           unzip -t "$A"
+          VERSION="$(python -c \"import json; print(json.load(open('extensions/advanced-tab-manager/manifest.json', encoding='utf-8'))['version'])\")"
+          echo "ATM_CANDIDATE_VERSION=$VERSION" >> "$GITHUB_ENV"
           mkdir -p dist/release
-          cp "$A" dist/release/goreecloud-advanced-tab-manager-0.1.11.xpi
-          sha256sum dist/release/goreecloud-advanced-tab-manager-0.1.11.xpi | tee dist/release/candidate-sha256.txt
+          cp "$A" "dist/release/goreecloud-advanced-tab-manager-${VERSION}.xpi"
+          sha256sum "dist/release/goreecloud-advanced-tab-manager-${VERSION}.xpi" | tee dist/release/candidate-sha256.txt
       - name: Qualify Stable security blockers
         run: |
-          python extensions/advanced-tab-manager/scripts/stable_security_review.py             --xpi dist/release/goreecloud-advanced-tab-manager-0.1.11.xpi             --source-revision "${{ github.event.pull_request.head.sha || github.sha }}"             --output dist/release/advanced-tab-manager-stable-security-review.json
+          python extensions/advanced-tab-manager/scripts/stable_security_review.py             --xpi "dist/release/goreecloud-advanced-tab-manager-${ATM_CANDIDATE_VERSION}.xpi"             --source-revision "${{ github.event.pull_request.head.sha || github.sha }}"             --output dist/release/advanced-tab-manager-stable-security-review.json
       - name: Qualify GLAZE UI 1.5.1 consumer adoption
         run: |
           python extensions/advanced-tab-manager/scripts/glaze_consumer_qualification.py             --source-revision "${{ github.event.pull_request.head.sha || github.sha }}"             --output dist/release/advanced-tab-manager-glaze-1.5.1-acceptance.json
@@ -67,7 +69,7 @@ jobs:
           retention-days: 30
           if-no-files-found: error
           path: |
-            dist/release/goreecloud-advanced-tab-manager-0.1.11.xpi
+            dist/release/goreecloud-advanced-tab-manager-*.xpi
             dist/release/candidate-sha256.txt
             dist/release/advanced-tab-manager-stable-security-review.json
             dist/release/advanced-tab-manager-glaze-1.5.1-acceptance.json
