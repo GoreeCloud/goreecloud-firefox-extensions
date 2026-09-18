@@ -36,6 +36,7 @@ required = [
     "tests/rule-state.test.mjs", "tests/rules.test.mjs", "tests/background-rules.test.mjs", "tests/commands.test.mjs",
     "tests/manager-model.test.mjs", "tests/background-manager.test.mjs", "tests/portability.test.mjs", "tests/background-portability.test.mjs",
     "tests/session-snapshots.test.mjs", "tests/background-session-snapshots.test.mjs",
+    "tests/firefox_runtime_smoke.py", "RELEASE-ACCEPTANCE-0.1.10.md",
     "scripts/large-session-qualification.mjs"
 ]
 for relative in required:
@@ -51,6 +52,10 @@ portability_core = (ROOT / "src/core/portability.js").read_text(encoding="utf-8"
 portability_background = (ROOT / "src/background/portability.js").read_text(encoding="utf-8")
 session_snapshots = (ROOT / "src/core/session-snapshots.js").read_text(encoding="utf-8")
 large_session_qualification = (ROOT / "scripts/large-session-qualification.mjs").read_text(encoding="utf-8")
+runtime_smoke = (ROOT / "tests/firefox_runtime_smoke.py").read_text(encoding="utf-8")
+release_acceptance = (ROOT / "RELEASE-ACCEPTANCE-0.1.10.md").read_text(encoding="utf-8")
+REPOSITORY_ROOT = ROOT.parents[1]
+runtime_workflow = (REPOSITORY_ROOT / ".github/workflows/advanced-tab-manager-firefox-runtime.yml").read_text(encoding="utf-8")
 rule_background = (ROOT / "src/background/rules.js").read_text(encoding="utf-8")
 rule_state = (ROOT / "src/core/rule-state.js").read_text(encoding="utf-8")
 rules_core = (ROOT / "src/core/rules.js").read_text(encoding="utf-8")
@@ -118,6 +123,25 @@ assert "sessionSnapshots" in manager_model and "snapshotRetention" in manager_mo
 assert "snapshot.test" not in manager_model, "manager model must not encode fixture browsing content"
 assert "SIZES = [100, 500, 1000]" in large_session_qualification
 assert "representative Firefox rendered/runtime performance remains separate" in large_session_qualification
+
+assert 'EXPECTED_ADDON_ID = "advanced-tab-manager@goreecloud.com"' in runtime_smoke
+assert 'EXPECTED_VERSION = "0.1.10"' in runtime_smoke
+assert "gBrowser.addTrustedTab" in runtime_smoke and "--allow-system-access" in runtime_smoke
+assert "temporary=True" in runtime_smoke, "unsigned runtime gate must not masquerade as persistent signed acceptance"
+for route in (
+    "atm:get-manager-state", "atm:set-tree-parent", "atm:save-focused-window-tab-set",
+    "atm:stash-tab", "atm:snooze-tab", "atm:cleanup-exact-duplicates",
+    "atm:get-rule-state", "atm:create-session-snapshot", "atm:restore-session-snapshot",
+    "atm:export-backup", "atm:preview-import"
+):
+    assert route in runtime_smoke, f"runtime smoke is missing release-critical route: {route}"
+assert '"signedPersistentRestartAccepted": False' in runtime_smoke
+assert "controlledLocalFixtureOnly" in runtime_smoke
+assert "browser-actions/setup-firefox@v1" in runtime_workflow
+assert "browser-actions/setup-geckodriver@latest" in runtime_workflow
+assert "firefox_runtime_smoke.py" in runtime_workflow
+assert "advanced-tab-manager-firefox-runtime.json" in runtime_workflow
+assert "Mozilla-signed persistent-install and full-process restart acceptance remain separate" in release_acceptance
 
 assert "createPortabilityManager" in background
 assert "atm:export-backup" in background and "atm:preview-import" in background and "atm:apply-import" in background
